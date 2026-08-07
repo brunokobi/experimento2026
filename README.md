@@ -22,9 +22,9 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 - **Pergunta de pesquisa**: metapaths estruturais em uma HIN de empresas melhoram a
   deteccao de indicios de fraude societaria em relacao a baselines tabulares e a
   GNNs homogeneas — e quais metapaths carregam mais sinal?
-- **Tarefa-fim proposta**: deteccao de empresas "de fachada" via metapaths de
+- **Tarefa-fim (decidida)**: deteccao de empresas "de fachada" via metapaths de
   socio/endereco/contador compartilhados, com rotulo fraco de CEIS/CNEP/TCU.
-  *(🔲 decisao final pendente de validacao com o orientador — ver secao 4 do plano)*
+  *(pesquisa conduzida sem orientador formal — ver nota na secao inicial do plano)*
 - **Metodologia**: split temporal (nao aleatorio), extracao de metapath via matriz
   esparsa, baselines tabular/GNN homogenea/metapath2vec/HAN-HGT, multiplas seeds +
   teste estatistico nas comparacoes.

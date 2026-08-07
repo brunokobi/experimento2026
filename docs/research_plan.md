@@ -3,9 +3,15 @@
 > **Objetivo do documento**: registrar a pergunta de pesquisa, o escopo e as decisões
 > metodológicas da dissertação, orientadas para produzir um artigo publicável em
 > veículo de classificação (Qualis/CAPES) alta. Este documento é vivo — deve ser
-> atualizado a cada decisão relevante tomada com o orientador.
+> atualizado a cada decisão relevante tomada.
+>
+> **Nota sobre orientação**: pesquisa conduzida sem orientador formal — as decisões
+> registradas aqui são de responsabilidade do próprio pesquisador (Bruno Kobi),
+> com apoio técnico de IA. Onde antes se lia "validar com o orientador", leia-se
+> "decisão travada pelo pesquisador".
 
-**Status**: rascunho inicial — tarefa-fim ainda pendente de validação com o orientador.
+**Status**: tarefa-fim decidida (seção 4) — foco atual: validar viabilidade real do
+rótulo (CEIS/CNEP/TCU) antes de travar o schema completo da HIN.
 
 ---
 
@@ -53,8 +59,10 @@ Heterogêneas de Empresas Brasileiras via Metapaths e Graph Neural Networks*.
 oferece que um modelo tabular não oferece, rótulo público real disponível (CEIS/CNEP),
 e gap de literatura genuíno.
 
-**Decisão final**: 🔲 pendente — a fechar com o orientador antes de travar o schema da
-HIN e a lista de metapaths.
+**Decisão final**: ✅ fechada — tarefa-fim é **detecção de fraude societária** (empresa
+"de fachada" via metapaths de sócio/endereço/contador compartilhados, rótulo fraco de
+CEIS/CNEP/TCU). Esta decisão trava o schema de nós/arcos da HIN e a lista de metapaths
+das próximas seções.
 
 ## 5. Metodologia
 
@@ -110,9 +118,19 @@ dissertação espelham estes marcos, não o inverso:
 
 ## 10. Próximo passo imediato
 
-Fechar a tarefa-fim (seção 4) com o orientador. Essa decisão trava o schema de nós/
-arcos da HIN, a lista de metapaths relevantes e a fonte de rótulos a buscar — sem
-ela, qualquer trabalho de implementação é especulativo.
+Com a tarefa-fim travada (seção 4), o próximo passo é **validar a viabilidade real do
+rótulo** antes de investir no schema completo da HIN e na coleta de dados em escala:
+
+- Checar formato, cobertura temporal e volume de empresas listadas em CEIS/CNEP/TCU.
+- Confirmar que os registros trazem CNPJ (ou informação suficiente para cruzar com a
+  base de empresas da Receita Federal) — sem isso o rótulo é inutilizável.
+- Estimar a proporção de exemplos positivos (empresas sancionadas) vs. universo total
+  — se for extremamente raro, isso já define a estratégia de avaliação (ex.:
+  PR-AUC em vez de acurácia, técnicas de desbalanceamento).
+
+Se o rótulo se mostrar inviável nessa checagem, a tarefa-fim recua para a segunda
+opção da tabela da seção 4 (grupo econômico oculto) ou para uma reavaliação da fonte
+de rótulo — antes de qualquer código de schema ser escrito.
 
 ---
 
