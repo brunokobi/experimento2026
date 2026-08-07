@@ -33,6 +33,9 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 - **Neo4j vs. PyTorch Geometric**: Neo4j para exploracao/validacao/visualizacao
   (Cypher, GDS, figuras); PyTorch Geometric para o treino da GNN em si — Neo4j nao
   treina modelo.
+- **Infraestrutura**: Neo4j hospedado numa VPS pessoal (ja orquestrada via
+  Coolify) — treino da GNN e notebooks ficam na maquina local (VPS e
+  CPU-only/ARM64, sem GPU). Segredos de acesso nunca vao neste repositorio.
 - **Metodologia**: validacao cruzada estratificada (nao split temporal simples, dado
   o N pequeno de positivos), extracao de metapath via matriz esparsa, baselines
   tabular/GNN homogenea/HAN-HGT, multiplas seeds + teste estatistico.
@@ -44,6 +47,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 
 ```
 .
+├── CLAUDE.md             # resumo das decisoes travadas, para retomar contexto em qualquer maquina
 ├── .github/workflows/
 │   └── ci.yml            # CI: lint (ruff) + testes (pytest) via uv
 ├── docs/

@@ -127,6 +127,24 @@ nem duplicação de esforço):
   - Recebe o grafo (via export do `HINBuilder`) e treina o modelo GNN (HAN/HGT).
   - É o que produz o resultado quantitativo (PR-AUC, Precision@k) reportado no artigo.
 
+### 6.1 Onde cada peça roda (decisão de infraestrutura)
+
+- **Neo4j**: hospedado na VPS pessoal do pesquisador (Oracle Cloud, ARM64, já
+  orquestrada via Coolify/Docker/Traefik para outros serviços pessoais) — mesmo
+  padrão operacional já em uso, sem impacto nos serviços existentes. Justificativa:
+  o grafo é pequeno (344k nós — ver seção 4), a imagem oficial do Neo4j é multi-arch
+  (sem a armadilha de build ARM64 já vista com outras imagens naquela VPS), e ganha-se
+  acesso persistente de qualquer máquina, sem depender do notebook local estar ligado.
+- **PyTorch Geometric / treino da GNN / notebooks**: máquina **local**. A VPS é
+  CPU-only/ARM64 (free tier) — sem GPU — e as extensões nativas do PyTorch Geometric
+  (`torch-scatter`/`torch-sparse`) são historicamente instáveis em ARM. Treinar ali
+  não traria ganho de velocidade e arriscaria consumir tempo de pesquisa debugando
+  build em vez de rodando experimento.
+- **Segredos de acesso** (IP, chaves SSH, credenciais) **nunca** vão neste
+  repositório — este é público. Ficam exclusivamente no `.env` local (já ignorado
+  pelo `.gitignore`) e no repositório privado de infraestrutura pessoal do
+  pesquisador. Este documento registra a decisão arquitetural, não os segredos.
+
 Fluxo: `Neo4j (explorar/validar/visualizar) → HeteroData (PyTorch Geometric) → GNN →
 ranking de risco + quais metapaths pesaram mais`.
 
