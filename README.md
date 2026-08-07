@@ -14,10 +14,32 @@ Projeto de pesquisa academica para construcao e analise de uma **Rede Heterogene
 Informacao (HIN)** representando empresas, socios, CNAEs e municipios, com foco em
 extracao de **metapaths** e preparacao para modelos de GNN (via PyTorch Geometric).
 
+## Plano de pesquisa (dissertacao de mestrado)
+
+Objetivo: produzir um artigo publicavel em veiculo de classificacao (Qualis/CAPES)
+alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — resumo:
+
+- **Pergunta de pesquisa**: metapaths estruturais em uma HIN de empresas melhoram a
+  deteccao de indicios de fraude societaria em relacao a baselines tabulares e a
+  GNNs homogeneas — e quais metapaths carregam mais sinal?
+- **Tarefa-fim proposta**: deteccao de empresas "de fachada" via metapaths de
+  socio/endereco/contador compartilhados, com rotulo fraco de CEIS/CNEP/TCU.
+  *(🔲 decisao final pendente de validacao com o orientador — ver secao 4 do plano)*
+- **Metodologia**: split temporal (nao aleatorio), extracao de metapath via matriz
+  esparsa, baselines tabular/GNN homogenea/metapath2vec/HAN-HGT, multiplas seeds +
+  teste estatistico nas comparacoes.
+- **Venues-alvo**: BRACIS/SBBD como rede de seguranca; periodicos como *Expert
+  Systems with Applications*, *Knowledge-Based Systems* ou *Decision Support
+  Systems* como alvo principal, compativel com o prazo do mestrado.
+
 ## Estrutura do projeto
 
 ```
 .
+├── .github/workflows/
+│   └── ci.yml            # CI: lint (ruff) + testes (pytest) via uv
+├── docs/
+│   └── research_plan.md  # plano de pesquisa da dissertacao (pergunta, metodologia, cronograma)
 ├── data/
 │   ├── raw/              # dados brutos (SQLite/Parquet do projeto original) — nao versionado
 │   ├── processed/        # dados limpos/transformados — nao versionado
