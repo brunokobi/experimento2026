@@ -7,133 +7,195 @@
 >
 > **Nota sobre orientação**: pesquisa conduzida sem orientador formal — as decisões
 > registradas aqui são de responsabilidade do próprio pesquisador (Bruno Kobi),
-> com apoio técnico de IA. Onde antes se lia "validar com o orientador", leia-se
-> "decisão travada pelo pesquisador".
+> com apoio técnico de IA.
 
-**Status**: tarefa-fim decidida (seção 4) — foco atual: validar viabilidade real do
-rótulo (CEIS/CNEP/TCU) antes de travar o schema completo da HIN.
+**Status**: fonte de dados e tarefa-fim confirmadas com números reais (seções 4 e 5) —
+próximo passo é desenhar o schema da HIN em código a partir do banco real (seção 10).
 
 ---
 
 ## 1. Motivação e lacuna na literatura
 
 Modelos tabulares (ex.: XGBoost sobre dados cadastrais da Receita Federal) e GNNs
-homogêneas ignoram um sinal estrutural importante em fraude societária: padrões de
-**sócio, endereço e contador compartilhados** entre empresas. Esse sinal é exatamente
-o que um metapath em uma Rede Heterogênea de Informação (HIN) captura.
+homogêneas ignoram um sinal estrutural importante em risco corporativo: padrões de
+**sócio, endereço e contador compartilhados** entre empresas, e — ângulo pouco
+explorado na literatura — **vínculo político do sócio** (candidatura/doação eleitoral).
+Esse sinal é exatamente o que um metapath em uma Rede Heterogênea de Informação (HIN)
+captura.
 
-A literatura brasileira de detecção de fraude corporativa é majoritariamente tabular.
+A literatura brasileira de risco/fraude corporativa é majoritariamente tabular.
 Trabalhos internacionais com HAN/HGT/R-GCN em grafos corporativos existem, mas
 concentrados em previsão de insolvência/risco de crédito — um espaço já saturado.
-**Detecção de fraude societária via metapaths, no contexto de dados públicos
-brasileiros, é pouco explorada** — esse é o gap que esta dissertação ataca.
+**Detecção de risco de sanção administrativa via metapaths societários e de conexão
+política, no contexto de dados públicos brasileiros, é pouco explorada** — esse é o
+gap que esta dissertação ataca.
 
 ## 2. Pergunta de pesquisa
 
-> Metapaths estruturais em uma HIN de empresas melhoram a detecção de indícios de
-> fraude societária em relação a baselines tabulares e a GNNs homogêneas — e quais
-> metapaths carregam mais sinal?
+> Metapaths estruturais em uma HIN de empresas (sócio comum, endereço comum, vínculo
+> político) melhoram a identificação de empresas com sanção administrativa confirmada,
+> em relação a um baseline tabular — e quais metapaths carregam mais sinal?
 
-**Título provisório**: *Detecção de Indícios de Fraude Societária em Redes
-Heterogêneas de Empresas Brasileiras via Metapaths e Graph Neural Networks*.
+**Título provisório**: *Detecção de Risco de Sanção Administrativa em Redes
+Heterogêneas de Empresas via Metapaths e Graph Neural Networks: um Estudo com Dados
+Reais da Grande Vitória (ES)*.
 
 ## 3. Contribuições reivindicadas
 
-1. Uma HIN de empresas brasileiras com schema e metapaths desenhados especificamente
-   para sinais de fraude societária (sócio comum, endereço comum, contador comum).
-2. Comparação empírica rigorosa entre HAN/HGT, GNN homogênea, metapath2vec e baseline
-   tabular (XGBoost/LightGBM), com ablation por metapath.
-3. Análise interpretável de quais metapaths carregam mais sinal — não apenas "o
-   modelo ganhou", mas "ganhou por causa de X".
+1. Uma HIN construída sobre dados reais de empresas da Grande Vitória (ES), com schema
+   e metapaths desenhados para sinais de risco corporativo (sócio comum, endereço
+   comum, vínculo político via TSE).
+2. Comparação empírica entre HAN/HGT, GNN homogênea e baseline tabular, avaliada com
+   métricas apropriadas a rótulo raro (PR-AUC, Precision@k) — não acurácia, que engana
+   nesse regime.
+3. Análise interpretável de quais metapaths carregam mais sinal — inclui testar
+   explicitamente se vínculo político (sinal com pouquíssima interseção direta com o
+   rótulo, ver seção 5) carrega sinal indireto via rede, algo que só um modelo
+   relacional captura.
 
-## 4. Tarefa-fim: opções avaliadas
+## 4. Fonte de dados (confirmada e verificada)
 
-| Tarefa | Novidade | Risco de rótulo | Concorrência na literatura |
+A tese usa um dataset já existente e mantido pelo próprio pesquisador:
+[`projeto_grande_vitoria_empresas`](https://github.com/brunokobi/projeto_grande_vitoria_empresas)
+— um pipeline ETL que consolida fontes públicas oficiais num SQLite único, cruzadas
+por CNPJ. **Verificado diretamente no banco real** (não só na documentação do repo):
+
+| Tabela | Linhas | Empresas distintas | Papel na HIN |
 |---|---|---|---|
-| **Fraude societária (empresa "de fachada")** — via metapaths de sócio/endereço/contador, rótulo fraco de CEIS/CNEP/TCU | Alta | Médio | Baixa |
-| Grupo econômico oculto / beneficiário final (classificação de pares de empresas) | Alta | Alto (poucos rótulos públicos) | Muito baixa |
-| Previsão de insolvência/falência | Baixa-média | Alto (dados dispersos) | **Alta** |
-| Risco de crédito de PME | Baixa | Médio | Muito alta |
+| `empresas` | 344.130 | — (universo) | nó central |
+| `socios` | 231.890 | — | nó — liga a empresas via `participa_de` |
+| `sancoes_administrativas` | 322 | **188** | **rótulo principal** (ver seção 5) |
+| `dividas_ativas` | 158.675 | 32.754 | sinal auxiliar (não é o rótulo) |
+| `vinculos_politicos` (TSE) | 4.557 | ~4.000 | nó/sinal auxiliar — ângulo de novidade |
+| `processos_judiciais` | 1.314.602 | — | **ruidoso**: 99,9% casado por nome (fuzzy), não CNPJ — ver riscos |
+| `registros_jucees` | 88.349 | 88.349 | metadado (natureza jurídica, constituição) |
+| `marcas_inpi` / `beneficios_fiscais` / `contratos_pncp` / `contratos_governamentais` | 36.963 / 32.006 / 7.013 / 894 | — | sinais auxiliares exploratórios |
 
-**Recomendação**: a opção de fraude societária — maior aproveitamento do que uma HIN
-oferece que um modelo tabular não oferece, rótulo público real disponível (CEIS/CNEP),
-e gap de literatura genuíno.
+**Escopo geográfico**: Grande Vitória (ES) — 7 municípios (Vitória, Vila Velha, Serra,
+Cariacica, Viana, Guarapari, Fundão). Escala **totalmente tratável em memória** — não
+há necessidade de infraestrutura de sampling distribuído nesta fase da pesquisa.
 
-**Decisão final**: ✅ fechada — tarefa-fim é **detecção de fraude societária** (empresa
-"de fachada" via metapaths de sócio/endereço/contador compartilhados, rótulo fraco de
-CEIS/CNEP/TCU). Esta decisão trava o schema de nós/arcos da HIN e a lista de metapaths
-das próximas seções.
+**LGPD já resolvida na origem**: `cpf_parcial` já vem mascarado da Receita Federal no
+próprio dataset — não é preciso pseudonimizar nada adicionalmente para uso na tese.
 
-## 5. Metodologia
+## 5. Rótulo e desenho do problema (decisão travada a partir dos números reais)
 
-- **Dados**: Receita Federal (empresas, sócios, CNAE) + rótulo fraco de proxy de
-  fraude via CEIS/CNEP/TCU ("empresas inidôneas e suspensas").
-- **Split temporal** (não aleatório) — evita vazamento de informação futura; é o
-  primeiro ponto que um revisor de veículo de peso ataca em dados corporativos.
+**Achado crítico**: apenas **188 empresas em 344.130 (0,055%)** têm qualquer sanção
+administrativa registrada (`CEIS`: 139 empresas · `CNEP`: 29 · `TCEES`: 16 · `CEPIM`:
+10 · `TRABALHO_ESCRAVO`: 2). Isso é desbalanceamento extremo — mais severo do que
+qualquer estimativa inicial deste plano. Isso muda o desenho do problema:
+
+- **Rótulo principal**: as 188 empresas com sanção administrativa confirmada
+  (`sancoes_administrativas`) são tratadas como **positivos confirmados** — não como
+  "toda a fraude que existe", só a que já foi pega. É um cenário de **rótulo
+  positivo-incompleto (PU — positive/unlabeled)**, comum e aceito na literatura de
+  detecção de fraude/risco.
+- **Framing do problema**: não é classificação binária balanceada — é **detecção de
+  anomalia / ranking de risco**. Métrica principal: **PR-AUC** e **Precision@k** (ex.:
+  "das 20 empresas mais bem ranqueadas pelo modelo, quantas eram sancionadas de
+  verdade"), não acurácia.
+- **Sinais auxiliares, não rótulo**: `dividas_ativas` (mais denso, 32.754 empresas,
+  mas é dívida fiscal — não necessariamente fraude) e `vinculos_politicos` entram como
+  *features*/nós extras na HIN, não como rótulo. A interseção direta entre sanção e
+  vínculo político é de só **4 empresas** — ou seja, se houver sinal de vínculo
+  político, ele é **indireto** (via rede, não correlação direta), que é exatamente a
+  hipótese que uma GNN testa e um modelo tabular não consegue.
+- **Ruído a isolar**: `processos_judiciais` é casado por nome da parte (fuzzy) em
+  99,9% dos casos, não por CNPJ direto — não deve ser tratado como sinal confiável de
+  fraude; entra, quando muito, como feature de baixa confiança (usar `match_confianca`
+  para filtrar/ponderar).
+
+## 6. Papel do grafo (HIN), Neo4j e PyTorch Geometric
+
+Divisão de responsabilidade decidida explicitamente (para não virar dependência morta
+nem duplicação de esforço):
+
+- **HIN (a estrutura central)**: sem ela, o problema vira só "planilha com uma coluna
+  de sanção" — a HIN é o que permite perguntar "essa empresa tem risco pelo que ela
+  é, ou por quem ela conhece" (sócio comum, mesmo contador, mesmo endereço, vínculo
+  político).
+- **Neo4j** — exploração, validação e prova visual, **não treino**:
+  - Consultas Cypher exploratórias (ex.: "empresas a até 2 saltos de uma empresa
+    sancionada via sócio compartilhado").
+  - Figuras da dissertação/defesa (Neo4j Bloom) — casos reais ilustrados como grafo.
+  - Métricas clássicas de rede via Neo4j GDS (centralidade, comunidades) — usadas como
+    comparação: "a GNN aprende algo que uma métrica clássica de rede já não entregava
+    de graça?" — pergunta que revisor de peso costuma fazer.
+  - Depuração da extração de metapath (conferir o resultado do código Python contra
+    uma query Cypher direta).
+- **PyTorch Geometric (`HeteroData`)** — o motor de fato:
+  - Recebe o grafo (via export do `HINBuilder`) e treina o modelo GNN (HAN/HGT).
+  - É o que produz o resultado quantitativo (PR-AUC, Precision@k) reportado no artigo.
+
+Fluxo: `Neo4j (explorar/validar/visualizar) → HeteroData (PyTorch Geometric) → GNN →
+ranking de risco + quais metapaths pesaram mais`.
+
+## 7. Metodologia
+
+- **Dados**: `grande_vitoria.db` (ver seção 4) — não é mais necessário buscar/validar
+  fonte externa de rótulo (CEIS/CNEP/TCU já vêm ingeridos e casados por CNPJ).
+- **Split**: dado o N pequeno de positivos (188), avaliar com **validação cruzada
+  estratificada repetida**, não um único split temporal — um único holdout temporal
+  arrisca deixar poucos ou nenhum positivo no teste. Continua sendo necessário
+  verificar que features usadas no treino não "vazam" informação posterior à sanção
+  (ex.: não usar `data_fim` da sanção como feature).
 - **Extração de metapath via matriz esparsa** (produto de matrizes de adjacência),
-  não busca em profundidade (DFS) — DFS não escala para o volume real de dados e
-  reviewer de sistemas percebe essa limitação.
-- **Baselines**: tabular (XGBoost/LightGBM), GNN homogênea, metapath2vec, HAN/HGT.
+  não busca em profundidade (DFS) — DFS não escala e reviewer de sistemas percebe essa
+  limitação.
+- **Baselines**: tabular (XGBoost/LightGBM, com técnicas de desbalanceamento — ex.:
+  class weighting, focal loss), GNN homogênea, HAN/HGT.
 - **Rigor estatístico**: múltiplas seeds + teste estatístico (ex.: Wilcoxon) nas
-  comparações entre modelos — sem isso a afirmação "nosso modelo é melhor" não
-  sobrevive à revisão.
+  comparações entre modelos.
 
-## 6. Ética e LGPD
+## 8. Ética e LGPD
 
-- Sócios (pessoas físicas) exigem pseudonimização (hash de CPF) antes de qualquer
-  dado tocar `data/raw/` — ver `.gitignore` e `src/config/settings.py`.
-- Justificativa de uso de dado público a documentar formalmente.
-- Verificar exigência de parecer de comitê de ética da instituição.
+- CPF de sócios **já vem mascarado** na fonte (Receita Federal) — sem trabalho
+  adicional de pseudonimização necessário para uso na tese.
+- Uso de dado público, com justificativa documentada; verificar exigência de parecer
+  de comitê de ética da instituição, se houver.
+- Vínculo político (TSE) é dado público de candidatura/doação eleitoral — mesmo
+  assim, tratar com cautela na exposição de nomes individuais nos resultados
+  publicados (agregar/anonimizar exemplos usados como ilustração).
 
-## 7. Riscos declarados
+## 9. Riscos declarados
 
-- **Rótulo de fraude é fraco/ruidoso** (proxy, não verdade absoluta) — mitigação:
-  validação manual de uma amostra dos rótulos.
-- **Escala do grafo real vs. tempo de mestrado** — mitigação: amostragem
-  estratificada por UF/setor nos experimentos intermediários; grafo completo apenas
-  no capítulo final.
+- **Desbalanceamento extremo (188/344.130)** — mitigação: framing de anomalia/ranking
+  (seção 5), não classificação balanceada; validação cruzada estratificada repetida.
+- **Rótulo é positivo-incompleto, não exaustivo** — a ausência de sanção não significa
+  ausência de irregularidade, só que não foi pega. Isso deve ser dito explicitamente
+  no texto da dissertação, não escondido.
+- **`processos_judiciais` é ruidoso** (99,9% casado por nome, fuzzy) — não usar como
+  rótulo; usar com cautela como feature, ponderado por `match_confianca`.
 - **Risco de novidade "comida"** por publicação concorrente — mitigação: publicar um
   resultado parcial em workshop/preprint antes do artigo principal.
 
-## 8. Venues-alvo (realistas para o prazo de mestrado)
+## 10. Venues-alvo (realistas para o prazo de mestrado)
 
 - **Rede de segurança nacional**: BRACIS, SBBD.
 - **Alvo principal**: periódicos de bom impacto e ciclo de revisão compatível com o
   prazo (ex.: *Expert Systems with Applications*, *Knowledge-Based Systems*,
   *Decision Support Systems*).
 - Evitar KDD/WWW/CIKM como alvo primário — ciclo e barreira de aceitação
-  incompatíveis com o tempo disponível; considerar apenas como alvo secundário
-  (workshop) se houver resultado forte e tempo de sobra.
+  incompatíveis com o tempo disponível.
 
-## 9. Cronograma orientado a publicação
+## 11. Cronograma orientado a publicação
 
-Os marcos seguem o ciclo de publicação, não fases de engenharia — os capítulos da
-dissertação espelham estes marcos, não o inverso:
-
-1. **Marco 1** — HIN + metapaths validados em amostra pequena, com resultado
-   preliminar.
+1. **Marco 1** — schema da HIN implementado a partir do banco real + metapaths
+   validados numa amostra, com resultado preliminar.
 2. **Marco 2** — submissão de resultado parcial em workshop/BRACIS.
 3. **Marco 3** — experimento completo com todos os baselines e ablation por metapath.
 4. **Marco 4** — submissão do artigo principal ao periódico-alvo.
 
-## 10. Próximo passo imediato
+## 12. Próximo passo imediato
 
-Com a tarefa-fim travada (seção 4), o próximo passo é **validar a viabilidade real do
-rótulo** antes de investir no schema completo da HIN e na coleta de dados em escala:
-
-- Checar formato, cobertura temporal e volume de empresas listadas em CEIS/CNEP/TCU.
-- Confirmar que os registros trazem CNPJ (ou informação suficiente para cruzar com a
-  base de empresas da Receita Federal) — sem isso o rótulo é inutilizável.
-- Estimar a proporção de exemplos positivos (empresas sancionadas) vs. universo total
-  — se for extremamente raro, isso já define a estratégia de avaliação (ex.:
-  PR-AUC em vez de acurácia, técnicas de desbalanceamento).
-
-Se o rótulo se mostrar inviável nessa checagem, a tarefa-fim recua para a segunda
-opção da tabela da seção 4 (grupo econômico oculto) ou para uma reavaliação da fonte
-de rótulo — antes de qualquer código de schema ser escrito.
+Com fonte de dados, rótulo e divisão Neo4j/PyG decididos, o próximo passo é técnico:
+**adaptar o schema em código** (`src/config/settings.py`, `src/data/loaders.py`,
+`src/graph/hin_builder.py`) ao banco real (`empresas`, `socios`,
+`sancoes_administrativas`, `vinculos_politicos`, `dividas_ativas`) no lugar do schema
+genérico de exemplo usado até aqui — isso ainda não foi feito neste repositório.
 
 ---
 
 *Ver também o scaffold de código em `src/` (config, loaders, HIN builder, extração
-de metapaths, testes) — construído para suportar esta pesquisa, mas ainda
-independente da tarefa-fim final.*
+de metapaths, testes) — construído com schema genérico de exemplo; ainda pendente de
+adaptação ao schema real descrito na seção 4.*

@@ -11,23 +11,31 @@
 [![License](https://img.shields.io/badge/license-Proprietary-lightgrey)](#)
 
 Projeto de pesquisa academica para construcao e analise de uma **Rede Heterogenea de
-Informacao (HIN)** representando empresas, socios, CNAEs e municipios, com foco em
-extracao de **metapaths** e preparacao para modelos de GNN (via PyTorch Geometric).
+Informacao (HIN)** representando empresas, socios, sancoes administrativas e vinculos
+politicos da Grande Vitoria (ES), com foco em extracao de **metapaths** e modelos de
+GNN (via PyTorch Geometric), sobre dados reais de
+[`projeto_grande_vitoria_empresas`](https://github.com/brunokobi/projeto_grande_vitoria_empresas).
 
 ## Plano de pesquisa (dissertacao de mestrado)
 
 Objetivo: produzir um artigo publicavel em veiculo de classificacao (Qualis/CAPES)
 alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — resumo:
 
-- **Pergunta de pesquisa**: metapaths estruturais em uma HIN de empresas melhoram a
-  deteccao de indicios de fraude societaria em relacao a baselines tabulares e a
-  GNNs homogeneas — e quais metapaths carregam mais sinal?
-- **Tarefa-fim (decidida)**: deteccao de empresas "de fachada" via metapaths de
-  socio/endereco/contador compartilhados, com rotulo fraco de CEIS/CNEP/TCU.
+- **Pergunta de pesquisa**: metapaths estruturais (socio comum, endereco comum,
+  vinculo politico) melhoram a identificacao de empresas com sancao administrativa
+  confirmada, em relacao a um baseline tabular — e quais metapaths carregam mais sinal?
+- **Fonte de dados (confirmada)**: 344.130 empresas, 231.890 socios, 7 municipios —
+  verificado direto no banco real, nao so na documentacao.
+- **Rotulo (achado critico)**: so **188 empresas em 344.130 (0,055%)** tem sancao
+  administrativa confirmada — desbalanceamento extremo. Tratado como deteccao de
+  anomalia/ranking (PR-AUC, Precision@k), nao classificacao balanceada.
   *(pesquisa conduzida sem orientador formal — ver nota na secao inicial do plano)*
-- **Metodologia**: split temporal (nao aleatorio), extracao de metapath via matriz
-  esparsa, baselines tabular/GNN homogenea/metapath2vec/HAN-HGT, multiplas seeds +
-  teste estatistico nas comparacoes.
+- **Neo4j vs. PyTorch Geometric**: Neo4j para exploracao/validacao/visualizacao
+  (Cypher, GDS, figuras); PyTorch Geometric para o treino da GNN em si — Neo4j nao
+  treina modelo.
+- **Metodologia**: validacao cruzada estratificada (nao split temporal simples, dado
+  o N pequeno de positivos), extracao de metapath via matriz esparsa, baselines
+  tabular/GNN homogenea/HAN-HGT, multiplas seeds + teste estatistico.
 - **Venues-alvo**: BRACIS/SBBD como rede de seguranca; periodicos como *Expert
   Systems with Applications*, *Knowledge-Based Systems* ou *Decision Support
   Systems* como alvo principal, compativel com o prazo do mestrado.
