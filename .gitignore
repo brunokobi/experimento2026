@@ -1,0 +1,110 @@
+# ============================================================
+# Python
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# --- Ambientes virtuais ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Gerenciadores de pacotes ---
+# uv: geralmente versiona-se o uv.lock; ignore apenas o cache local.
+.uv-cache/
+# Poetry: descomente a linha abaixo caso NAO queira versionar o lock file.
+# poetry.lock
+
+# --- Testes / cobertura ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# --- Jupyter / Notebooks ---
+.ipynb_checkpoints/
+notebooks/**/*.html
+
+# ============================================================
+# Dados sensiveis e artefatos do projeto
+# ============================================================
+# Dados brutos e processados nunca devem ser versionados.
+data/raw/*
+data/processed/*
+data/graph_exports/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/graph_exports/.gitkeep
+
+*.db
+*.sqlite
+*.sqlite3
+*.parquet
+*.csv
+*.feather
+
+# --- Credenciais / configuracao local ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ============================================================
+# Neo4j
+# ============================================================
+*.dump
+*.backup
+neo4j-data/
+neo4j-import/
+neo4j-logs/
+graph.db/
+
+# ============================================================
+# Artefatos de IA / ML
+# ============================================================
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.h5
+*.pkl
+*.joblib
+mlruns/
+mlartifacts/
+wandb/
+lightning_logs/
+checkpoints/
+runs/
+outputs/
+
+# ============================================================
+# IDE / SO
+# ============================================================
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
