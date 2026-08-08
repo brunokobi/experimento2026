@@ -319,10 +319,18 @@ código numérico da Receita (`"01"`/`"03"`/`"05"`), não texto descritivo —
 importa para interpretar resultado depois. A etapa 7 (seção 7) foi quebrada
 em subetapas (7.1–7.7) no `README.md` para acompanhar o progresso.
 
+**Feito também (08/08/2026, etapa 7.2 — harness de avaliação)**:
+`src/evaluation/harness.py` implementa `precision_at_k`, `evaluate_repeated_cv`
+(validação cruzada estratificada repetida via `RepeatedStratifiedKFold`,
+retorna PR-AUC + Precision@k por fold) e `compare_models` (teste de Wilcoxon
+pareado). Único ponto de acoplamento com cada modelo é uma função
+`fit_predict(x_train, y_train, x_test) -> scores` — o mesmo harness serve
+para o baseline tabular, a GNN homogênea e o HAN/HGT sem modificação.
+
 **Pendente a seguir**:
-- Etapa 7.2 (harness de avaliação: PR-AUC, Precision@k, validação cruzada
-  estratificada repetida, seeds + Wilcoxon) — compartilhada pelos 3
-  baselines, bloqueia 7.3/7.4/7.5.
+- Etapa 7.3 (baseline tabular: XGBoost/LightGBM + class weighting) — primeiro
+  número quantitativo real da dissertação, usando `build_feature_matrix`
+  (7.1) + `evaluate_repeated_cv` (7.2).
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).
 - Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP

@@ -90,10 +90,15 @@ no banco é código numérico da Receita (`"01"`/`"03"`/`"05"`), não texto —
 documentado no módulo. Etapa 7 quebrada em subetapas no README (7.1 a 7.7,
 mais a etapa 8 de publicação).
 
-**Próximo passo real agora**: etapa 7.2 — harness de avaliação (PR-AUC,
-Precision@k, validação cruzada estratificada repetida, múltiplas seeds +
-Wilcoxon) — é infraestrutura compartilhada pelos 3 baselines, tem que vir
-antes de treinar qualquer modelo.
+**Feito (08/08/2026, etapa 7.2)**: `src/evaluation/harness.py` —
+`precision_at_k`, `evaluate_repeated_cv` (RepeatedStratifiedKFold, PR-AUC +
+Precision@k por fold) e `compare_models` (Wilcoxon pareado). Genérico pros 3
+baselines — só exige uma função `fit_predict(x_train, y_train, x_test) ->
+scores`. Testado com dado sintético (independente do schema do dataset).
+
+**Próximo passo real agora**: etapa 7.3 — baseline tabular (XGBoost/LightGBM
++ class weighting), usando `build_feature_matrix` (7.1) + `evaluate_repeated_cv`
+(7.2) — primeiro número quantitativo real da dissertação.
 
 ## Armadilhas já identificadas (não repetir)
 
