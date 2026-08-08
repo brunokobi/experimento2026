@@ -327,10 +327,36 @@ pareado). Único ponto de acoplamento com cada modelo é uma função
 `fit_predict(x_train, y_train, x_test) -> scores` — o mesmo harness serve
 para o baseline tabular, a GNN homogênea e o HAN/HGT sem modificação.
 
+**Feito também (08/08/2026, etapa 7.3 — primeiro resultado quantitativo)**:
+`src/models/tabular_baseline.py` (`xgboost_fit_predict`) rodado contra o
+banco real via validação cruzada estratificada repetida (5 splits × 10
+repeats = 50 folds, `scripts/rodar_baseline_tabular.py`, ~5min total):
+
+| Rótulo | Positivos | PR-AUC | Taxa-base | Lift sobre o acaso |
+|---|---|---|---|---|
+| `y_direto` | 148 | 0,0081 ± 0,0036 | 0,043% | **~18,8×** |
+| `y_qualquer` | 188 | 0,0085 ± 0,0029 | 0,055% | **~15,5×** |
+
+**Interpretação**: os valores absolutos de PR-AUC parecem baixos, mas isso é
+esperado com taxa-base tão extrema — o número relevante é o *lift* sobre o
+acaso, não o valor absoluto (é exatamente por isso que a seção 5 já mandava
+usar PR-AUC/Precision@k em vez de acurácia). O baseline tabular tem lift
+**menor** em `y_qualquer` do que em `y_direto` — consistente com a hipótese
+central da dissertação (seção 2): dado tabular isolado não enxerga risco por
+associação (as 41 empresas via-sócio de `y_qualquer` não têm nenhum sinal
+tabular próprio que as distinga, só a conexão de rede) — é exatamente o que
+a HIN/GNN (etapas 7.4/7.5) deveria capturar e o tabular não consegue.
+
+**Nota metodológica**: o desvio-padrão do Precision@k frequentemente supera
+a própria média (ex.: Precision@10 em `y_direto` = 0,012 ± 0,039) — com só
+~30 positivos por fold de teste, acertar exatamente os k primeiros é muito
+ruidoso. Considerar k maiores (50, 100) nas rodadas dos próximos baselines
+para uma estimativa mais estável, sem descartar k pequenos (são os que
+importam pra "leitura de investigador": poucos casos pra checar manualmente).
+
 **Pendente a seguir**:
-- Etapa 7.3 (baseline tabular: XGBoost/LightGBM + class weighting) — primeiro
-  número quantitativo real da dissertação, usando `build_feature_matrix`
-  (7.1) + `evaluate_repeated_cv` (7.2).
+- Etapa 7.4 (baseline GNN homogênea via `SparseMetaPathExtractor`) — primeiro
+  modelo que de fato usa a estrutura de rede, comparar contra o número acima.
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).
 - Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP

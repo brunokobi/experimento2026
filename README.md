@@ -88,7 +88,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 6 | Exportar a HIN para Neo4j (exploracao Cypher/GDS, figuras da dissertacao) | `src/graph/neo4j_export.py` + VPS pessoal | ✅ feito — Neo4j 5 + GDS rodando na VPS, **acesso so via tunel SSH** (nunca porta publica: o grafo tem dado pessoal); HIN real exportada (344k+ nos) |
 | 7.1 | Feature engineering tabular | `src/features/tabular.py` (`build_feature_matrix`) | ✅ feito e **validado contra o banco real**: 344.130 empresas, 5,5s, 107 colunas, 0 `NaN` |
 | 7.2 | Harness de avaliacao (PR-AUC, Precision@k, CV estratificada repetida, seeds+Wilcoxon) | `src/evaluation/harness.py` | ✅ feito — generico para os 3 baselines (so precisa de uma funcao `fit_predict`) |
-| 7.3 | Baseline tabular (XGBoost/LightGBM + class weighting) | — | ⏳ pendente |
+| 7.3 | Baseline tabular (XGBoost + class weighting) | `src/models/tabular_baseline.py` | ✅ feito e **rodado contra o banco real** — primeiro resultado quantitativo: PR-AUC ~18,8× a taxa-base em `y_direto` (ver nota abaixo) |
 | 7.4 | Baseline GNN homogenea (via `SparseMetaPathExtractor`) | — | ⏳ pendente |
 | 7.5 | HAN/HGT (heterogenea de verdade) | — | ⏳ pendente |
 | 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | — | ⏳ pendente |
@@ -97,6 +97,14 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 
 Cronograma por marcos (Marco 1–4) e riscos declarados: ver secoes 9 e 11 de
 [`docs/research_plan.md`](docs/research_plan.md).
+
+**Primeiro resultado quantitativo (baseline tabular, 08/08/2026)**: PR-AUC
+0,0081 (`y_direto`) / 0,0085 (`y_qualquer`) — parecem baixos, mas a taxa-base
+e 0,043%/0,055%, entao isso e **~18,8x e ~15,5x melhor que o acaso**,
+respectivamente. O modelo tabular tem lift *menor* em `y_qualquer` (as
+empresas que so sao suspeitas por sócio comum) — consistente com a hipotese
+da tese: dado tabular isolado nao enxerga risco por associacao. Ver
+`scripts/rodar_baseline_tabular.py`.
 
 **Dois bugs reais encontrados só ao validar contra o banco de verdade** (nenhum
 aparecia no dado sintético dos testes — registrado para não repetir):

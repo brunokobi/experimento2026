@@ -96,9 +96,21 @@ Precision@k por fold) e `compare_models` (Wilcoxon pareado). Genérico pros 3
 baselines — só exige uma função `fit_predict(x_train, y_train, x_test) ->
 scores`. Testado com dado sintético (independente do schema do dataset).
 
-**Próximo passo real agora**: etapa 7.3 — baseline tabular (XGBoost/LightGBM
-+ class weighting), usando `build_feature_matrix` (7.1) + `evaluate_repeated_cv`
-(7.2) — primeiro número quantitativo real da dissertação.
+**Feito (08/08/2026, etapa 7.3 — primeiro resultado quantitativo)**:
+`src/models/tabular_baseline.py` (`xgboost_fit_predict`, `scale_pos_weight`
+calculado por fold, nunca do dataset inteiro). Rodado contra o banco real
+(`scripts/rodar_baseline_tabular.py`, ~5min): PR-AUC 0,0081 (`y_direto`) /
+0,0085 (`y_qualquer`) — **~18,8×/~15,5× a taxa-base** (0,043%/0,055%), não
+"baixo" como parece à primeira vista. Achado: lift menor em `y_qualquer`
+(empresas só suspeitas via sócio comum) — bate com a hipótese central: dado
+tabular isolado não vê risco por associação, é o que a HIN/GNN deve capturar.
+Nota metodológica: desvio-padrão do Precision@k costuma superar a média (só
+~30 positivos por fold de teste) — considerar k maiores (50/100) nas
+próximas rodadas.
+
+**Próximo passo real agora**: etapa 7.4 — baseline GNN homogênea (via
+`SparseMetaPathExtractor`) — primeiro modelo que de fato usa a estrutura de
+rede, pra comparar contra esse número tabular.
 
 ## Armadilhas já identificadas (não repetir)
 
