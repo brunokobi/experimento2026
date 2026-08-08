@@ -172,12 +172,21 @@ comparar o HAN/HGT isolado vs. dentro do script de comparação: 0,0078 vs.
 `fit_predict`. Teste de regressão que "suja" o RNG global de propósito
 antes de comparar.
 
-**Próximo passo real agora**: etapa 7.7 — sensibilidade `y_direto` vs
-`y_qualquer` (já há indícios fortes de confusão por circularidade nos 3
-resultados — GNN homogênea e HAN/HGT sistematicamente melhores em
-`y_qualquer`, nunca em `y_direto`), ou investir em mais recursos
-computacionais pra rodar a 7.6 com mais folds antes de seguir. Decisão em
-aberto com o pesquisador.
+**Em andamento (iniciado 08/08/2026, ~17:33)**: rodando
+`scripts/comparar_baselines.py` com 5×6=30 folds (escala acordada com o
+pesquisador, ~7h30 estimado) em background via `nohup` (PID pode ter
+mudado — checar `pgrep -af comparar_baselines`), log em
+`/tmp/comparar_baselines_30folds.log`. **Sem notificação automática** (uso
+de `nohup` em vez do mecanismo de background do Claude Code, de propósito,
+pra sobreviver a esta sessão terminar) — se retomar o trabalho e este log
+não aparecer mais em `/tmp`, a rodada pode ter sido perdida (reboot/limpeza
+do sistema) e precisa ser refeita. Quando terminar, ler o log e atualizar
+esta seção + `docs/research_plan.md` com o resultado final de 30 folds.
+
+**Próximo passo real (depois desse resultado)**: etapa 7.7 — sensibilidade
+`y_direto` vs `y_qualquer` (já há indícios fortes de confusão por
+circularidade nos 3 resultados de 5 folds — GNN homogênea e HAN/HGT
+sistematicamente melhores em `y_qualquer`, nunca em `y_direto`).
 
 ## Armadilhas já identificadas (não repetir)
 

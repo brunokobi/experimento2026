@@ -1,12 +1,13 @@
 """Script manual: etapa 7.6 -- padroniza n_splits/n_repeats/random_state
 entre os 3 baselines e roda a comparacao estatistica (Wilcoxon) de verdade.
 
-Fold count padronizado em 5x1=5 (nao os 50 do baseline tabular original,
-nem os 10 da GNN homogenea) -- o menor dos 3 ja usados, escolhido de
-proposito para nao precisar rodar o HAN/HGT (o mais caro) em dobro. Ainda e
-uma comparacao valida (mesmo random_state, folds pareados por construcao),
-so com menos poder estatistico que o ideal -- ver docs/research_plan.md,
-secao 7, pendencia de rigor metodologico.
+Fold count padronizado em 5x6=30 -- escala acordada com o pesquisador em
+08/08/2026 apos o resultado inconclusivo com 5 folds (Wilcoxon p entre 0.625
+e 1.0 em todos os pares, sem poder estatistico suficiente para decidir).
+Estimativa de tempo: ~7h30 nesta maquina (HAN/HGT domina o custo, ~278s por
+fold). Ainda e uma comparacao valida (mesmo random_state, folds pareados
+por construcao) -- ver docs/research_plan.md, secao 7, pendencia de rigor
+metodologico.
 
 Uso:
     uv run python scripts/comparar_baselines.py
@@ -27,7 +28,7 @@ from src.models.han_hgt import make_han_hgt_fit_predict
 from src.models.tabular_baseline import xgboost_fit_predict
 
 N_SPLITS = 5
-N_REPEATS = 1
+N_REPEATS = 6
 RANDOM_STATE = 42
 K_VALUES = (10, 20, 50)
 
