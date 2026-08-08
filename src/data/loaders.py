@@ -86,3 +86,84 @@ class ParquetLoader:
         df.to_parquet(path, index=False)
         logger.debug(f"Parquet escrito em: {path} ({len(df)} linhas)")
         return path
+
+
+class GrandeVitoriaLoader:
+    """Leitor das tabelas reais do dataset ``projeto_grande_vitoria_empresas``.
+
+    Encapsula os nomes de tabela/coluna do schema real (ver
+    ``docs/research_plan.md``, secao 4, e ``database/schema.sql`` naquele
+    repo) para nao espalhar strings magicas pelo resto do codigo. Usa
+    ``SQLiteLoader`` por baixo -- aceita um ``SQLiteLoader`` explicito (util
+    em testes, com um banco sintetico) ou usa o caminho de ``Settings``.
+    """
+
+    def __init__(self, loader: SQLiteLoader | None = None, settings: Settings | None = None) -> None:
+        self._settings = settings or get_settings()
+        self._sqlite = loader or SQLiteLoader(settings=self._settings)
+
+    def empresas(self) -> pd.DataFrame:
+        """Universo de empresas ativas (chave: ``cnpj``)."""
+        return self._sqlite.read_table("empresas")
+
+    def socios(self) -> pd.DataFrame:
+        """Vinculos socio-empresa (uma linha por par; ``cnpj_empresa`` + ``nome_socio``/``cpf_parcial``)."""
+        return self._sqlite.read_table("socios")
+
+    def dividas_ativas(self) -> pd.DataFrame:
+        """Divida ativa (PGFN/Sefaz-ES) -- sinal auxiliar, nao e rotulo."""
+        return self._sqlite.read_table("dividas_ativas")
+
+    def vinculos_politicos(self) -> pd.DataFrame:
+        """Vinculos politicos (TSE) por empresa -- sinal/no auxiliar, nao e rotulo."""
+        return self._sqlite.read_table("vinculos_politicos")
+
+    def sancoes_administrativas(self, match_confianca: str | None = None) -> pd.DataFrame:
+        """Sancoes administrativas (CEIS/CNEP/CEPIM/TCEES/TRABALHO_ESCRAVO).
+
+        Args:
+            match_confianca: se informado, filtra por ``'direto'`` (sancao na
+                propria empresa) ou ``'socio'`` (atribuida via socio em comum
+                com entidade sancionada -- ver risco de circularidade na
+                secao 5/9 do plano de pesquisa). ``None`` retorna as duas.
+        """
+        df = self._sqlite.read_table("sancoes_administrativas")
+        if match_confianca is not None:
+            df = df[df["match_confianca"] == match_confianca]
+        return df
+
+    def processos_judiciais(self, match_confianca: str | None = None) -> pd.DataFrame:
+        """Processos judiciais via DJEN -- ruidoso (casado por nome), nao e rotulo.
+
+        Args:
+            match_confianca: ``'nome'`` (casado por razao social) ou ``'socio'``
+                (via socio em comum); nunca ``'direto'`` nesta tabela.
+        """
+        df = self._sqlite.read_table("processos_judiciais")
+        if match_confianca is not None:
+            df = df[df["match_confianca"] == match_confianca]
+        return df
+
+    def rotulo_sancao(self) -> pd.DataFrame:
+        """Rotulo binario por empresa, nas duas granularidades travadas no plano
+        de pesquisa (``docs/research_plan.md``, secoes 5 e 9):
+
+        - ``y_direto``: sancao confirmada na propria empresa
+          (``match_confianca='direto'``) -- rotulo **primario**, sem risco de
+          circularidade com o metapath de socio comum.
+        - ``y_qualquer``: ``y_direto`` OU sancao atribuida via socio em comum
+          (``match_confianca='socio'``) -- inclui as ~41 empresas com risco de
+          circularidade; usar so como analise de sensibilidade separada, nunca
+          misturado com ``y_direto`` sem declarar qual foi usado.
+
+        Retorna um DataFrame com uma linha por empresa (``cnpj_empresa``,
+        ``y_direto``, ``y_qualquer``), cobrindo todo o universo de
+        ``empresas`` (nao so as sancionadas).
+        """
+        sancoes = self.sancoes_administrativas()
+        universo = self.empresas()[["cnpj"]].rename(columns={"cnpj": "cnpj_empresa"})
+        diretas = set(sancoes.loc[sancoes["match_confianca"] == "direto", "cnpj_empresa"])
+        quaisquer = set(sancoes["cnpj_empresa"])
+        universo["y_direto"] = universo["cnpj_empresa"].isin(diretas)
+        universo["y_qualquer"] = universo["cnpj_empresa"].isin(quaisquer)
+        return universo

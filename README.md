@@ -82,9 +82,9 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 |---|---|---|---|
 | 1 | ETL do dataset (RFB, JUCEES, CEIS/CNEP, TCEES, PGFN, IBAMA, TSE, DJEN) | repo [`projeto_grande_vitoria_empresas`](https://github.com/brunokobi/projeto_grande_vitoria_empresas) | ✅ nucleo pronto (`cnpj`, `jucees`, `sancoes`, `dividas_ativas`, `ibama`); ⏸️ `djen` (processos judiciais) e `geo` ainda rodando em background, nao bloqueiam as proximas etapas |
 | 2 | Definir pergunta de pesquisa, rotulo e metodologia | [`docs/research_plan.md`](docs/research_plan.md) | ✅ travado (com o achado de circularidade do item acima) |
-| 3 | Adaptar `settings.py` / `loaders.py` ao schema real (`empresas`, `socios`, `sancoes_administrativas`, `dividas_ativas`, `vinculos_politicos`) | `src/config`, `src/data` | ⏳ pendente — **proximo passo imediato** |
-| 4 | Construir a HIN real em `HeteroData` a partir das tabelas do banco | `src/graph/hin_builder.py` | ⏳ pendente (hoje so tem schema sintetico de exemplo) |
-| 5 | Reescrever extracao de metapath para produto de matriz esparsa (o DFS atual em `networkx` nao escala para 344k empresas) | `src/graph/metapaths.py` | ⏳ pendente |
+| 3 | Adaptar `settings.py` / `loaders.py` ao schema real (`empresas`, `socios`, `sancoes_administrativas`, `dividas_ativas`, `vinculos_politicos`) | `src/config`, `src/data/loaders.py` (`GrandeVitoriaLoader`) | ✅ primeira versao — inclui `rotulo_sancao()` (y_direto/y_qualquer, respeitando o risco de circularidade) |
+| 4 | Construir a HIN real em `HeteroData` a partir das tabelas do banco | `src/graph/build_hin.py` (`build_empresas_hin`) | ✅ primeira versao — nos `empresa`/`socio`/`endereco`/`municipio`/`vinculo_politico`; `processos_judiciais` ainda de fora (pipeline `djen` em andamento) |
+| 5 | Reescrever extracao de metapath para produto de matriz esparsa (o DFS atual em `networkx` nao escala para 344k empresas) | `src/graph/metapaths.py` | ⏳ pendente — `COMMON_METAPATHS` ja atualizado para os nos/relacoes reais (`empresa_socio_empresa`, `empresa_endereco_empresa`, `empresa_vinculo_politico_empresa`), extracao ainda por DFS |
 | 6 | Exportar a HIN para Neo4j (exploracao Cypher/GDS, figuras da dissertacao) | `src/graph/hin_builder.py` + VPS pessoal | ⏳ pendente |
 | 7 | Baselines: tabular (XGBoost/LightGBM com class weighting), GNN homogenea, HAN/HGT | notebooks/ + novo modulo de treino | ⏳ pendente |
 | 8 | Avaliacao: validacao cruzada estratificada repetida, PR-AUC/Precision@k, multiplas seeds + teste estatistico (Wilcoxon) | idem | ⏳ pendente |
@@ -113,15 +113,17 @@ Cronograma por marcos (Marco 1–4) e riscos declarados: ver secoes 9 e 11 de
 │   ├── config/
 │   │   └── settings.py   # Pydantic Settings (.env) — caminhos, Neo4j, parametros de memoria
 │   ├── data/
-│   │   └── loaders.py    # SQLiteLoader / ParquetLoader
+│   │   └── loaders.py    # SQLiteLoader / ParquetLoader / GrandeVitoriaLoader (schema real)
 │   ├── graph/
-│   │   ├── hin_builder.py   # HINBuilder (HeteroData -> networkx -> Neo4j/export)
+│   │   ├── hin_builder.py   # HINBuilder (HeteroData -> networkx -> Neo4j/export) — generico
+│   │   ├── build_hin.py     # build_empresas_hin() — monta a HIN real a partir do dataset
 │   │   └── metapaths.py     # MetaPath / MetaPathExtractor
 │   └── tests/
-│       ├── conftest.py           # fixture de HIN sintetica
+│       ├── conftest.py           # fixtures: HIN sintetica + SQLite sintetico no schema real
 │       ├── test_connectivity.py  # sem nos isolados, indices validos, simetria de arcos reversos
 │       ├── test_memory.py        # pico de memoria na construcao vs. orcamento configurado
-│       └── test_quality.py       # NaN/Inf, duplicidade de arcos, schema minimo esperado
+│       ├── test_quality.py       # NaN/Inf, duplicidade de arcos, schema minimo esperado
+│       └── test_real_schema.py   # GrandeVitoriaLoader + build_empresas_hin (rotulo, metapaths reais)
 ├── pyproject.toml
 ├── .env.example
 └── .gitignore

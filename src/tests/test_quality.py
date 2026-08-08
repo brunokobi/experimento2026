@@ -54,10 +54,10 @@ def test_metapath_extraction_returns_valid_instances(sample_hin: HINBuilder) -> 
     """Instancias extraidas de um metapath devem comecar e terminar no tipo esperado."""
     graph = sample_hin.to_networkx()
     extractor = MetaPathExtractor(graph)
-    metapath = COMMON_METAPATHS["empresa_cnae_empresa"]
+    metapath = COMMON_METAPATHS["empresa_municipio_empresa"]
 
     instances = extractor.extract_instances(metapath)
-    assert len(instances) > 0, "Esperava-se ao menos uma instancia de empresa-cnae-empresa"
+    assert len(instances) > 0, "Esperava-se ao menos uma instancia de empresa-municipio-empresa"
     for instance in instances:
         assert instance[0][0] == "empresa"
         assert instance[-1][0] == "empresa"

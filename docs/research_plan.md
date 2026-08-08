@@ -9,8 +9,10 @@
 > registradas aqui são de responsabilidade do próprio pesquisador (Bruno Kobi),
 > com apoio técnico de IA.
 
-**Status**: fonte de dados e tarefa-fim confirmadas com números reais (seções 4 e 5) —
-próximo passo é desenhar o schema da HIN em código a partir do banco real (seção 10).
+**Status (08/08/2026)**: fonte de dados e tarefa-fim confirmadas com números reais
+(seções 4 e 5); schema real da HIN implementado em código, primeira versão (seção 12)
+— próximo passo é a extração de metapath escalável e os baselines/treino da GNN
+(seções 7 e 8).
 
 ---
 
@@ -244,14 +246,31 @@ ranking de risco + quais metapaths pesaram mais`.
 
 ## 12. Próximo passo imediato
 
-Com fonte de dados, rótulo e divisão Neo4j/PyG decididos, o próximo passo é técnico:
-**adaptar o schema em código** (`src/config/settings.py`, `src/data/loaders.py`,
-`src/graph/hin_builder.py`) ao banco real (`empresas`, `socios`,
-`sancoes_administrativas`, `vinculos_politicos`, `dividas_ativas`) no lugar do schema
-genérico de exemplo usado até aqui — isso ainda não foi feito neste repositório.
+**Status (08/08/2026): primeira versão implementada.** `src/config/settings.py` e
+`src/data/loaders.py` (`GrandeVitoriaLoader`) já apontam para o schema real
+(`empresas`, `socios`, `sancoes_administrativas`, `dividas_ativas`,
+`vinculos_politicos`); `src/graph/build_hin.py` (`build_empresas_hin`) monta a HIN
+real com os nós `empresa`/`socio`/`endereço`/`município`/`vínculo_político` e expõe
+o rótulo como `data["empresa"].y_direto` / `.y_qualquer` (nunca como feature, para
+não vazar informação e para preservar a distinção direto vs. via-sócio da seção 5).
+`docs/research_plan.md` e o código foram atualizados juntos — ver `README.md`,
+seção "Etapas do trabalho", para o estado de cada etapa.
+
+**Pendente a seguir**:
+- `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
+  ainda em andamento; o campo é ruidoso por design — ver seção 9).
+- Extração de metapath ainda é DFS em `networkx` (`src/graph/metapaths.py`) — não
+  escala para 344k empresas; reescrever para produto de matriz esparsa antes de
+  rodar sobre o dataset completo (só testado até aqui numa amostra sintética).
+- Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP
+  normalizados) são heurísticas de primeira versão — não resolvem homônimos nem
+  variação de grafia; documentado como limitação em `src/graph/build_hin.py`.
+- Vínculo político ainda não é ligado ao sócio da própria empresa por nome (fica
+  como nó auxiliar ligado direto à empresa) — juntar as duas identidades exigiria
+  resolução de nome mais cuidadosa.
 
 ---
 
-*Ver também o scaffold de código em `src/` (config, loaders, HIN builder, extração
-de metapaths, testes) — construído com schema genérico de exemplo; ainda pendente de
-adaptação ao schema real descrito na seção 4.*
+*Ver também o scaffold de código em `src/` (config, loaders, HIN builder/build_hin,
+extração de metapaths, testes) — schema real já adaptado (seção acima); o próximo
+passo é a extração de metapath escalável e os baselines/treino da GNN (seções 7-8).*

@@ -43,11 +43,20 @@ endereço comum, vínculo político). Objetivo: publicação em veículo Qualis 
 
 ## Pendente (próximo passo real)
 
-Adaptar `src/config/settings.py`, `src/data/loaders.py` e
-`src/graph/hin_builder.py` ao schema real do banco (`empresas`, `socios`,
-`sancoes_administrativas`, `vinculos_politicos`, `dividas_ativas`) — hoje o
-scaffold ainda usa um schema genérico de exemplo, não o real. Ver seção 12 de
-`docs/research_plan.md`.
+**Feito (08/08/2026)**: `src/config/settings.py` e `src/data/loaders.py`
+(`GrandeVitoriaLoader`) já adaptados ao schema real (`empresas`, `socios`,
+`sancoes_administrativas`, `dividas_ativas`, `vinculos_politicos`);
+`src/graph/build_hin.py` (`build_empresas_hin`) monta a HIN real (nós
+`empresa`/`socio`/`endereco`/`municipio`/`vinculo_politico`), com rótulo
+exposto como `data["empresa"].y_direto`/`.y_qualquer` — nunca como feature.
+Testado em `src/tests/test_real_schema.py` (banco sintético no schema real,
+não o banco de verdade). Ver seção 12 de `docs/research_plan.md` para
+detalhes e limitações conhecidas (identidade de sócio/endereço por
+heurística, vínculo político ainda não ligado ao sócio por nome).
+
+**Próximo passo real agora**: reescrever `src/graph/metapaths.py` para
+extração via produto de matriz esparsa (o DFS atual não escala para 344k
+empresas) e então rodar a extração sobre o banco real pela primeira vez.
 
 ## Armadilhas já identificadas (não repetir)
 

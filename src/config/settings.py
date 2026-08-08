@@ -59,8 +59,11 @@ class Settings(BaseSettings):
     data_processed_dir: Path = Field(default=Path("data/processed"))
     data_graph_exports_dir: Path = Field(default=Path("data/graph_exports"))
 
-    # --- Fonte de dados original (projeto anterior) ---
-    sqlite_db_path: Path = Field(default=Path("data/raw/empresas.db"))
+    # --- Fonte de dados: projeto_grande_vitoria_empresas (dataset real) ---
+    # Baixar de https://github.com/brunokobi/projeto_grande_vitoria_empresas
+    # (GitHub Release "dataset-latest", arquivo grande_vitoria.db.gz) e
+    # descomprimir em data/raw/ -- nunca versionado (ver .gitignore e CLAUDE.md).
+    sqlite_db_path: Path = Field(default=Path("data/raw/grande_vitoria.db"))
     parquet_dir: Path = Field(default=Path("data/raw"))
 
     # --- Neo4j ---

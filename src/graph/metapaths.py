@@ -96,16 +96,26 @@ class MetaPathExtractor:
 
 
 # --- Metapaths de referencia para o dominio de empresas -----------------------
+# Os tres primeiros sao os metapaths de hipotese da pergunta de pesquisa
+# (docs/research_plan.md, secao 2): socio comum, endereco comum e vinculo
+# politico. "empresa_municipio_empresa" e so contexto/visualizacao (7
+# municipios == sinal fraco, nao e metapath de hipotese). Nomes de no/relacao
+# devem casar com os produzidos por ``src.graph.build_hin.build_empresas_hin``.
 COMMON_METAPATHS = {
-    "empresa_cnae_empresa": MetaPath(
-        name="empresa_cnae_empresa",
-        node_sequence=("empresa", "cnae", "empresa"),
-        relation_sequence=("atua_em", "rev_atua_em"),
-    ),
     "empresa_socio_empresa": MetaPath(
         name="empresa_socio_empresa",
         node_sequence=("empresa", "socio", "empresa"),
         relation_sequence=("rev_participa_de", "participa_de"),
+    ),
+    "empresa_endereco_empresa": MetaPath(
+        name="empresa_endereco_empresa",
+        node_sequence=("empresa", "endereco", "empresa"),
+        relation_sequence=("sediada_em", "rev_sediada_em"),
+    ),
+    "empresa_vinculo_politico_empresa": MetaPath(
+        name="empresa_vinculo_politico_empresa",
+        node_sequence=("empresa", "vinculo_politico", "empresa"),
+        relation_sequence=("tem_vinculo_politico", "rev_tem_vinculo_politico"),
     ),
     "empresa_municipio_empresa": MetaPath(
         name="empresa_municipio_empresa",
