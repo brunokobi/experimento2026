@@ -110,6 +110,19 @@ class HINBuilder:
             self.data.validate(raise_on_error=True)
         return self.data
 
+    def external_ids(self, node_type: str) -> list[Any]:
+        """Retorna os ids externos de um tipo de no, na ordem do indice
+        interno (posicao ``i`` da lista == indice interno ``i`` em
+        ``HeteroData``) -- inverso do mapeamento criado em ``add_node_type``.
+        Usado na exportacao para Neo4j, onde os nos precisam do id externo
+        (CNPJ, chave de socio/endereco etc.), nao do indice interno.
+        """
+        id_map = self._node_id_maps[node_type]
+        ordered: list[Any] = [None] * len(id_map)
+        for external_id, idx in id_map.items():
+            ordered[idx] = external_id
+        return ordered
+
     # ------------------------------------------------------------------ #
     # Estatisticas / qualidade
     # ------------------------------------------------------------------ #

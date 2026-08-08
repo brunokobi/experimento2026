@@ -73,9 +73,17 @@ esparso explodir (~187 GiB) — resolvido com `MetapathExplosionError`
 overflow silencioso em `int32` só visível com a distribuição real
 desigual dos municípios. Os dois têm teste de regressão.
 
+**Feito (08/08/2026, Neo4j)**: Neo4j 5 + GDS rodando num container na VPS
+pessoal (Oracle Cloud/Coolify, `/opt/coolify/apps/neo4j/`) — **acesso só via
+túnel SSH** (`ssh -L 7687:localhost:7687 -L 7474:localhost:7474 -i
+~/ssh-key-2026-07-18.key ubuntu@<vps>`), nenhuma porta exposta publicamente
+(decisão: o grafo tem dado pessoal). `src/graph/neo4j_export.py`
+(`export_hin_to_neo4j`) exporta a HIN real inteira (idempotente, via `MERGE`)
+— rodado com sucesso contra o banco de verdade (`scripts/exportar_hin_neo4j.py`).
+
 **Próximo passo real agora**: começar os baselines (tabular/GNN
-homogênea/HAN-HGT) da seção 7 do plano — a infraestrutura de dados/HIN/
-metapath já está validada ponta a ponta contra o banco real.
+homogênea/HAN-HGT) da seção 7 do plano — infraestrutura de dados/HIN/
+metapath/Neo4j já validada ponta a ponta contra o banco real.
 
 ## Armadilhas já identificadas (não repetir)
 

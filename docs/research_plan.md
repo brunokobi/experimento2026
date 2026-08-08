@@ -286,6 +286,28 @@ testes — documentando para não repetir):
    a distribuição real e desigual dos municípios, não com números sintéticos
    uniformes. Tem teste de regressão que reproduz os dois bugs.
 
+**Feito também (08/08/2026, Neo4j)**: `src/graph/neo4j_export.py`
+(`export_hin_to_neo4j`) exporta a HIN real inteira para o Neo4j — rodado com
+sucesso (`scripts/exportar_hin_neo4j.py`, 3min47s) contra um Neo4j 5 + GDS na
+VPS pessoal (Oracle Cloud/Coolify), **acesso só via túnel SSH**, nenhuma
+porta pública (o grafo tem dado pessoal). Conferido via query direta:
+344.130 `Empresa`, 142.844 `Socio`, 181.268 `Endereco`, 7 `Municipio`, 519
+`VinculoPolitico`; arcos `PARTICIPA_DE` (231.890), `SEDIADA_EM` (344.130),
+`LOCALIZADA_EM` (344.130), `TEM_VINCULO_POLITICO` (833, não 866 — 33 pares
+empresa-político colapsam por `MERGE`, ver nota abaixo).
+
+**Observação (não é bug, mas anotar)**: 33 dos 866 vínculos políticos têm o
+mesmo par (empresa, político-normalizado) repetido — candidatura em anos
+diferentes, ou variação mínima de grafia que a normalização de nome já
+junta. No Neo4j isso vira 1 relacionamento só (`MERGE` é idempotente por
+natureza — correto). No `HeteroData`/`SparseMetaPathExtractor`, porém, o
+`edge_index` **não** deduplica esses 33 pares, e `scipy.sparse` soma
+entradas duplicadas — logo a matriz de comutação de
+`empresa_vinculo_politico_empresa` conta peso 2 (não 1) para esses 33
+pares específicos. Imprecisão pequena (33 em 519 vínculos), não bloqueia
+nada agora, mas vale deduplicar o `edge_index` de `vinculo_politico` antes
+de reportar qualquer análise fina desse metapath especificamente.
+
 **Pendente a seguir**:
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).

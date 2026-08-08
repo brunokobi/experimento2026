@@ -85,7 +85,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 3 | Adaptar `settings.py` / `loaders.py` ao schema real (`empresas`, `socios`, `sancoes_administrativas`, `dividas_ativas`, `vinculos_politicos`) | `src/config`, `src/data/loaders.py` (`GrandeVitoriaLoader`) | ✅ primeira versao — inclui `rotulo_sancao()` (y_direto/y_qualquer, respeitando o risco de circularidade) |
 | 4 | Construir a HIN real em `HeteroData` a partir das tabelas do banco | `src/graph/build_hin.py` (`build_empresas_hin`) | ✅ primeira versao — nos `empresa`/`socio`/`endereco`/`municipio`/`vinculo_politico`; `processos_judiciais` ainda de fora (pipeline `djen` em andamento) |
 | 5 | Extracao de metapath via produto de matriz esparsa (escala para 344k empresas) | `src/graph/metapaths.py` (`SparseMetaPathExtractor`) | ✅ feito e **validado contra o banco real**: HIN completa (344.130 empresas) construida em 23,5s / 0,44 GB; os 3 metapaths de hipotese extraidos em <0,2s cada. Dois bugs reais encontrados e corrigidos so ao rodar contra dado de verdade — ver `scripts/validar_hin_real.py` e a nota abaixo |
-| 6 | Exportar a HIN para Neo4j (exploracao Cypher/GDS, figuras da dissertacao) | `src/graph/hin_builder.py` + VPS pessoal | ⏳ pendente |
+| 6 | Exportar a HIN para Neo4j (exploracao Cypher/GDS, figuras da dissertacao) | `src/graph/neo4j_export.py` + VPS pessoal | ✅ feito — Neo4j 5 + GDS rodando na VPS, **acesso so via tunel SSH** (nunca porta publica: o grafo tem dado pessoal); HIN real exportada (344k+ nos) |
 | 7 | Baselines: tabular (XGBoost/LightGBM com class weighting), GNN homogenea, HAN/HGT | notebooks/ + novo modulo de treino | ⏳ pendente |
 | 8 | Avaliacao: validacao cruzada estratificada repetida, PR-AUC/Precision@k, multiplas seeds + teste estatistico (Wilcoxon) | idem | ⏳ pendente |
 | 9 | Analise de sensibilidade: rotulo `direto` (148) vs. `direto+socio` (188) | idem | ⏳ pendente — decidido, nao implementado |
@@ -191,6 +191,33 @@ from src.config import get_settings
 settings = get_settings()
 settings.ensure_data_dirs()
 ```
+
+## Neo4j (exploracao/visualizacao — VPS pessoal)
+
+Neo4j 5 + GDS rodam num container na VPS pessoal (Oracle Cloud, ja orquestrada via
+Coolify) — **acesso exclusivamente via tunel SSH**, nenhuma porta exposta publicamente
+(decisao de seguranca: o grafo carrega dado pessoal — nome de sócio, endereço). Sem o
+túnel aberto, `NEO4J_URI=bolt://localhost:7687` do `.env` não conecta em lugar nenhum.
+
+```bash
+# 1. Abrir o tunel (mantenha rodando em outro terminal enquanto for usar o Neo4j)
+ssh -L 7687:localhost:7687 -L 7474:localhost:7474 \
+    -i ~/ssh-key-2026-07-18.key ubuntu@<vps>
+
+# 2. Exportar a HIN real para o Neo4j (idempotente — usa MERGE por id)
+uv run python scripts/exportar_hin_neo4j.py
+
+# 3. Explorar via Neo4j Browser (com o tunel aberto)
+#    http://localhost:7474
+```
+
+Convenção de nomes na exportação (`src/graph/neo4j_export.py`): tipo de nó
+`empresa` → label Cypher `Empresa`; relação `participa_de` → tipo de
+relacionamento `PARTICIPA_DE`. Arcos reversos (`rev_*`) não são exportados —
+um relacionamento Cypher já é navegável nos dois sentidos. Nenhuma feature
+numérica de treino (`x`) vai para o Neo4j, só o rótulo (`sancionada_direto`/
+`sancionada_qualquer`) como propriedade booleana, para poder filtrar/colorir
+na exploração.
 
 ## Proximos passos sugeridos
 
