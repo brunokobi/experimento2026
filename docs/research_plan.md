@@ -67,13 +67,24 @@ por CNPJ. **Verificado diretamente no banco real** (não só na documentação d
 | `sancoes_administrativas` | 322 | **188** | **rótulo principal** (ver seção 5) |
 | `dividas_ativas` | 158.675 | 32.754 | sinal auxiliar (não é o rótulo) |
 | `vinculos_politicos` (TSE) | 4.557 | ~4.000 | nó/sinal auxiliar — ângulo de novidade |
-| `processos_judiciais` | 1.314.602 | — | **ruidoso**: 99,9% casado por nome (fuzzy), não CNPJ — ver riscos |
+| `processos_judiciais` | 110.489 (parcial — pipeline `djen` ainda rodando) | 2.374 | **ruidoso**: casado por nome via DJEN, `match_confianca='nome'`, não CNPJ — ver riscos |
 | `registros_jucees` | 88.349 | 88.349 | metadado (natureza jurídica, constituição) |
 | `marcas_inpi` / `beneficios_fiscais` / `contratos_pncp` / `contratos_governamentais` | 36.963 / 32.006 / 7.013 / 894 | — | sinais auxiliares exploratórios |
 
 **Escopo geográfico**: Grande Vitória (ES) — 7 municípios (Vitória, Vila Velha, Serra,
 Cariacica, Viana, Guarapari, Fundão). Escala **totalmente tratável em memória** — não
 há necessidade de infraestrutura de sampling distribuído nesta fase da pesquisa.
+
+**Nota de reverificação (2026-08-08)**: números re-conferidos direto no
+`grande_vitoria.db` real (não só na documentação do repo do dataset, que estava
+desatualizada em um ponto: a etapa `datajud` foi descontinuada e substituída por
+`djen`, que casa processo por nome via Comunica API do CNJ/PJe — ver
+`src/djen_client.py` do dataset). `empresas`, `socios` e `sancoes_administrativas`
+bateram exatamente com o já documentado. `processos_judiciais` mudou bastante: o
+número antigo (1.314.602) era de antes da migração; o pipeline `djen` reconstruiu a
+tabela do zero e ainda está rodando (110.489 linhas / 2.374 empresas casadas até o
+momento desta verificação) — isso não afeta o rótulo (seção 5), só o volume desse
+sinal auxiliar de baixa confiança.
 
 **LGPD já resolvida na origem**: `cpf_parcial` já vem mascarado da Receita Federal no
 próprio dataset — não é preciso pseudonimizar nada adicionalmente para uso na tese.
@@ -90,6 +101,21 @@ qualquer estimativa inicial deste plano. Isso muda o desenho do problema:
   "toda a fraude que existe", só a que já foi pega. É um cenário de **rótulo
   positivo-incompleto (PU — positive/unlabeled)**, comum e aceito na literatura de
   detecção de fraude/risco.
+- **Achado crítico adicional (2026-08-08) — parte do rótulo é indireta, via sócio**:
+  o campo `match_confianca` de `sancoes_administrativas` revela que das 188 empresas
+  positivas, **148 são "direto"** (a própria empresa está listada em CEIS/CNEP/TCEES/
+  CEPIM/TRABALHO_ESCRAVO) e **41 são "socio"** (a empresa em si não está sancionada —
+  foi rotulada como positiva porque um dos seus sócios está ligado a uma entidade
+  sancionada; ocorre só dentro do CEIS: 46 registros / 41 empresas distintas; 148+41=189
+  vs. 188 distintos por haver 1 empresa com sanção nos dois tipos). **Isso é um risco de
+  circularidade/vazamento para a pergunta de pesquisa**: o metapath `empresa-sócio-empresa`
+  é justamente a hipótese estrutural central da dissertação (seção 2) — para essas 41
+  empresas, o rótulo já foi *construído* usando sócio comum, então um modelo que "descubra"
+  que sócio comum prediz risco não estaria descobrindo sinal novo nesse subconjunto, só
+  reproduzindo a regra de rotulagem. Mitigação a decidir antes do experimento principal:
+  reportar métricas com o rótulo restrito às 148 "direto" como análise primária, e as 188
+  completas (ou o ganho marginal das 41 "socio") como análise de sensibilidade separada —
+  não misturar as duas sem declarar.
 - **Framing do problema**: não é classificação binária balanceada — é **detecção de
   anomalia / ranking de risco**. Métrica principal: **PR-AUC** e **Precision@k** (ex.:
   "das 20 empresas mais bem ranqueadas pelo modelo, quantas eram sancionadas de
@@ -100,10 +126,14 @@ qualquer estimativa inicial deste plano. Isso muda o desenho do problema:
   vínculo político é de só **4 empresas** — ou seja, se houver sinal de vínculo
   político, ele é **indireto** (via rede, não correlação direta), que é exatamente a
   hipótese que uma GNN testa e um modelo tabular não consegue.
-- **Ruído a isolar**: `processos_judiciais` é casado por nome da parte (fuzzy) em
-  99,9% dos casos, não por CNPJ direto — não deve ser tratado como sinal confiável de
-  fraude; entra, quando muito, como feature de baixa confiança (usar `match_confianca`
-  para filtrar/ponderar).
+- **Ruído a isolar**: `processos_judiciais` é casado por nome da parte via DJEN, não
+  por CNPJ direto — não deve ser tratado como sinal confiável de fraude; entra, quando
+  muito, como feature de baixa confiança. **Correção (2026-08-08)**: o valor real do
+  campo é `match_confianca='nome'` (confirmado contra os destinatários da publicação
+  para evitar homônimo) — não existe granularidade `'direto'`/`'fuzzy'` nessa tabela
+  como o `schema.sql` do dataset chegou a sugerir (comentário desatualizado, já
+  corrigido lá); na prática o campo aqui é categórico e serve para **filtrar**, não
+  para ponderar continuamente.
 
 ## 6. Papel do grafo (HIN), Neo4j e PyTorch Geometric
 
@@ -182,8 +212,16 @@ ranking de risco + quais metapaths pesaram mais`.
 - **Rótulo é positivo-incompleto, não exaustivo** — a ausência de sanção não significa
   ausência de irregularidade, só que não foi pega. Isso deve ser dito explicitamente
   no texto da dissertação, não escondido.
-- **`processos_judiciais` é ruidoso** (99,9% casado por nome, fuzzy) — não usar como
-  rótulo; usar com cautela como feature, ponderado por `match_confianca`.
+- **`processos_judiciais` é ruidoso** (casado por nome via DJEN, `match_confianca='nome'`,
+  não CNPJ direto) — não usar como rótulo; usar com cautela como feature de baixa
+  confiança (filtrar, não ponderar continuamente — o campo é categórico).
+- **Rótulo parcialmente circular com a hipótese estrutural (novo, 2026-08-08)**: 41 das
+  188 empresas positivas (`sancoes_administrativas.match_confianca='socio'`) foram
+  rotuladas via sócio comum com entidade sancionada, não por sanção direta na própria
+  empresa — mesmo mecanismo do metapath central da pergunta de pesquisa (seção 2).
+  Mitigação: reportar resultado primário com rótulo restrito a `match_confianca='direto'`
+  (148 empresas) e tratar as 41 "socio" como análise de sensibilidade separada, deixando
+  explícito no texto qual definição de rótulo foi usada em cada resultado.
 - **Risco de novidade "comida"** por publicação concorrente — mitigação: publicar um
   resultado parcial em workshop/preprint antes do artigo principal.
 
