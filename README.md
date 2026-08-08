@@ -16,6 +16,34 @@ politicos da Grande Vitoria (ES), com foco em extracao de **metapaths** e modelo
 GNN (via PyTorch Geometric), sobre dados reais de
 [`projeto_grande_vitoria_empresas`](https://github.com/brunokobi/projeto_grande_vitoria_empresas).
 
+## O trabalho, em linguagem simples
+
+A pergunta de fundo: **uma empresa conectada a uma empresa ja sancionada — via socio
+em comum, mesmo endereco, ou vinculo politico do socio — tem risco maior de tambem
+estar envolvida em irregularidade**, mesmo quando isso nao aparece nos dados tabulares
+comuns (CNAE, porte, capital social)? E, se sim, **qual desses tipos de conexao carrega
+mais sinal**?
+
+Pra responder, as empresas e seus socios sao montados como um **grafo** (nao uma
+planilha) e uma rede neural de grafos (GNN) aprende esse padrao de conexao, comparando
+contra um modelo tabular tradicional (que so ve cada empresa isolada, sem a rede).
+
+Como so **188 empresas em 344.130 (0,055%)** tem sancao administrativa confirmada, o
+problema nao e classificacao balanceada — e **deteccao de anomalia / ranking de risco**
+(PR-AUC, Precision@k: "das 20 empresas mais suspeitas segundo o modelo, quantas eram
+mesmo sancionadas"). E o rotulo e **positivo-incompleto**: essas 188 sao as que ja
+foram *pegas*, nao "toda irregularidade que existe" — isso e dito explicitamente no
+texto, nao escondido.
+
+**Achado que mudou o escopo (08/08/2026)**: ao reconferir o banco real, das 188
+empresas positivas, **41 (22%) nao tem sancao na propria empresa** — foram marcadas
+como positivas so por ter **socio em comum com outra empresa sancionada**. Isso e
+risco de circularidade: e o mesmo mecanismo (socio comum) que a hipotese da pesquisa
+quer testar. Mitigacao: o resultado principal usa so as 148 empresas com sancao
+**direta** como rotulo; as 41 via-socio entram como analise de sensibilidade separada,
+nunca misturadas sem declarar qual definicao de rotulo foi usada. Detalhe completo em
+[`docs/research_plan.md`](docs/research_plan.md), secoes 5 e 9.
+
 ## Plano de pesquisa (dissertacao de mestrado)
 
 Objetivo: produzir um artigo publicavel em veiculo de classificacao (Qualis/CAPES)
@@ -24,12 +52,17 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 - **Pergunta de pesquisa**: metapaths estruturais (socio comum, endereco comum,
   vinculo politico) melhoram a identificacao de empresas com sancao administrativa
   confirmada, em relacao a um baseline tabular — e quais metapaths carregam mais sinal?
-- **Fonte de dados (confirmada)**: 344.130 empresas, 231.890 socios, 7 municipios —
-  verificado direto no banco real, nao so na documentacao.
+- **Fonte de dados (confirmada e reconferida no banco real em 08/08/2026)**: 344.130
+  empresas, 231.890 socios, 322 sancoes administrativas (188 empresas distintas), 7
+  municipios.
 - **Rotulo (achado critico)**: so **188 empresas em 344.130 (0,055%)** tem sancao
   administrativa confirmada — desbalanceamento extremo. Tratado como deteccao de
-  anomalia/ranking (PR-AUC, Precision@k), nao classificacao balanceada.
+  anomalia/ranking (PR-AUC, Precision@k), nao classificacao balanceada. Dessas 188,
+  **148 sao rotulo direto e 41 via socio comum** (risco de circularidade — ver acima).
   *(pesquisa conduzida sem orientador formal — ver nota na secao inicial do plano)*
+- **`processos_judiciais` e ruidoso, nao e rotulo**: casado por nome via DJEN
+  (`match_confianca='nome'`), nao por CNPJ direto; pipeline ainda em andamento no
+  repo do dataset (110.489 registros / 2.374 empresas casadas at 08/08/2026).
 - **Neo4j vs. PyTorch Geometric**: Neo4j para exploracao/validacao/visualizacao
   (Cypher, GDS, figuras); PyTorch Geometric para o treino da GNN em si — Neo4j nao
   treina modelo.
@@ -42,6 +75,24 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 - **Venues-alvo**: BRACIS/SBBD como rede de seguranca; periodicos como *Expert
   Systems with Applications*, *Knowledge-Based Systems* ou *Decision Support
   Systems* como alvo principal, compativel com o prazo do mestrado.
+
+## Etapas do trabalho
+
+| # | Etapa | Onde | Status |
+|---|---|---|---|
+| 1 | ETL do dataset (RFB, JUCEES, CEIS/CNEP, TCEES, PGFN, IBAMA, TSE, DJEN) | repo [`projeto_grande_vitoria_empresas`](https://github.com/brunokobi/projeto_grande_vitoria_empresas) | ✅ nucleo pronto (`cnpj`, `jucees`, `sancoes`, `dividas_ativas`, `ibama`); ⏸️ `djen` (processos judiciais) e `geo` ainda rodando em background, nao bloqueiam as proximas etapas |
+| 2 | Definir pergunta de pesquisa, rotulo e metodologia | [`docs/research_plan.md`](docs/research_plan.md) | ✅ travado (com o achado de circularidade do item acima) |
+| 3 | Adaptar `settings.py` / `loaders.py` ao schema real (`empresas`, `socios`, `sancoes_administrativas`, `dividas_ativas`, `vinculos_politicos`) | `src/config`, `src/data` | ⏳ pendente — **proximo passo imediato** |
+| 4 | Construir a HIN real em `HeteroData` a partir das tabelas do banco | `src/graph/hin_builder.py` | ⏳ pendente (hoje so tem schema sintetico de exemplo) |
+| 5 | Reescrever extracao de metapath para produto de matriz esparsa (o DFS atual em `networkx` nao escala para 344k empresas) | `src/graph/metapaths.py` | ⏳ pendente |
+| 6 | Exportar a HIN para Neo4j (exploracao Cypher/GDS, figuras da dissertacao) | `src/graph/hin_builder.py` + VPS pessoal | ⏳ pendente |
+| 7 | Baselines: tabular (XGBoost/LightGBM com class weighting), GNN homogenea, HAN/HGT | notebooks/ + novo modulo de treino | ⏳ pendente |
+| 8 | Avaliacao: validacao cruzada estratificada repetida, PR-AUC/Precision@k, multiplas seeds + teste estatistico (Wilcoxon) | idem | ⏳ pendente |
+| 9 | Analise de sensibilidade: rotulo `direto` (148) vs. `direto+socio` (188) | idem | ⏳ pendente — decidido, nao implementado |
+| 10 | Publicacao: resultado parcial em workshop/BRACIS, depois artigo principal em periodico-alvo | — | ⏳ pendente |
+
+Cronograma por marcos (Marco 1–4) e riscos declarados: ver secoes 9 e 11 de
+[`docs/research_plan.md`](docs/research_plan.md).
 
 ## Estrutura do projeto
 
@@ -127,7 +178,13 @@ settings.ensure_data_dirs()
 
 ## Proximos passos sugeridos
 
-1. Implementar loaders especificos das tabelas reais do projeto original em `src/data/loaders.py`.
-2. Definir o schema completo de nos/relacoes do dominio em `src/graph/hin_builder.py`.
+Ver tambem a tabela [Etapas do trabalho](#etapas-do-trabalho) acima para o roteiro
+completo. Tecnicamente, o proximo passo (etapa 3) e:
+
+1. Implementar loaders especificos das tabelas reais (`empresas`, `socios`,
+   `sancoes_administrativas`, `dividas_ativas`, `vinculos_politicos`) em
+   `src/data/loaders.py`, no lugar do schema generico de exemplo.
+2. Definir o schema completo de nos/relacoes do dominio real em `src/graph/hin_builder.py`.
 3. Adicionar exportador para Neo4j (`neo4j` driver ja incluido nas dependencias).
-4. Expandir `COMMON_METAPATHS` conforme as hipoteses da pesquisa.
+4. Expandir `COMMON_METAPATHS` conforme as hipoteses da pesquisa (socio comum, endereco
+   comum, vinculo politico) e reescrever a extracao para produto de matriz esparsa.
