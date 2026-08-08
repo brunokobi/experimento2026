@@ -61,9 +61,21 @@ heurística, vínculo político ainda não ligado ao sócio por nome).
 pequenas, não é mais o caminho de produção. Testado com HIN sintética de
 50k+20k nós (`test_memory.py`) sem densificar a matriz.
 
-**Próximo passo real agora**: rodar essa extração pela primeira vez contra o
-banco real (não só o sintético dos testes) e começar os baselines
-(tabular/GNN homogênea/HAN-HGT) da seção 7 do plano.
+**Feito (08/08/2026, validação final)**: rodei tudo contra o banco real
+(`scripts/validar_hin_real.py`, banco copiado — não movido — pra
+`data/raw/grande_vitoria.db`, ignorado pelo git). HIN completa em 23,5s /
+0,44 GB; metapaths de hipótese extraídos em <0,2s cada. Dois bugs reais só
+apareceram aqui (documentados em detalhe no README e no plano de pesquisa):
+`pandas` devolve `NaN` (não `None`) pra texto nulo — quebrava
+`_chave_socio`; e `município` (7 nós pra 344k empresas) faz o produto
+esparso explodir (~187 GiB) — resolvido com `MetapathExplosionError`
+(estima o tamanho antes de calcular), que por sua vez tinha um bug de
+overflow silencioso em `int32` só visível com a distribuição real
+desigual dos municípios. Os dois têm teste de regressão.
+
+**Próximo passo real agora**: começar os baselines (tabular/GNN
+homogênea/HAN-HGT) da seção 7 do plano — a infraestrutura de dados/HIN/
+metapath já está validada ponta a ponta contra o banco real.
 
 ## Armadilhas já identificadas (não repetir)
 

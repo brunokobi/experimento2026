@@ -84,7 +84,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 2 | Definir pergunta de pesquisa, rotulo e metodologia | [`docs/research_plan.md`](docs/research_plan.md) | ✅ travado (com o achado de circularidade do item acima) |
 | 3 | Adaptar `settings.py` / `loaders.py` ao schema real (`empresas`, `socios`, `sancoes_administrativas`, `dividas_ativas`, `vinculos_politicos`) | `src/config`, `src/data/loaders.py` (`GrandeVitoriaLoader`) | ✅ primeira versao — inclui `rotulo_sancao()` (y_direto/y_qualquer, respeitando o risco de circularidade) |
 | 4 | Construir a HIN real em `HeteroData` a partir das tabelas do banco | `src/graph/build_hin.py` (`build_empresas_hin`) | ✅ primeira versao — nos `empresa`/`socio`/`endereco`/`municipio`/`vinculo_politico`; `processos_judiciais` ainda de fora (pipeline `djen` em andamento) |
-| 5 | Extracao de metapath via produto de matriz esparsa (escala para 344k empresas) | `src/graph/metapaths.py` (`SparseMetaPathExtractor`) | ✅ feito — DFS (`MetaPathExtractor`) mantido so para depuracao/cruzamento com Cypher em amostras pequenas; testado com HIN sintetica de 50k+20k nos sem densificar |
+| 5 | Extracao de metapath via produto de matriz esparsa (escala para 344k empresas) | `src/graph/metapaths.py` (`SparseMetaPathExtractor`) | ✅ feito e **validado contra o banco real**: HIN completa (344.130 empresas) construida em 23,5s / 0,44 GB; os 3 metapaths de hipotese extraidos em <0,2s cada. Dois bugs reais encontrados e corrigidos so ao rodar contra dado de verdade — ver `scripts/validar_hin_real.py` e a nota abaixo |
 | 6 | Exportar a HIN para Neo4j (exploracao Cypher/GDS, figuras da dissertacao) | `src/graph/hin_builder.py` + VPS pessoal | ⏳ pendente |
 | 7 | Baselines: tabular (XGBoost/LightGBM com class weighting), GNN homogenea, HAN/HGT | notebooks/ + novo modulo de treino | ⏳ pendente |
 | 8 | Avaliacao: validacao cruzada estratificada repetida, PR-AUC/Precision@k, multiplas seeds + teste estatistico (Wilcoxon) | idem | ⏳ pendente |
@@ -93,6 +93,20 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 
 Cronograma por marcos (Marco 1–4) e riscos declarados: ver secoes 9 e 11 de
 [`docs/research_plan.md`](docs/research_plan.md).
+
+**Dois bugs reais encontrados só ao validar contra o banco de verdade** (nenhum
+aparecia no dado sintético dos testes — registrado para não repetir):
+
+1. `pandas.read_sql_query` devolve `NaN` (float) para coluna de texto nula, não
+   `None`/string vazia — `nan or ""` não pega isso (`NaN` é *truthy* em Python).
+   Quebrava `_chave_socio`/`_normalizar_texto` em `build_hin.py`.
+2. `municipio` é um nó "hub" de baixíssima cardinalidade (7 nós para 344k
+   empresas) — o produto esparso do metapath `empresa_municipio_empresa`
+   tentou alocar **187 GiB**. Corrigido com `MetapathExplosionError`: estima o
+   tamanho do produto antes de calcular e recusa com mensagem clara em vez de
+   estourar memória. A própria estimativa tinha um bug de overflow silencioso
+   em `int32` (`np.dot` sem cast para `int64`) — só apareceu com a distribuição
+   real e desigual dos municípios, não com números sintéticos uniformes.
 
 ## Estrutura do projeto
 

@@ -9,8 +9,21 @@ do rotulo (sancao atribuida via socio comum) encontrado no banco de verdade
 from __future__ import annotations
 
 from src.data.loaders import GrandeVitoriaLoader
-from src.graph.build_hin import build_empresas_hin
+from src.graph.build_hin import _chave_endereco, _chave_socio, _normalizar_texto, build_empresas_hin
 from src.graph.metapaths import COMMON_METAPATHS, MetaPathExtractor, SparseMetaPathExtractor
+
+
+def test_normalizacao_trata_nan_do_pandas_como_vazio() -> None:
+    """``pandas.read_sql_query`` devolve ``NaN`` (float), nao ``None``, para
+    colunas de texto nulas -- achado ao validar contra o banco real
+    (``scripts/validar_hin_real.py``). ``nan or ""`` NAO pega esse caso
+    (``NaN`` e *truthy* em Python); regressao para esse bug."""
+    nan = float("nan")
+    assert _normalizar_texto(nan) == ""
+    assert _normalizar_texto(None) == ""
+    assert _chave_socio(nan, "FULANO") == "|FULANO"
+    assert _chave_socio(nan, nan) == "|"
+    assert _chave_endereco(nan, "10", nan) == "|10|"
 
 
 def test_rotulo_sancao_separa_direto_de_qualquer(grande_vitoria_loader: GrandeVitoriaLoader) -> None:

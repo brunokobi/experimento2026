@@ -55,10 +55,16 @@ def _normalizar_texto(valor: str | None) -> str:
     """Normaliza uma string para uso como chave de identidade (maiusculas,
     sem acento, espacos colapsados). Nao resolve homonimos/variacoes de
     grafia -- limitacao conhecida, ver docstring do modulo.
+
+    Aceita ``NaN`` (``float``) alem de ``None``/``str`` -- colunas de texto
+    lidas via ``pandas.read_sql_query`` viram ``NaN`` quando nulas no SQLite,
+    nao ``None`` nem string vazia (achado ao validar contra o banco real, ver
+    ``scripts/validar_hin_real.py``). ``nan or ""`` NAO pega esse caso: ``NaN``
+    e *truthy* em Python, entao usar ``pd.isna`` explicitamente.
     """
-    if not valor:
+    if pd.isna(valor):
         return ""
-    sem_acento = unicodedata.normalize("NFKD", valor).encode("ascii", "ignore").decode()
+    sem_acento = unicodedata.normalize("NFKD", str(valor)).encode("ascii", "ignore").decode()
     return re.sub(r"\s+", " ", sem_acento.strip().upper())
 
 
@@ -67,7 +73,7 @@ def _chave_socio(cpf_parcial: str | None, nome_socio: str | None) -> str:
     (ja vem mascarado da Receita -- LGPD resolvida na fonte) e nome
     normalizado. Sem CPF, cai no nome isoladamente.
     """
-    cpf = (cpf_parcial or "").strip()
+    cpf = "" if pd.isna(cpf_parcial) else str(cpf_parcial).strip()
     nome_norm = _normalizar_texto(nome_socio)
     return f"{cpf}|{nome_norm}"
 

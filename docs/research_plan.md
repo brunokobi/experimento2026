@@ -262,10 +262,31 @@ matriz de comutação via produto de matrizes de adjacência esparsas (`scipy.sp
 testado com HIN sintética de 50k+20k nós sem densificar. O DFS (`MetaPathExtractor`)
 foi mantido só para depuração/cruzamento com Cypher em amostras pequenas (seção 6).
 
+**Feito também (08/08/2026, validação contra o banco real)**: rodei o pipeline
+completo contra `grande_vitoria.db` de verdade (`scripts/validar_hin_real.py`).
+HIN construída em 23,5s / 0,44 GB de pico; os 3 metapaths de hipótese extraídos
+em <0,2s cada, sem densificar. Números reais: 142.844 sócios distintos (de
+231.890 linhas — esperado, é o mecanismo de sócio comum funcionando, não
+colisão espúria), 181.268 endereços distintos, 519 pessoas com vínculo
+político, rótulo `y_direto=148`/`y_qualquer=188`.
+
+Dois bugs reais só apareceram aqui (nenhum aparecia no dado sintético dos
+testes — documentando para não repetir):
+1. `pandas.read_sql_query` devolve `NaN` (float) para coluna de texto nula, não
+   `None`/string vazia — `nan or ""` não pega isso (`NaN` é *truthy* em
+   Python). Quebrava `_chave_socio`/`_normalizar_texto` em `build_hin.py`.
+   Corrigido com `pd.isna()` explícito; tem teste de regressão.
+2. `município` é nó "hub" de baixíssima cardinalidade (7 nós para 344k
+   empresas): o produto esparso de `empresa_municipio_empresa` tentou alocar
+   **187 GiB**. Corrigido com `MetapathExplosionError` (`SparseMetaPathExtractor`
+   estima o tamanho do produto antes de calcular e recusa com mensagem clara).
+   A própria estimativa tinha um bug de overflow silencioso em `int32` (o
+   `indptr` do scipy vem nesse tipo; `np.dot` sem cast para `int64` estourava
+   pra um número negativo, que passava batido pelo limite) — só detectável com
+   a distribuição real e desigual dos municípios, não com números sintéticos
+   uniformes. Tem teste de regressão que reproduz os dois bugs.
+
 **Pendente a seguir**:
-- Rodar a extração via matriz esparsa pela primeira vez contra o **banco real**
-  (até aqui só testada contra dado sintético) — inclui checar tempo/memória reais
-  com 344k empresas, não só a estimativa do teste sintético.
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).
 - Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP
