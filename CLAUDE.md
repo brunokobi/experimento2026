@@ -154,11 +154,30 @@ vazamento). Rodar a versão maior/tunada precisa de máquina com mais RAM/GPU.
 tabular (50), GNN homogênea (10), HAN/HGT (5) — bloqueia Wilcoxon até
 padronizar (etapa 7.6).
 
-**Próximo passo real agora**: etapa 7.6 — padronizar `n_splits`/`n_repeats`/
-`random_state` entre os 3 modelos e rodar a comparação estatística
-(Wilcoxon) de verdade. Dado o custo computacional das GNNs nessa máquina,
-provavelmente exige rodar em ambiente com mais recursos (GPU/VPS com mais
-RAM) antes do número final da dissertação.
+**Feito (08/08/2026, etapa 7.6 — comparação estatística)**:
+`scripts/comparar_baselines.py` padronizou 5×1=5 folds (o menor já usado,
+evitando rodar o HAN/HGT em dobro), mesmo `random_state`, mesmo dado —
+folds pareados de verdade. **Resultado: nenhuma diferença estatisticamente
+significativa entre os 3 modelos, em nenhum rótulo** (Wilcoxon p entre 0,62
+e 1,00 nos 6 pares). Inconclusivo pelo poder estatístico atual (5 folds,
+~30 positivos por fold), não uma refutação da hipótese — precisa de mais
+folds/repeats (mais recursos computacionais) pra decidir de verdade.
+
+**Bug de reprodutibilidade achado e corrigido nessa etapa**:
+`torch.manual_seed` só era chamado na construção da fábrica
+`make_*_fit_predict`, não a cada fold — rodar outro modelo torch antes no
+mesmo processo mudava o resultado mesmo com `random_state` igual (achado ao
+comparar o HAN/HGT isolado vs. dentro do script de comparação: 0,0078 vs.
+0,0059 com config "idêntica"). Corrigido: seed resetada dentro do
+`fit_predict`. Teste de regressão que "suja" o RNG global de propósito
+antes de comparar.
+
+**Próximo passo real agora**: etapa 7.7 — sensibilidade `y_direto` vs
+`y_qualquer` (já há indícios fortes de confusão por circularidade nos 3
+resultados — GNN homogênea e HAN/HGT sistematicamente melhores em
+`y_qualquer`, nunca em `y_direto`), ou investir em mais recursos
+computacionais pra rodar a 7.6 com mais folds antes de seguir. Decisão em
+aberto com o pesquisador.
 
 ## Armadilhas já identificadas (não repetir)
 

@@ -457,9 +457,68 @@ comparação estatística final (etapa 7.6), é preciso: (a) padronizar
 isso num ambiente com mais recursos computacionais que a máquina local
 usada até aqui, dado o custo já observado das GNNs.
 
+**Feito também (08/08/2026, etapa 7.6 — comparação estatística)**:
+`scripts/comparar_baselines.py` padronizou os 3 modelos em 5×1=5 folds
+(o menor já usado entre os três, escolhido de propósito para não precisar
+rodar o HAN/HGT — o mais caro dos três — em dobro), mesmo `random_state`,
+mesmo `x`/`y`, garantindo folds pareados de verdade (condição exigida por
+`compare_models`/Wilcoxon).
+
+**Resultado (5 folds, mesmo split para os 3 modelos)**:
+
+| Rótulo | Tabular | GNN homogênea | HAN/HGT |
+|---|---|---|---|
+| `y_direto` | PR-AUC 0,0077 | PR-AUC 0,0074 | PR-AUC 0,0059 |
+| `y_qualquer` | PR-AUC 0,0081 | PR-AUC 0,0161 | PR-AUC 0,0129 |
+
+**Nenhum dos 6 pares testados (3 modelos × 2 rótulos) teve diferença
+estatisticamente significativa** — Wilcoxon `p` entre 0,625 e 1,000 em
+todos. **Isso não confirma nem refuta a hipótese central da tese** — é
+inconclusivo dado o poder estatístico atual: com só 5 folds e ~30 positivos
+por fold de teste, o teste de Wilcoxon (que precisa de várias diferenças
+consistentes de sinal para rejeitar a hipótese nula) simplesmente não tem
+amostra suficiente para detectar diferenças do tamanho observado entre os
+modelos. Isso deve ser reportado explicitamente no texto como uma
+**limitação do estudo nesta fase**, não escondido nem apresentado como
+"os modelos são equivalentes" (afirmação mais forte do que os dados sustentam).
+
+**O que resolveria isso**: mais folds/repeats (mais poder estatístico) —
+mas isso exige mais recursos computacionais do que a máquina local usada
+até aqui permite em tempo hábil (o HAN/HGT já levou ~44min para só 5 folds
+de uma repetição). Rodar a versão definitiva desta comparação numa máquina
+com GPU ou mais RAM é uma pendência de infraestrutura, não só de código.
+
+**Bug de reprodutibilidade encontrado e corrigido nesta etapa** (achado
+justamente ao comparar resultados entre rodadas): `torch.manual_seed` era
+chamado uma única vez, na construção da fábrica (`make_gnn_fit_predict`/
+`make_han_hgt_fit_predict`), não a cada fold dentro de `fit_predict`. Isso
+significa que a inicialização dos pesos do modelo dependia de quanto o RNG
+global do PyTorch já tinha sido consumido por qualquer outra coisa antes no
+mesmo processo — não só do `random_state` declarado. Prova concreta: o
+HAN/HGT rodado isoladamente (`scripts/rodar_baseline_han_hgt.py`) deu
+PR-AUC 0,0078 em `y_direto`; o mesmo modelo, mesma configuração, mesmo
+`random_state=42`, rodado dentro de `comparar_baselines.py` (depois do
+tabular e da GNN homogênea já terem consumido RNG) deu PR-AUC 0,0059 —
+uma diferença que não devia existir se a semente estivesse isolada
+corretamente. Corrigido movendo `torch.manual_seed(random_state)` para
+dentro do `fit_predict` (reseta a cada fold — deixa a inicialização do
+modelo idêntica entre folds, isolando a variância que importa: a dos dados
+de treino/teste de cada fold, não a de inicialização aleatória). Tem teste
+de regressão que "suja" o RNG global de propósito antes de comparar
+(`test_gnn_fit_predict_e_reprodutivel_mesmo_com_rng_global_consumido_antes`).
+Os números acima já refletem o código corrigido; não foram re-rodados após
+o fix (custo computacional), mas a conclusão qualitativa (sem diferença
+significativa) é robusta a essa correção — é uma questão de poder
+estatístico baixo, não de viés sistemático de uma seed específica.
+
 **Pendente a seguir**:
-- Etapa 7.6 (comparação estatística) — bloqueada pela padronização de fold
-  count acima; considerar ambiente com GPU/mais RAM para viabilizar.
+- Etapa 7.7 (sensibilidade `y_direto` vs `y_qualquer`) — já há indício forte
+  nos 3 resultados de hoje: GNN homogênea e HAN/HGT são sistematicamente
+  melhores em `y_qualquer`, nunca em `y_direto` — consistente com a
+  confusão de circularidade já registrada, mas vale formalizar a análise.
+- Decidir sobre investir em ambiente com mais recursos computacionais
+  (GPU/mais RAM) para uma rodada de 7.6 com poder estatístico real, antes
+  da etapa 8 (publicação).
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).
 - Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP

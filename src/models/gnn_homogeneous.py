@@ -161,8 +161,15 @@ def make_gnn_fit_predict(
 
     ``features`` deve ser a matriz de ``src.features.tabular.build_feature_matrix``
     (mesmas colunas ``x`` do baseline tabular) -- ver docstring do modulo.
+
+    Reprodutibilidade: ``torch.manual_seed`` e chamado **dentro** de
+    ``fit_predict``, nao so aqui na construcao -- senao a inicializacao do
+    modelo depende de quanto o RNG global do torch ja foi consumido por
+    qualquer outra coisa antes (ex.: outro modelo rodado no mesmo processo),
+    nao so do ``random_state`` -- achado real ao comparar 2 rodadas com o
+    mesmo ``random_state``, mesmo dado, resultados diferentes (ver
+    docs/research_plan.md, secao 7, etapa 7.6).
     """
-    torch.manual_seed(random_state)
     cnpjs = builder.external_ids("empresa")
 
     adjacency = build_combined_adjacency(builder, max_grau_endereco=max_grau_endereco)
@@ -173,6 +180,7 @@ def make_gnn_fit_predict(
     cnpj_to_idx = {cnpj: i for i, cnpj in enumerate(cnpjs)}
 
     def fit_predict(x_train: pd.DataFrame, y_train: np.ndarray, x_test: pd.DataFrame) -> np.ndarray:
+        torch.manual_seed(random_state)
         train_idx = torch.tensor([cnpj_to_idx[c] for c in x_train.index], dtype=torch.long)
         test_idx = torch.tensor([cnpj_to_idx[c] for c in x_test.index], dtype=torch.long)
 

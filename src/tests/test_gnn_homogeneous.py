@@ -8,6 +8,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
+import torch
 
 from src.data.loaders import GrandeVitoriaLoader
 from src.evaluation.harness import evaluate_repeated_cv
@@ -109,3 +110,36 @@ def test_gnn_fit_predict_usa_indice_nao_posicao() -> None:
     scores = fit_predict(x_train, y_train, x_test)
     assert len(scores) == 3
     assert np.all(np.isfinite(scores))
+
+
+def test_gnn_fit_predict_e_reprodutivel_mesmo_com_rng_global_consumido_antes() -> None:
+    """Achado real na etapa 7.6: rodar outro modelo torch antes (consumindo o
+    RNG global) mudava o resultado, mesmo com o mesmo random_state -- porque
+    ``torch.manual_seed`` so era chamado na construcao da fabrica, nao a cada
+    fold. Regressao: o resultado deve ser identico independente do que
+    consumiu o RNG global antes."""
+    builder = HINBuilder()
+    empresas = [f"emp_{i}" for i in range(10)]
+    builder.add_node_type("empresa", empresas)
+    builder.add_node_type("socio", ["soc_1"])
+    builder.add_edge_type(
+        "socio", "participa_de", "empresa", edges=[("soc_1", "emp_0"), ("soc_1", "emp_1")], bidirectional=True
+    )
+    builder.build()
+    features = pd.DataFrame({"x": np.arange(10, dtype=float)}, index=empresas)
+    x_train, x_test = features.iloc[:7], features.iloc[7:]
+    y_train = np.array([1, 0, 1, 0, 0, 0, 0])
+
+    from src.models.gnn_homogeneous import make_gnn_fit_predict
+
+    fit_predict_limpo = make_gnn_fit_predict(builder, features, epochs=3, hidden_channels=4, random_state=0)
+    scores_limpo = fit_predict_limpo(x_train, y_train, x_test)
+
+    # "suja" o RNG global do torch com outro modelo antes de treinar de novo
+    torch.manual_seed(999)
+    _ = torch.nn.Linear(5, 5)(torch.rand(3, 5))
+
+    fit_predict_sujo = make_gnn_fit_predict(builder, features, epochs=3, hidden_channels=4, random_state=0)
+    scores_sujo = fit_predict_sujo(x_train, y_train, x_test)
+
+    np.testing.assert_allclose(scores_limpo, scores_sujo)

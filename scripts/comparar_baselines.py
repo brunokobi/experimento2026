@@ -1,0 +1,82 @@
+"""Script manual: etapa 7.6 -- padroniza n_splits/n_repeats/random_state
+entre os 3 baselines e roda a comparacao estatistica (Wilcoxon) de verdade.
+
+Fold count padronizado em 5x1=5 (nao os 50 do baseline tabular original,
+nem os 10 da GNN homogenea) -- o menor dos 3 ja usados, escolhido de
+proposito para nao precisar rodar o HAN/HGT (o mais caro) em dobro. Ainda e
+uma comparacao valida (mesmo random_state, folds pareados por construcao),
+so com menos poder estatistico que o ideal -- ver docs/research_plan.md,
+secao 7, pendencia de rigor metodologico.
+
+Uso:
+    uv run python scripts/comparar_baselines.py
+"""
+
+from __future__ import annotations
+
+import time
+
+from loguru import logger
+
+from src.data.loaders import GrandeVitoriaLoader
+from src.evaluation.harness import compare_models, evaluate_repeated_cv
+from src.features.tabular import build_feature_matrix
+from src.graph.build_hin import build_empresas_hin
+from src.models.gnn_homogeneous import make_gnn_fit_predict
+from src.models.han_hgt import make_han_hgt_fit_predict
+from src.models.tabular_baseline import xgboost_fit_predict
+
+N_SPLITS = 5
+N_REPEATS = 1
+RANDOM_STATE = 42
+K_VALUES = (10, 20, 50)
+
+
+def _rodar(nome: str, x, y, fit_predict):
+    logger.info(f"Rodando CV para '{nome}'...")
+    t0 = time.perf_counter()
+    resultado = evaluate_repeated_cv(
+        x, y, fit_predict, n_splits=N_SPLITS, n_repeats=N_REPEATS, k_values=K_VALUES, random_state=RANDOM_STATE
+    )
+    logger.info(f"'{nome}' concluido em {time.perf_counter() - t0:.1f}s.")
+    return resultado
+
+
+def _comparar(nome_a: str, resultado_a, nome_b: str, resultado_b) -> None:
+    teste = compare_models(resultado_a["pr_auc"].to_numpy(), resultado_b["pr_auc"].to_numpy())
+    media_a, media_b = resultado_a["pr_auc"].mean(), resultado_b["pr_auc"].mean()
+    veredito = "diferenca significativa (p<0.05)" if teste.pvalue < 0.05 else "sem diferenca significativa"
+    print(f"{nome_a} (media={media_a:.4f}) vs {nome_b} (media={media_b:.4f}): Wilcoxon p={teste.pvalue:.4f} -- {veredito}")
+
+
+def main() -> None:
+    loader = GrandeVitoriaLoader()
+    builder = build_empresas_hin(loader)
+    builder.build()
+    features = build_feature_matrix(loader)
+    x = features.drop(columns=["y_direto", "y_qualquer"])
+
+    modelos = {
+        "tabular": xgboost_fit_predict(random_state=RANDOM_STATE),
+        "gnn_homogenea": make_gnn_fit_predict(builder, features, random_state=RANDOM_STATE),
+        "han_hgt": make_han_hgt_fit_predict(builder, features, random_state=RANDOM_STATE),
+    }
+
+    for rotulo in ["y_direto", "y_qualquer"]:
+        print()
+        print(f"========== Rotulo: {rotulo} ({N_SPLITS}x{N_REPEATS} folds) ==========")
+        y = features[rotulo].to_numpy()
+        resultados = {}
+        for nome, fit_predict in modelos.items():
+            resultados[nome] = _rodar(f"{nome}/{rotulo}", x, y, fit_predict)
+            r = resultados[nome]
+            print(f"{nome}: PR-AUC {r['pr_auc'].mean():.4f} +- {r['pr_auc'].std():.4f}")
+
+        print()
+        print("--- Comparacoes (Wilcoxon pareado, pr_auc por fold) ---")
+        for a, b in [("tabular", "gnn_homogenea"), ("tabular", "han_hgt"), ("gnn_homogenea", "han_hgt")]:
+            _comparar(a, resultados[a], b, resultados[b])
+
+
+if __name__ == "__main__":
+    main()

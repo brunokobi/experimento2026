@@ -91,7 +91,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 7.3 | Baseline tabular (XGBoost + class weighting) | `src/models/tabular_baseline.py` | ✅ feito e **rodado contra o banco real** — primeiro resultado quantitativo: PR-AUC ~18,8× a taxa-base em `y_direto` (ver nota abaixo) |
 | 7.4 | Baseline GNN homogenea (via `SparseMetaPathExtractor`) | `src/models/gnn_homogeneous.py` | ✅ feito e rodado — **pior que o tabular em `y_direto`** (13,0x vs 18,8x de lift), ver nota abaixo |
 | 7.5 | HAN/HGT (heterogenea de verdade) | `src/models/han_hgt.py` | ✅ feito e rodado — recupera quase todo o sinal perdido na GNN homogenea (18,2x vs 13,0x em `y_direto`), quase empata com o tabular |
-| 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | — | ⏳ pendente |
+| 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | `scripts/comparar_baselines.py` | ✅ feito — **nenhuma diferenca estatisticamente significativa entre os 3 modelos**, em nenhum rotulo (ver nota abaixo) |
 | 7.7 | Analise de sensibilidade: rotulo `direto` (148) vs. `direto+socio` (188) | — | ⏳ pendente — decidido, nao implementado |
 | 8 | Publicacao: resultado parcial em workshop/BRACIS, depois artigo principal em periodico-alvo | — | ⏳ pendente |
 
@@ -137,9 +137,26 @@ resolvido reduzindo dimensoes e excluindo `municipio` (que ja nao era
 metapath de hipotese) — pico de memoria caiu para ~5 GB, estavel entre
 folds (nao e vazamento). Ver `scripts/rodar_baseline_han_hgt.py`.
 
-**Pendencia de rigor atualizada**: fold count diferente entre os 3 modelos
-— tabular (50), GNN homogenea (10), HAN/HGT (5) — ainda nao da pra rodar
-Wilcoxon comparando nenhum par, precisa padronizar antes da etapa 7.6.
+**Comparacao estatistica final (etapa 7.6, 08/08/2026)**: padronizado em
+5x1=5 folds (o menor dos 3 ja usados, pra nao precisar rodar o HAN/HGT — o
+mais caro — em dobro), mesmo `random_state`, mesmo dado, folds pareados de
+verdade. **Resultado: nenhuma diferenca estatisticamente significativa
+entre tabular/GNN homogenea/HAN-HGT, em nenhum dos dois rotulos**
+(Wilcoxon p entre 0,62 e 1,00 em todos os 6 pares testados). Isso nao
+confirma nem refuta a hipotese da tese — e inconclusivo no poder
+estatistico atual (so 5 folds, ~30 positivos por fold de teste). Acabar de
+provar a hipotese exige mais folds/repeats, o que exige mais recursos
+computacionais do que a maquina local usada aqui.
+
+**Bug de reprodutibilidade encontrado e corrigido nesta etapa**:
+`torch.manual_seed(random_state)` era chamado so na construcao da fabrica
+`make_*_fit_predict`, nao a cada fold -- rodar outro modelo torch antes no
+mesmo processo consumia o RNG global e mudava o resultado, mesmo com o
+mesmo `random_state`. Corrigido movendo a chamada pra dentro do
+`fit_predict` (mesma seed a cada fold, isola variancia de inicializacao
+da variancia dos dados). Tem teste de regressao que "suja" o RNG global de
+proposito antes de comparar. Ver `src/models/gnn_homogeneous.py` e
+`src/models/han_hgt.py`.
 
 **Dois bugs reais encontrados só ao validar contra o banco de verdade** (nenhum
 aparecia no dado sintético dos testes — registrado para não repetir):

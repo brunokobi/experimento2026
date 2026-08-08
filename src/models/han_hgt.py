@@ -87,8 +87,12 @@ def make_han_hgt_fit_predict(
     que a VPS) -- ``excluir_relacoes`` tira ``municipio`` por padrao (que ja
     nao era metapath de hipotese, mesma decisao da etapa 7.4) para caber na
     memoria disponivel; ajuste os defaults numa maquina com mais RAM/GPU.
+
+    Reprodutibilidade: ``torch.manual_seed`` e chamado **dentro** de
+    ``fit_predict``, nao so aqui na construcao -- ver nota equivalente em
+    ``src.models.gnn_homogeneous.make_gnn_fit_predict`` (achado real ao
+    comparar rodadas na etapa 7.6).
     """
-    torch.manual_seed(random_state)
     data = builder.data
     cnpjs = builder.external_ids("empresa")
     cnpj_to_idx = {cnpj: i for i, cnpj in enumerate(cnpjs)}
@@ -109,6 +113,7 @@ def make_han_hgt_fit_predict(
     )
 
     def fit_predict(x_train: pd.DataFrame, y_train: np.ndarray, x_test: pd.DataFrame) -> np.ndarray:
+        torch.manual_seed(random_state)
         train_idx = torch.tensor([cnpj_to_idx[c] for c in x_train.index], dtype=torch.long)
         test_idx = torch.tensor([cnpj_to_idx[c] for c in x_test.index], dtype=torch.long)
 
