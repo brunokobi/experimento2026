@@ -1,14 +1,19 @@
 """Definicao e extracao de metapaths sobre a HIN.
 
 Um metapath e uma sequencia de tipos de no conectados por tipos de arco
-especificos, ex.: ``empresa -atua_em-> cnae -atua_em-1-> empresa`` (empresas
-que compartilham o mesmo CNAE) ou ``empresa -participa_de-1-> socio
--participa_de-> empresa`` (empresas com socios em comum).
+especificos, ex.: ``empresa -participa_de-1-> socio -participa_de-> empresa``
+(empresas com socios em comum).
 
-``MetaPathExtractor`` percorre a HIN (via ``networkx.MultiDiGraph``, gerado por
-``HINBuilder.to_networkx``) seguindo a sequencia de relacoes do metapath e
-retorna os pares de nos-alvo alcancados, alem de poder materializar a matriz
-de adjacencia commuting resultante.
+Duas implementacoes, papeis diferentes (ver docs/research_plan.md, secoes 6/7):
+
+- ``MetaPathExtractor``: percorre a HIN via DFS num ``networkx.MultiDiGraph``
+  (gerado por ``HINBuilder.to_networkx``). Da os caminhos completos
+  (instancias), uteis para depuracao/inspecao e para cruzar contra uma query
+  Cypher no Neo4j -- mas **nao escala**: so serve para amostras pequenas.
+- ``SparseMetaPathExtractor``: calcula a matriz de comutacao via produto de
+  matrizes de adjacencia esparsas (CSR), direto do ``HeteroData`` -- e o que
+  escala para os volumes reais do dataset (344k empresas) e o que de fato
+  alimenta a extracao de features/adjacencia para os baselines e a GNN.
 """
 
 from __future__ import annotations
@@ -16,7 +21,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import networkx as nx
+import numpy as np
+import scipy.sparse as sp
 from loguru import logger
+from torch_geometric.data import HeteroData
 
 
 @dataclass(frozen=True)
@@ -45,7 +53,9 @@ class MetaPath:
 
 
 class MetaPathExtractor:
-    """Extrai instancias de metapaths de um ``networkx.MultiDiGraph`` heterogeneo."""
+    """Extrai instancias (caminhos completos) de metapaths via DFS, para
+    depuracao/inspecao em amostras pequenas -- ver ``SparseMetaPathExtractor``
+    para a extracao que escala para o dataset real."""
 
     def __init__(self, graph: nx.MultiDiGraph) -> None:
         self.graph = graph
@@ -93,6 +103,74 @@ class MetaPathExtractor:
         """
         instances = self.extract_instances(metapath, max_instances=max_instances)
         return [(instance[0], instance[-1]) for instance in instances]
+
+
+class SparseMetaPathExtractor:
+    """Extrai a matriz de comutacao ("commuting matrix") de um metapath via
+    produto de matrizes de adjacencia esparsas -- e o que escala para os
+    volumes reais do dataset (344k empresas), ao contrario do DFS de
+    ``MetaPathExtractor`` acima (que so serve para depuracao em amostras
+    pequenas, cruzando o resultado contra uma query Cypher no Neo4j -- ver
+    docs/research_plan.md, secao 6).
+
+    Cada passo do metapath vira uma matriz esparsa CSR (linhas = indice do no
+    de origem, colunas = indice do no de destino, valor = 1 por arco). O
+    resultado e o produto dessas matrizes, na ordem do metapath: a entrada
+    ``(i, j)`` conta quantos caminhos ligam o no ``i`` ao no ``j`` seguindo o
+    metapath -- ex.: para ``empresa_socio_empresa``, e o numero de socios em
+    comum entre as empresas ``i`` e ``j``. A diagonal conta os caminhos de um
+    no de volta a ele mesmo (ex.: numero de socios da propria empresa) -- nao
+    e sinal de conexao entre empresas distintas, ver ``top_pairs``.
+    """
+
+    def __init__(self, data: HeteroData) -> None:
+        self.data = data
+        self._adjacency_cache: dict[tuple[str, str, str], sp.csr_matrix] = {}
+
+    def _adjacency(self, edge_type: tuple[str, str, str]) -> sp.csr_matrix:
+        """Matriz de adjacencia esparsa (CSR) de um tipo de arco, com cache."""
+        if edge_type not in self._adjacency_cache:
+            src_type, _relation, dst_type = edge_type
+            edge_index = self.data[edge_type].edge_index
+            num_src = self.data[src_type].num_nodes
+            num_dst = self.data[dst_type].num_nodes
+            rows = edge_index[0].numpy()
+            cols = edge_index[1].numpy()
+            values = np.ones(edge_index.shape[1], dtype=np.float32)
+            self._adjacency_cache[edge_type] = sp.csr_matrix((values, (rows, cols)), shape=(num_src, num_dst))
+        return self._adjacency_cache[edge_type]
+
+    def commuting_matrix(self, metapath: MetaPath) -> sp.csr_matrix:
+        """Produto das matrizes de adjacencia esparsas ao longo do metapath."""
+        result: sp.csr_matrix | None = None
+        for step, relation in enumerate(metapath.relation_sequence):
+            src_type = metapath.node_sequence[step]
+            dst_type = metapath.node_sequence[step + 1]
+            matrix = self._adjacency((src_type, relation, dst_type))
+            result = matrix if result is None else result @ matrix
+        result = result.tocsr()
+        logger.info(
+            f"Metapath '{metapath.name}': matriz de comutacao {result.shape}, "
+            f"{result.nnz} pares (contando a diagonal) com pelo menos um caminho."
+        )
+        return result
+
+    def top_pairs(
+        self, metapath: MetaPath, k: int | None = 20, min_weight: float = 1.0
+    ) -> list[tuple[int, int, float]]:
+        """Pares ``(idx_origem, idx_destino, peso)`` com mais caminhos pelo
+        metapath, ignorando a diagonal (no ligado a ele mesmo) -- util para
+        inspecao/depuracao sem materializar a matriz inteira.
+        """
+        matrix = self.commuting_matrix(metapath).tocoo()
+        mask = (matrix.data >= min_weight) & (matrix.row != matrix.col)
+        rows, cols, weights = matrix.row[mask], matrix.col[mask], matrix.data[mask]
+        order = np.argsort(-weights)
+        if k is not None:
+            order = order[:k]
+        return list(
+            zip(rows[order].tolist(), cols[order].tolist(), weights[order].tolist(), strict=True)
+        )
 
 
 # --- Metapaths de referencia para o dominio de empresas -----------------------

@@ -10,9 +10,9 @@
 > com apoio técnico de IA.
 
 **Status (08/08/2026)**: fonte de dados e tarefa-fim confirmadas com números reais
-(seções 4 e 5); schema real da HIN implementado em código, primeira versão (seção 12)
-— próximo passo é a extração de metapath escalável e os baselines/treino da GNN
-(seções 7 e 8).
+(seções 4 e 5); schema real da HIN e extração de metapath via matriz esparsa já
+implementados em código (seção 12) — próximo passo é validar essa extração contra
+o banco real (não só dado sintético) e então os baselines/treino da GNN (seções 7 e 8).
 
 ---
 
@@ -256,21 +256,30 @@ não vazar informação e para preservar a distinção direto vs. via-sócio da 
 `docs/research_plan.md` e o código foram atualizados juntos — ver `README.md`,
 seção "Etapas do trabalho", para o estado de cada etapa.
 
+**Feito também (08/08/2026, continuação)**: `SparseMetaPathExtractor`
+(`src/graph/metapaths.py`) substitui o DFS como caminho de produção — calcula a
+matriz de comutação via produto de matrizes de adjacência esparsas (`scipy.sparse`),
+testado com HIN sintética de 50k+20k nós sem densificar. O DFS (`MetaPathExtractor`)
+foi mantido só para depuração/cruzamento com Cypher em amostras pequenas (seção 6).
+
 **Pendente a seguir**:
+- Rodar a extração via matriz esparsa pela primeira vez contra o **banco real**
+  (até aqui só testada contra dado sintético) — inclui checar tempo/memória reais
+  com 344k empresas, não só a estimativa do teste sintético.
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).
-- Extração de metapath ainda é DFS em `networkx` (`src/graph/metapaths.py`) — não
-  escala para 344k empresas; reescrever para produto de matriz esparsa antes de
-  rodar sobre o dataset completo (só testado até aqui numa amostra sintética).
 - Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP
   normalizados) são heurísticas de primeira versão — não resolvem homônimos nem
   variação de grafia; documentado como limitação em `src/graph/build_hin.py`.
 - Vínculo político ainda não é ligado ao sócio da própria empresa por nome (fica
   como nó auxiliar ligado direto à empresa) — juntar as duas identidades exigiria
   resolução de nome mais cuidadosa.
+- Baselines (tabular/GNN homogênea/HAN-HGT) e avaliação (seções 7-8) ainda não
+  implementados — é o próximo passo depois da extração rodar no banco real.
 
 ---
 
 *Ver também o scaffold de código em `src/` (config, loaders, HIN builder/build_hin,
-extração de metapaths, testes) — schema real já adaptado (seção acima); o próximo
-passo é a extração de metapath escalável e os baselines/treino da GNN (seções 7-8).*
+extração de metapaths DFS+esparsa, testes) — schema real e extração escalável já
+implementados (seção acima); o próximo passo são os baselines/treino da GNN
+(seções 7-8), depois de validar a extração contra o banco real.*

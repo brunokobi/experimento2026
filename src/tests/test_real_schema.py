@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from src.data.loaders import GrandeVitoriaLoader
 from src.graph.build_hin import build_empresas_hin
-from src.graph.metapaths import COMMON_METAPATHS, MetaPathExtractor
+from src.graph.metapaths import COMMON_METAPATHS, MetaPathExtractor, SparseMetaPathExtractor
 
 
 def test_rotulo_sancao_separa_direto_de_qualquer(grande_vitoria_loader: GrandeVitoriaLoader) -> None:
@@ -89,3 +89,33 @@ def test_metapath_endereco_comum_liga_emp1_e_emp3(grande_vitoria_loader: GrandeV
     idx_emp1, idx_emp3 = empresas.index("11111111000101"), empresas.index("33333333000103")
 
     assert (("empresa", idx_emp1), ("empresa", idx_emp3)) in pares
+
+
+def test_sparse_commuting_matrix_socio_comum_bate_com_dfs(grande_vitoria_loader: GrandeVitoriaLoader) -> None:
+    """A matriz de comutacao esparsa deve concordar com o DFS: emp_1/emp_2 tem
+    exatamente 1 socio em comum (fora da diagonal), e a matriz e simetrica."""
+    builder = build_empresas_hin(grande_vitoria_loader)
+    data = builder.build()
+    extractor = SparseMetaPathExtractor(data)
+
+    empresas = grande_vitoria_loader.empresas()["cnpj"].tolist()
+    idx_emp1, idx_emp2 = empresas.index("11111111000101"), empresas.index("22222222000102")
+
+    matrix = extractor.commuting_matrix(COMMON_METAPATHS["empresa_socio_empresa"])
+    assert matrix.shape == (5, 5)
+    assert matrix[idx_emp1, idx_emp2] == 1
+    assert matrix[idx_emp2, idx_emp1] == 1  # simetrica
+    assert matrix[idx_emp1, idx_emp1] == 1  # diagonal: emp_1 tem 1 socio
+
+
+def test_sparse_top_pairs_ignora_diagonal_e_acha_endereco_comum(grande_vitoria_loader: GrandeVitoriaLoader) -> None:
+    builder = build_empresas_hin(grande_vitoria_loader)
+    data = builder.build()
+    extractor = SparseMetaPathExtractor(data)
+
+    empresas = grande_vitoria_loader.empresas()["cnpj"].tolist()
+    idx_emp1, idx_emp3 = empresas.index("11111111000101"), empresas.index("33333333000103")
+
+    pares = extractor.top_pairs(COMMON_METAPATHS["empresa_endereco_empresa"])
+    assert all(origem != destino for origem, destino, _peso in pares), "diagonal nao deveria aparecer"
+    assert (idx_emp1, idx_emp3, 1.0) in pares or (idx_emp3, idx_emp1, 1.0) in pares

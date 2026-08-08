@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import tracemalloc
 
+import scipy.sparse as sp
 import torch
 
 from src.config import get_settings
 from src.graph.hin_builder import HINBuilder
+from src.graph.metapaths import MetaPath, SparseMetaPathExtractor
 
 GB = 1024**3
 
@@ -49,6 +51,36 @@ def test_hin_construction_peak_memory_within_budget() -> None:
     finally:
         tracemalloc.stop()
 
+    assert peak < budget_bytes, (
+        f"Pico de memoria ({peak / GB:.3f} GB) excedeu o orcamento configurado "
+        f"({settings.max_memory_gb} GB)."
+    )
+
+
+def test_sparse_metapath_scales_and_respects_memory_budget() -> None:
+    """A extracao via matriz esparsa (``SparseMetaPathExtractor``) deve rodar
+    sem densificar a matriz de comutacao, mesmo numa HIN sintetica de dezenas
+    de milhares de nos -- ao contrario do DFS de ``MetaPathExtractor``, que
+    nao escala para os volumes reais (ver docs/research_plan.md, secao 6)."""
+    settings = get_settings()
+    budget_bytes = settings.max_memory_gb * GB
+    metapath = MetaPath(
+        name="empresa_socio_empresa",
+        node_sequence=("empresa", "socio", "empresa"),
+        relation_sequence=("rev_participa_de", "participa_de"),
+    )
+
+    tracemalloc.start()
+    try:
+        builder = _build_synthetic_hin(num_empresas=50_000, num_socios=20_000)
+        data = builder.build()
+        matrix = SparseMetaPathExtractor(data).commuting_matrix(metapath)
+        _current, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+
+    assert matrix.shape == (50_000, 50_000)
+    assert sp.issparse(matrix), "a matriz de comutacao nao deve ser densificada"
     assert peak < budget_bytes, (
         f"Pico de memoria ({peak / GB:.3f} GB) excedeu o orcamento configurado "
         f"({settings.max_memory_gb} GB)."

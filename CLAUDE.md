@@ -54,9 +54,16 @@ não o banco de verdade). Ver seção 12 de `docs/research_plan.md` para
 detalhes e limitações conhecidas (identidade de sócio/endereço por
 heurística, vínculo político ainda não ligado ao sócio por nome).
 
-**Próximo passo real agora**: reescrever `src/graph/metapaths.py` para
-extração via produto de matriz esparsa (o DFS atual não escala para 344k
-empresas) e então rodar a extração sobre o banco real pela primeira vez.
+**Feito (08/08/2026, continuação)**: `src/graph/metapaths.py` ganhou
+`SparseMetaPathExtractor` (produto de matrizes de adjacência esparsas via
+`scipy.sparse`) — é o que escala para os 344k empresas; `MetaPathExtractor`
+(DFS) foi mantido só para depuração/cruzamento com Cypher em amostras
+pequenas, não é mais o caminho de produção. Testado com HIN sintética de
+50k+20k nós (`test_memory.py`) sem densificar a matriz.
+
+**Próximo passo real agora**: rodar essa extração pela primeira vez contra o
+banco real (não só o sintético dos testes) e começar os baselines
+(tabular/GNN homogênea/HAN-HGT) da seção 7 do plano.
 
 ## Armadilhas já identificadas (não repetir)
 
@@ -65,8 +72,10 @@ empresas) e então rodar a extração sobre o banco real pela primeira vez.
   (ignorado pelo `.gitignore`). Contém dado pessoal (nome de sócio, endereço),
   mesmo com CPF mascarado.
 - **Extração de metapath deve usar produto de matrizes esparsas**, não DFS em
-  `networkx` (`src/graph/metapaths.py` hoje usa DFS — é só protótipo sobre dado
-  sintético; não escala para os volumes reais).
+  `networkx` — **resolvido em 08/08/2026**: `SparseMetaPathExtractor` em
+  `src/graph/metapaths.py` faz isso via `scipy.sparse`; o DFS (`MetaPathExtractor`)
+  foi mantido só para depuração/cruzamento com Cypher em amostras pequenas, não
+  é mais o caminho de produção.
 - **Não usar `processos_judiciais` como rótulo** — é ruidoso (match fuzzy por
   nome, não CNPJ direto).
 - **Split temporal simples é arriscado** dado o N pequeno de positivos (188) —
