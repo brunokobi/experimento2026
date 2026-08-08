@@ -403,10 +403,63 @@ são os mesmos, **ainda não é válido rodar `compare_models` (Wilcoxon)** entr
 os dois — precisa padronizar `n_splits`/`n_repeats`/`random_state` entre os
 3 modelos antes da comparação estatística final (etapa 7.6).
 
+**Feito também (08/08/2026, etapa 7.5 — HAN/HGT)**: `src/models/han_hgt.py`
+implementa o modelo "heterogêneo de verdade" — `HGTConv` (Heterogeneous
+Graph Transformer, Hu et al. 2020) empilhado em 2 camadas, tratando cada
+tipo de nó (`empresa`/`socio`/`endereco`/`vinculo_politico`) e cada tipo de
+relação **distintamente** (ao contrário da 7.4, que colapsa tudo num único
+tipo de aresta empresa-empresa). Só `empresa` tem features tabulares reais
+(mesma matriz da 7.1); os outros tipos de nó entram via embedding aprendido.
+
+**Resultado (5×1 folds, 50 épocas, ~44min)**:
+
+| Rótulo | Tabular (7.3) | GNN homogênea (7.4) | HAN/HGT (7.5) |
+|---|---|---|---|
+| `y_direto` (principal, 148) | PR-AUC 0,0081 — lift 18,8× | PR-AUC 0,0056 — lift 13,0× | PR-AUC 0,0078 — **lift 18,2×** |
+| `y_qualquer` (sensibilidade, 188) | PR-AUC 0,0085 — lift 15,5× | PR-AUC 0,0101 — lift 18,5× | PR-AUC 0,0208 — **lift 38,1×** |
+
+**Interpretação**: tratar cada metapath como relação distinta recupera
+quase todo o sinal que se perdeu ao colapsar num grafo homogêneo (18,2× vs
+13,0× em `y_direto`) — é exatamente a razão de a etapa 7.5 existir separada
+da 7.4, não redundante. No rótulo principal, HAN/HGT fica **praticamente
+empatado** com o baseline tabular (18,2× vs 18,8×, diferença dentro da
+margem de ruído esperada com só 5 folds) — ainda não é uma vitória clara da
+estrutura de rede sobre o dado tabular isolado, mas também não perde.
+
+Em `y_qualquer` o salto é grande (38,1×) — mas isso **amplifica, não
+resolve**, a confusão de circularidade já registrada na seção 5: o HAN/HGT
+modela a relação sócio-empresa explicitamente (com peso de atenção próprio,
+distinto das outras relações), o que dá uma vantagem estrutural "de dentro"
+ainda maior do que a GNN homogênea tinha pra achar justamente os casos que
+foram *rotulados* via essa mesma relação. Reforça, com dado mais forte
+ainda, por que `y_direto` — não `y_qualquer` — tem que ser o número citado
+como resultado principal no texto da dissertação.
+
+**Achado de infraestrutura (memória)**: a configuração inicial
+(`hidden_channels=64`, 2 cabeças de atenção, incluindo a relação
+`localizada_em`/`município`) foi morta pelo OOM killer do kernel na máquina
+local de desenvolvimento (7,8 GB de RAM — bem menos que a VPS, que tem
+24 GB). Corrigido reduzindo `hidden_channels` para 32, `num_heads` para 1,
+e excluindo `município` por padrão (já não era metapath de hipótese, mesma
+lógica da poda de endereço-hub na 7.4) — pico de memória caiu para ~5 GB,
+confirmado estável entre folds (não é vazamento, é custo fixo por fold de
+full-batch heterogêneo). Rodar a versão maior/tunada (mais dimensões,
+época, e incluindo município) provavelmente exige uma máquina com mais
+RAM ou GPU — não esta usada no desenvolvimento interativo.
+
+**Pendência de rigor metodológico (acumulada)**: os 3 modelos agora têm
+contagens de fold diferentes — tabular (5×10=50), GNN homogênea (5×2=10),
+HAN/HGT (5×1=5) — todas por razão de custo computacional crescente (tabular
+≪ GNN homogênea ≪ HAN/HGT). **Nenhum par ainda pode ser comparado via
+`compare_models` (Wilcoxon)**, que exige folds pareados idênticos. Antes da
+comparação estatística final (etapa 7.6), é preciso: (a) padronizar
+`n_splits`/`n_repeats`/`random_state` entre os 3; e (b) provavelmente rodar
+isso num ambiente com mais recursos computacionais que a máquina local
+usada até aqui, dado o custo já observado das GNNs.
+
 **Pendente a seguir**:
-- Etapa 7.5 (HAN/HGT, heterogênea de verdade — sem colapsar os metapaths).
-- Decidir: investir em ajustar a GNN homogênea (mais épocas/folds) antes de
-  seguir, ou aceitar o resultado atual como interino e avançar.
+- Etapa 7.6 (comparação estatística) — bloqueada pela padronização de fold
+  count acima; considerar ambiente com GPU/mais RAM para viabilizar.
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).
 - Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP

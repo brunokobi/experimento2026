@@ -129,10 +129,36 @@ tipo de aresta pode diluir sinal que o HAN/HGT deveria recuperar.
 — ainda não dá pra rodar Wilcoxon comparando os dois, precisa padronizar
 antes da etapa 7.6.
 
-**Próximo passo real agora**: etapa 7.5 — HAN/HGT (heterogênea de verdade,
-sem colapsar os metapaths) — ou, alternativamente, investir em ajustar a GNN
-homogênea (mais épocas/folds) antes de seguir. Decisão em aberto com o
-pesquisador.
+**Feito (08/08/2026, etapa 7.5 — HAN/HGT)**: `src/models/han_hgt.py` —
+`HGTConv` (2 camadas) tratando cada tipo de nó/relação distintamente (não
+colapsa como a 7.4). Rodado contra o banco real (~44min, 5×1 folds, 50
+epochs):
+
+| Rótulo | Tabular (7.3) | GNN homogênea (7.4) | HAN/HGT (7.5) |
+|---|---|---|---|
+| `y_direto` | 18,8× | 13,0× | **18,2× — quase empata** |
+| `y_qualquer` | 15,5× | 18,5× | **38,1× — amplifica a confusão de circularidade** |
+
+Tratar cada metapath como relação distinta recupera quase todo o sinal
+perdido ao colapsar (7.4): 18,2× vs 13,0× — exatamente a razão de a 7.5
+existir separada da 7.4. No rótulo principal, empata (dentro do ruído) com
+o tabular; ainda não supera claramente.
+
+**Achado de infraestrutura**: configuração original (hidden=64, 2 cabeças,
+com `município`) deu **OOM killer** na máquina local (7,8 GB RAM). Corrigido
+reduzindo dimensões + excluindo `município` (não era metapath de hipótese
+mesmo) — pico de memória ~5 GB, estável entre folds (confirmado não é
+vazamento). Rodar a versão maior/tunada precisa de máquina com mais RAM/GPU.
+
+**Pendência de rigor (acumulada)**: fold count diferente nos 3 modelos —
+tabular (50), GNN homogênea (10), HAN/HGT (5) — bloqueia Wilcoxon até
+padronizar (etapa 7.6).
+
+**Próximo passo real agora**: etapa 7.6 — padronizar `n_splits`/`n_repeats`/
+`random_state` entre os 3 modelos e rodar a comparação estatística
+(Wilcoxon) de verdade. Dado o custo computacional das GNNs nessa máquina,
+provavelmente exige rodar em ambiente com mais recursos (GPU/VPS com mais
+RAM) antes do número final da dissertação.
 
 ## Armadilhas já identificadas (não repetir)
 

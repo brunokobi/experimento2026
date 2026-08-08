@@ -90,7 +90,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 7.2 | Harness de avaliacao (PR-AUC, Precision@k, CV estratificada repetida, seeds+Wilcoxon) | `src/evaluation/harness.py` | ✅ feito — generico para os 3 baselines (so precisa de uma funcao `fit_predict`) |
 | 7.3 | Baseline tabular (XGBoost + class weighting) | `src/models/tabular_baseline.py` | ✅ feito e **rodado contra o banco real** — primeiro resultado quantitativo: PR-AUC ~18,8× a taxa-base em `y_direto` (ver nota abaixo) |
 | 7.4 | Baseline GNN homogenea (via `SparseMetaPathExtractor`) | `src/models/gnn_homogeneous.py` | ✅ feito e rodado — **pior que o tabular em `y_direto`** (13,0x vs 18,8x de lift), ver nota abaixo |
-| 7.5 | HAN/HGT (heterogenea de verdade) | — | ⏳ pendente |
+| 7.5 | HAN/HGT (heterogenea de verdade) | `src/models/han_hgt.py` | ✅ feito e rodado — recupera quase todo o sinal perdido na GNN homogenea (18,2x vs 13,0x em `y_direto`), quase empata com o tabular |
 | 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | — | ⏳ pendente |
 | 7.7 | Analise de sensibilidade: rotulo `direto` (148) vs. `direto+socio` (188) | — | ⏳ pendente — decidido, nao implementado |
 | 8 | Publicacao: resultado parcial em workshop/BRACIS, depois artigo principal em periodico-alvo | — | ⏳ pendente |
@@ -120,6 +120,26 @@ comparacao estatistica (7.6)**: o tabular rodou com 50 folds e a GNN so com
 folds levaria ~2h30) -- ainda nao da pra rodar Wilcoxon comparando os dois,
 precisa padronizar o numero de folds primeiro. Ver
 `scripts/rodar_baseline_gnn_homogenea.py`.
+
+**Terceiro resultado (HAN/HGT, 08/08/2026)**: PR-AUC 0,0078 (`y_direto`,
+lift ~18,2x) / 0,0208 (`y_qualquer`, lift ~38,1x). Tratar cada metapath
+como relacao distinta (em vez de colapsar num grafo homogeneo) **recupera
+quase todo o sinal perdido na 7.4** (18,2x vs 13,0x) e chega quase no
+empate com o tabular no rotulo principal (18,2x vs 18,8x, dentro da margem
+de ruido com so 5 folds). Em `y_qualquer` o salto e grande (38,1x) — mas
+amplifica a confusao de circularidade ja registrada: modelar a relacao
+socio-empresa explicitamente da vantagem "de dentro" enorme pra achar
+justamente os casos rotulados via essa mesma relacao. **Achado de
+infraestrutura**: a configuracao original (hidden_channels=64, 2 cabecas
+de atencao, incluindo `municipio`) estourou memoria (OOM killer) na
+maquina local de desenvolvimento (7,8 GB de RAM — bem menos que a VPS);
+resolvido reduzindo dimensoes e excluindo `municipio` (que ja nao era
+metapath de hipotese) — pico de memoria caiu para ~5 GB, estavel entre
+folds (nao e vazamento). Ver `scripts/rodar_baseline_han_hgt.py`.
+
+**Pendencia de rigor atualizada**: fold count diferente entre os 3 modelos
+— tabular (50), GNN homogenea (10), HAN/HGT (5) — ainda nao da pra rodar
+Wilcoxon comparando nenhum par, precisa padronizar antes da etapa 7.6.
 
 **Dois bugs reais encontrados só ao validar contra o banco de verdade** (nenhum
 aparecia no dado sintético dos testes — registrado para não repetir):
