@@ -108,9 +108,31 @@ Nota metodológica: desvio-padrão do Precision@k costuma superar a média (só
 ~30 positivos por fold de teste) — considerar k maiores (50/100) nas
 próximas rodadas.
 
-**Próximo passo real agora**: etapa 7.4 — baseline GNN homogênea (via
-`SparseMetaPathExtractor`) — primeiro modelo que de fato usa a estrutura de
-rede, pra comparar contra esse número tabular.
+**Feito (08/08/2026, etapa 7.4 — GNN homogênea)**:
+`src/models/gnn_homogeneous.py` — colapsa os 3 metapaths de hipótese numa
+matriz empresa-empresa (GraphSAGE por cima, mesmas features tabulares da
+7.1). Achado real ao construir o grafo: 878 endereços concentram ~11M das
+~13M arestas empresa-endereço (prédios comerciais grandes, não "endereço de
+fachada") — podados (`max_grau_endereco=20`) antes de virar grafo, senão
+inviável treinar. Rodado contra o banco real (~29min, 5×2 folds, 50 epochs):
+
+| Rótulo | Tabular (7.3) | GNN homogênea (7.4) |
+|---|---|---|
+| `y_direto` (principal) | 18,8× lift | **13,0× lift — pior** |
+| `y_qualquer` (sensibilidade) | 15,5× lift | 18,5× lift — melhor, mas confundido (ver plano) |
+
+**Reportado sem maquiar**: GNN homogênea perdeu do tabular no rótulo
+principal. Causas plausíveis: poucas épocas/folds (custo computacional alto:
+~29min pra só 10 folds vs 50 do tabular), e colapsar os 3 metapaths num só
+tipo de aresta pode diluir sinal que o HAN/HGT deveria recuperar.
+**Pendência de rigor**: fold count diferente entre tabular (50) e GNN (10)
+— ainda não dá pra rodar Wilcoxon comparando os dois, precisa padronizar
+antes da etapa 7.6.
+
+**Próximo passo real agora**: etapa 7.5 — HAN/HGT (heterogênea de verdade,
+sem colapsar os metapaths) — ou, alternativamente, investir em ajustar a GNN
+homogênea (mais épocas/folds) antes de seguir. Decisão em aberto com o
+pesquisador.
 
 ## Armadilhas já identificadas (não repetir)
 

@@ -89,7 +89,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 7.1 | Feature engineering tabular | `src/features/tabular.py` (`build_feature_matrix`) | ✅ feito e **validado contra o banco real**: 344.130 empresas, 5,5s, 107 colunas, 0 `NaN` |
 | 7.2 | Harness de avaliacao (PR-AUC, Precision@k, CV estratificada repetida, seeds+Wilcoxon) | `src/evaluation/harness.py` | ✅ feito — generico para os 3 baselines (so precisa de uma funcao `fit_predict`) |
 | 7.3 | Baseline tabular (XGBoost + class weighting) | `src/models/tabular_baseline.py` | ✅ feito e **rodado contra o banco real** — primeiro resultado quantitativo: PR-AUC ~18,8× a taxa-base em `y_direto` (ver nota abaixo) |
-| 7.4 | Baseline GNN homogenea (via `SparseMetaPathExtractor`) | — | ⏳ pendente |
+| 7.4 | Baseline GNN homogenea (via `SparseMetaPathExtractor`) | `src/models/gnn_homogeneous.py` | ✅ feito e rodado — **pior que o tabular em `y_direto`** (13,0x vs 18,8x de lift), ver nota abaixo |
 | 7.5 | HAN/HGT (heterogenea de verdade) | — | ⏳ pendente |
 | 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | — | ⏳ pendente |
 | 7.7 | Analise de sensibilidade: rotulo `direto` (148) vs. `direto+socio` (188) | — | ⏳ pendente — decidido, nao implementado |
@@ -105,6 +105,21 @@ respectivamente. O modelo tabular tem lift *menor* em `y_qualquer` (as
 empresas que so sao suspeitas por sócio comum) — consistente com a hipotese
 da tese: dado tabular isolado nao enxerga risco por associacao. Ver
 `scripts/rodar_baseline_tabular.py`.
+
+**Segundo resultado (GNN homogenea, 08/08/2026)** — reportado sem maquiar,
+mesmo nao sendo a narrativa esperada: PR-AUC 0,0056 (`y_direto`, lift
+~13,0x) / 0,0101 (`y_qualquer`, lift ~18,5x). **No rotulo principal
+(`y_direto`), a GNN homogenea ficou pior que o tabular** (13,0x vs 18,8x).
+Ja em `y_qualquer` ela ganha do tabular — mas isso e quase esperado, nao uma
+vitoria limpa: os 40 positivos extras de `y_qualquer` foram *rotulados* via
+socio comum, e a GNN usa exatamente essa aresta, entao tem vantagem "de
+dentro" pra achar esses casos especificos (reforca por que `y_direto` e o
+rotulo principal, nao `y_qualquer`). **Limitacao a corrigir antes da
+comparacao estatistica (7.6)**: o tabular rodou com 50 folds e a GNN so com
+10 (custo computacional -- ~29min pra 10 folds, 50 epochs; escalar pra 50
+folds levaria ~2h30) -- ainda nao da pra rodar Wilcoxon comparando os dois,
+precisa padronizar o numero de folds primeiro. Ver
+`scripts/rodar_baseline_gnn_homogenea.py`.
 
 **Dois bugs reais encontrados só ao validar contra o banco de verdade** (nenhum
 aparecia no dado sintético dos testes — registrado para não repetir):

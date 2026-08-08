@@ -354,9 +354,59 @@ ruidoso. Considerar k maiores (50, 100) nas rodadas dos próximos baselines
 para uma estimativa mais estável, sem descartar k pequenos (são os que
 importam pra "leitura de investigador": poucos casos pra checar manualmente).
 
+**Feito também (08/08/2026, etapa 7.4 — GNN homogênea)**:
+`src/models/gnn_homogeneous.py` colapsa os 3 metapaths de hipótese (sócio
+comum, endereço comum, vínculo político) numa única matriz de adjacência
+empresa-empresa (soma binarizada das comutações), e treina uma GraphSAGE de
+2 camadas por cima, usando as mesmas features tabulares da etapa 7.1 (para
+isolar o efeito da estrutura de rede, não misturar com diferença de
+features em relação ao baseline).
+
+**Achado real ao construir o grafo**: 878 endereços (~0,5% do total)
+concentram ~10,8 milhões das ~12,85 milhões de arestas empresa-endereço —
+são prédios comerciais grandes/galpões industriais com centenas de empresas
+registradas (o maior tem 1.419), não "endereço de fachada" compartilhado por
+poucas empresas. Sem podar, o grafo homogêneo ficaria denso demais pra
+treinar por passagem de mensagem em tempo viável (não é o mesmo problema de
+estouro de memória do `MetapathExplosionError`, mas um problema de custo de
+treino equivalente em espírito). `max_grau_endereco=20` zera essas colunas
+antes da comutação, reduzindo o grafo de ~14,5 milhões para ~2 milhões de
+arestas.
+
+**Resultado, reportado sem maquiar (5×2 folds, 50 épocas, ~29min)**:
+
+| Rótulo | Baseline tabular (7.3) | GNN homogênea (7.4) |
+|---|---|---|
+| `y_direto` (principal, 148) | PR-AUC 0,0081 — **lift 18,8×** | PR-AUC 0,0056 — **lift 13,0×** |
+| `y_qualquer` (sensibilidade, 188) | PR-AUC 0,0085 — lift 15,5× | PR-AUC 0,0101 — lift 18,5× |
+
+**No rótulo principal, a GNN homogênea perdeu do baseline tabular.** Isso
+não invalida a hipótese da tese, mas é um resultado real que entra no texto
+como está, não escondido. Causas plausíveis a investigar: (a) só 50 épocas —
+pode estar subtreinada; (b) só 10 folds (vs. 50 do tabular) — estimativa com
+mais variância; (c) colapsar os 3 metapaths num único tipo de aresta
+("GNN homogênea" por definição) pode diluir sinal que o HAN/HGT (etapa 7.5,
+que trata cada metapath como relação distinta) deveria recuperar — é
+literalmente a razão de ter uma etapa 7.5 separada, não redundante com a 7.4.
+
+Em `y_qualquer` a GNN homogênea ganha do tabular — mas **não é uma vitória
+limpa**: os 40 positivos extras de `y_qualquer` (em relação a `y_direto`)
+foram *rotulados* via sócio comum (achado da seção 5), e a GNN usa
+exatamente essa aresta — tem vantagem estrutural "de dentro" pra achar esses
+casos específicos, não descoberta genuína de padrão novo. Reforça, com dado
+real, por que `y_direto` tem que continuar sendo o rótulo primário do texto.
+
+**Pendência de rigor metodológico**: o baseline tabular rodou com 50 folds
+(5×10) e a GNN homogênea só com 10 (5×2) — custo computacional real (~29min
+pra 10 folds; 50 folds levariam ~2h30 nessa configuração). Como os folds não
+são os mesmos, **ainda não é válido rodar `compare_models` (Wilcoxon)** entre
+os dois — precisa padronizar `n_splits`/`n_repeats`/`random_state` entre os
+3 modelos antes da comparação estatística final (etapa 7.6).
+
 **Pendente a seguir**:
-- Etapa 7.4 (baseline GNN homogênea via `SparseMetaPathExtractor`) — primeiro
-  modelo que de fato usa a estrutura de rede, comparar contra o número acima.
+- Etapa 7.5 (HAN/HGT, heterogênea de verdade — sem colapsar os metapaths).
+- Decidir: investir em ajustar a GNN homogênea (mais épocas/folds) antes de
+  seguir, ou aceitar o resultado atual como interino e avançar.
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).
 - Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP
