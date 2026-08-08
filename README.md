@@ -86,10 +86,14 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 4 | Construir a HIN real em `HeteroData` a partir das tabelas do banco | `src/graph/build_hin.py` (`build_empresas_hin`) | ✅ primeira versao — nos `empresa`/`socio`/`endereco`/`municipio`/`vinculo_politico`; `processos_judiciais` ainda de fora (pipeline `djen` em andamento) |
 | 5 | Extracao de metapath via produto de matriz esparsa (escala para 344k empresas) | `src/graph/metapaths.py` (`SparseMetaPathExtractor`) | ✅ feito e **validado contra o banco real**: HIN completa (344.130 empresas) construida em 23,5s / 0,44 GB; os 3 metapaths de hipotese extraidos em <0,2s cada. Dois bugs reais encontrados e corrigidos so ao rodar contra dado de verdade — ver `scripts/validar_hin_real.py` e a nota abaixo |
 | 6 | Exportar a HIN para Neo4j (exploracao Cypher/GDS, figuras da dissertacao) | `src/graph/neo4j_export.py` + VPS pessoal | ✅ feito — Neo4j 5 + GDS rodando na VPS, **acesso so via tunel SSH** (nunca porta publica: o grafo tem dado pessoal); HIN real exportada (344k+ nos) |
-| 7 | Baselines: tabular (XGBoost/LightGBM com class weighting), GNN homogenea, HAN/HGT | notebooks/ + novo modulo de treino | ⏳ pendente |
-| 8 | Avaliacao: validacao cruzada estratificada repetida, PR-AUC/Precision@k, multiplas seeds + teste estatistico (Wilcoxon) | idem | ⏳ pendente |
-| 9 | Analise de sensibilidade: rotulo `direto` (148) vs. `direto+socio` (188) | idem | ⏳ pendente — decidido, nao implementado |
-| 10 | Publicacao: resultado parcial em workshop/BRACIS, depois artigo principal em periodico-alvo | — | ⏳ pendente |
+| 7.1 | Feature engineering tabular | `src/features/tabular.py` (`build_feature_matrix`) | ✅ feito e **validado contra o banco real**: 344.130 empresas, 5,5s, 107 colunas, 0 `NaN` |
+| 7.2 | Harness de avaliacao (PR-AUC, Precision@k, CV estratificada repetida, seeds+Wilcoxon) | — | ⏳ pendente |
+| 7.3 | Baseline tabular (XGBoost/LightGBM + class weighting) | — | ⏳ pendente |
+| 7.4 | Baseline GNN homogenea (via `SparseMetaPathExtractor`) | — | ⏳ pendente |
+| 7.5 | HAN/HGT (heterogenea de verdade) | — | ⏳ pendente |
+| 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | — | ⏳ pendente |
+| 7.7 | Analise de sensibilidade: rotulo `direto` (148) vs. `direto+socio` (188) | — | ⏳ pendente — decidido, nao implementado |
+| 8 | Publicacao: resultado parcial em workshop/BRACIS, depois artigo principal em periodico-alvo | — | ⏳ pendente |
 
 Cronograma por marcos (Marco 1–4) e riscos declarados: ver secoes 9 e 11 de
 [`docs/research_plan.md`](docs/research_plan.md).

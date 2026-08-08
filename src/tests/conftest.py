@@ -61,7 +61,8 @@ def sample_hin() -> HINBuilder:
 _SCHEMA_REAL_SQL = """
 CREATE TABLE empresas (
     cnpj TEXT PRIMARY KEY, capital_social REAL, municipio TEXT,
-    logradouro TEXT, numero TEXT, cep TEXT
+    logradouro TEXT, numero TEXT, cep TEXT,
+    porte TEXT, regime_tributario TEXT, cnae_principal TEXT
 );
 CREATE TABLE socios (
     id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, nome_socio TEXT, cpf_parcial TEXT
@@ -83,11 +84,11 @@ CREATE TABLE vinculos_politicos (
 # -- reproduz o achado real de circularidade); emp_4 tem vinculo politico;
 # emp_5 nao tem nenhum sinal (empresa "limpa").
 _EMPRESAS = [
-    ("11111111000101", 1000.0, "VITORIA", "RUA A", "10", "29000-000"),
-    ("22222222000102", 2000.0, "VILA VELHA", "RUA B", "20", "29100-000"),
-    ("33333333000103", 3000.0, "SERRA", "RUA A", "10", "29000-000"),
-    ("44444444000104", 4000.0, "VITORIA", "RUA C", "30", "29200-000"),
-    ("55555555000105", 5000.0, "SERRA", "RUA D", "40", "29300-000"),
+    ("11111111000101", 1000.0, "VITORIA", "RUA A", "10", "29000-000", "ME", "SIMPLES", "4711301"),
+    ("22222222000102", 2000.0, "VILA VELHA", "RUA B", "20", "29100-000", "EPP", "SIMPLES", "4711301"),
+    ("33333333000103", 3000.0, "SERRA", "RUA A", "10", "29000-000", "ME", "MEI", "6201501"),
+    ("44444444000104", 4000.0, "VITORIA", "RUA C", "30", "29200-000", "DEMAIS", "NORMAL", "8112500"),
+    ("55555555000105", 5000.0, "SERRA", "RUA D", "40", "29300-000", "ME", "SIMPLES", "4711301"),
 ]
 _SOCIOS = [
     ("11111111000101", "FULANO DE TAL", "123.***.***-45"),
@@ -113,7 +114,7 @@ def grande_vitoria_loader(tmp_path: Path) -> GrandeVitoriaLoader:
     conn = sqlite3.connect(db_path)
     try:
         conn.executescript(_SCHEMA_REAL_SQL)
-        conn.executemany("INSERT INTO empresas VALUES (?, ?, ?, ?, ?, ?)", _EMPRESAS)
+        conn.executemany("INSERT INTO empresas VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", _EMPRESAS)
         conn.executemany("INSERT INTO socios (cnpj_empresa, nome_socio, cpf_parcial) VALUES (?, ?, ?)", _SOCIOS)
         conn.executemany(
             "INSERT INTO sancoes_administrativas (cnpj_empresa, tipo, match_confianca) VALUES (?, ?, ?)",

@@ -81,9 +81,19 @@ túnel SSH** (`ssh -L 7687:localhost:7687 -L 7474:localhost:7474 -i
 (`export_hin_to_neo4j`) exporta a HIN real inteira (idempotente, via `MERGE`)
 — rodado com sucesso contra o banco de verdade (`scripts/exportar_hin_neo4j.py`).
 
-**Próximo passo real agora**: começar os baselines (tabular/GNN
-homogênea/HAN-HGT) da seção 7 do plano — infraestrutura de dados/HIN/
-metapath/Neo4j já validada ponta a ponta contra o banco real.
+**Feito (08/08/2026, etapa 7.1)**: `src/features/tabular.py`
+(`build_feature_matrix`) — feature engineering tabular por empresa (capital
+social, sócios, dívida ativa agregada, vínculo político, porte/regime/CNAE
+one-hot), sem nenhuma coluna derivada de sanção. Validado contra o banco
+real: 344.130 empresas, 5,5s, 107 colunas, 0 `NaN`. Achado ao validar: `porte`
+no banco é código numérico da Receita (`"01"`/`"03"`/`"05"`), não texto —
+documentado no módulo. Etapa 7 quebrada em subetapas no README (7.1 a 7.7,
+mais a etapa 8 de publicação).
+
+**Próximo passo real agora**: etapa 7.2 — harness de avaliação (PR-AUC,
+Precision@k, validação cruzada estratificada repetida, múltiplas seeds +
+Wilcoxon) — é infraestrutura compartilhada pelos 3 baselines, tem que vir
+antes de treinar qualquer modelo.
 
 ## Armadilhas já identificadas (não repetir)
 

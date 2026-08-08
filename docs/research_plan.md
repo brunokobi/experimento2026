@@ -308,7 +308,21 @@ pares específicos. Imprecisão pequena (33 em 519 vínculos), não bloqueia
 nada agora, mas vale deduplicar o `edge_index` de `vinculo_politico` antes
 de reportar qualquer análise fina desse metapath especificamente.
 
+**Feito também (08/08/2026, etapa 7.1 — feature engineering tabular)**:
+`src/features/tabular.py` (`build_feature_matrix`) monta a matriz de
+features por empresa (capital social, contagem de sócios, dívida ativa
+agregada, vínculo político booleano, porte/regime tributário/CNAE/município
+one-hot) junto com `y_direto`/`y_qualquer`, sem nenhuma coluna de
+`sancoes_administrativas` além do rótulo. Validado contra o banco real:
+344.130 empresas, 5,5s, 107 colunas, 0 `NaN`. Achado: `porte` no banco é
+código numérico da Receita (`"01"`/`"03"`/`"05"`), não texto descritivo —
+importa para interpretar resultado depois. A etapa 7 (seção 7) foi quebrada
+em subetapas (7.1–7.7) no `README.md` para acompanhar o progresso.
+
 **Pendente a seguir**:
+- Etapa 7.2 (harness de avaliação: PR-AUC, Precision@k, validação cruzada
+  estratificada repetida, seeds + Wilcoxon) — compartilhada pelos 3
+  baselines, bloqueia 7.3/7.4/7.5.
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).
 - Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP
