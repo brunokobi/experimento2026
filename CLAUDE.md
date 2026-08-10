@@ -172,16 +172,18 @@ comparar o HAN/HGT isolado vs. dentro do script de comparação: 0,0078 vs.
 `fit_predict`. Teste de regressão que "suja" o RNG global de propósito
 antes de comparar.
 
-**Rodada de 30 folds perdida (iniciada 08/08/2026 ~17:33, checada 09/08/2026
-23:09)**: a máquina reiniciou (`uptime` mostrou boot em 09/08 23:05, só
-alguns minutos antes da checagem) — `/tmp` foi limpo no reboot, matando o
-processo `nohup` e o log (`/tmp/comparar_baselines_30folds.log`) junto.
-Exatamente o risco que já tinha sido registrado aqui. **Nenhum resultado de
-30 folds existe** — o único resultado válido de comparação estatística
-ainda é o de 5 folds (etapa 7.6 original, inconclusivo, Wilcoxon p entre
-0,625 e 1,0). Decisão de como retomar (refazer com 30 folds, aceitar o
-resultado de 5 folds e seguir, ou mudar a estratégia de persistência de
-processo longo) em aberto com o pesquisador.
+**Primeira tentativa de 30 folds perdida** (iniciada 08/08/2026 ~17:33,
+checada 09/08/2026 23:09): a máquina reiniciou entre as duas datas —
+`/tmp` foi limpo no reboot, matando o processo `nohup` e o log junto.
+Nenhum resultado daquela rodada existe.
+
+**Em andamento (retomada 09/08/2026 ~23:11)**: relançada do mesmo jeito
+(`nohup`, mesmo risco aceito pelo pesquisador), PID 2201 (pode ter mudado —
+checar `pgrep -af comparar_baselines`), log em
+`/tmp/comparar_baselines_30folds.log`. Sem notificação automática. Se
+checar de novo e o log não existir mais, mesma causa provável (reboot) —
+decidir com o pesquisador se tenta de novo ou muda a estratégia (ex.:
+salvar checkpoint incremental por fold, não só o resultado final).
 
 **Próximo passo real (depois desse resultado)**: etapa 7.7 — sensibilidade
 `y_direto` vs `y_qualquer` (já há indícios fortes de confusão por
