@@ -172,16 +172,16 @@ comparar o HAN/HGT isolado vs. dentro do script de comparação: 0,0078 vs.
 `fit_predict`. Teste de regressão que "suja" o RNG global de propósito
 antes de comparar.
 
-**Em andamento (iniciado 08/08/2026, ~17:33)**: rodando
-`scripts/comparar_baselines.py` com 5×6=30 folds (escala acordada com o
-pesquisador, ~7h30 estimado) em background via `nohup` (PID pode ter
-mudado — checar `pgrep -af comparar_baselines`), log em
-`/tmp/comparar_baselines_30folds.log`. **Sem notificação automática** (uso
-de `nohup` em vez do mecanismo de background do Claude Code, de propósito,
-pra sobreviver a esta sessão terminar) — se retomar o trabalho e este log
-não aparecer mais em `/tmp`, a rodada pode ter sido perdida (reboot/limpeza
-do sistema) e precisa ser refeita. Quando terminar, ler o log e atualizar
-esta seção + `docs/research_plan.md` com o resultado final de 30 folds.
+**Rodada de 30 folds perdida (iniciada 08/08/2026 ~17:33, checada 09/08/2026
+23:09)**: a máquina reiniciou (`uptime` mostrou boot em 09/08 23:05, só
+alguns minutos antes da checagem) — `/tmp` foi limpo no reboot, matando o
+processo `nohup` e o log (`/tmp/comparar_baselines_30folds.log`) junto.
+Exatamente o risco que já tinha sido registrado aqui. **Nenhum resultado de
+30 folds existe** — o único resultado válido de comparação estatística
+ainda é o de 5 folds (etapa 7.6 original, inconclusivo, Wilcoxon p entre
+0,625 e 1,0). Decisão de como retomar (refazer com 30 folds, aceitar o
+resultado de 5 folds e seguir, ou mudar a estratégia de persistência de
+processo longo) em aberto com o pesquisador.
 
 **Próximo passo real (depois desse resultado)**: etapa 7.7 — sensibilidade
 `y_direto` vs `y_qualquer` (já há indícios fortes de confusão por
