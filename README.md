@@ -91,7 +91,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 7.3 | Baseline tabular (XGBoost + class weighting) | `src/models/tabular_baseline.py` | ✅ feito e **rodado contra o banco real** — primeiro resultado quantitativo: PR-AUC ~18,8× a taxa-base em `y_direto` (ver nota abaixo) |
 | 7.4 | Baseline GNN homogenea (via `SparseMetaPathExtractor`) | `src/models/gnn_homogeneous.py` | ✅ feito e rodado — **pior que o tabular em `y_direto`** (13,0x vs 18,8x de lift), ver nota abaixo |
 | 7.5 | HAN/HGT (heterogenea de verdade) | `src/models/han_hgt.py` | ✅ feito e rodado — recupera quase todo o sinal perdido na GNN homogenea (18,2x vs 13,0x em `y_direto`), quase empata com o tabular |
-| 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | `scripts/comparar_baselines.py` | ✅ feito — **nenhuma diferenca estatisticamente significativa entre os 3 modelos**, em nenhum rotulo (ver nota abaixo) |
+| 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | `scripts/comparar_baselines.py` | ✅ feito (30 folds, poder estatistico real) — **HAN/HGT e significativamente PIOR que o tabular em `y_direto`** (p=0,007), ver nota abaixo |
 | 7.7 | Analise de sensibilidade: rotulo `direto` (148) vs. `direto+socio` (188) | — | ⏳ pendente — decidido, nao implementado |
 | 8 | Publicacao: resultado parcial em workshop/BRACIS, depois artigo principal em periodico-alvo | — | ⏳ pendente |
 
@@ -137,16 +137,32 @@ resolvido reduzindo dimensoes e excluindo `municipio` (que ja nao era
 metapath de hipotese) — pico de memoria caiu para ~5 GB, estavel entre
 folds (nao e vazamento). Ver `scripts/rodar_baseline_han_hgt.py`.
 
-**Comparacao estatistica final (etapa 7.6, 08/08/2026)**: padronizado em
-5x1=5 folds (o menor dos 3 ja usados, pra nao precisar rodar o HAN/HGT — o
-mais caro — em dobro), mesmo `random_state`, mesmo dado, folds pareados de
-verdade. **Resultado: nenhuma diferenca estatisticamente significativa
-entre tabular/GNN homogenea/HAN-HGT, em nenhum dos dois rotulos**
-(Wilcoxon p entre 0,62 e 1,00 em todos os 6 pares testados). Isso nao
-confirma nem refuta a hipotese da tese — e inconclusivo no poder
-estatistico atual (so 5 folds, ~30 positivos por fold de teste). Acabar de
-provar a hipotese exige mais folds/repeats, o que exige mais recursos
-computacionais do que a maquina local usada aqui.
+**Comparacao estatistica final (etapa 7.6)**: primeira rodada (5 folds,
+08/08/2026) foi inconclusiva por baixo poder estatistico (Wilcoxon p entre
+0,62 e 1,00 em todos os 6 pares) — nao usada como resultado final.
+**Escalada para 30 folds (5x6), rodada 09-10/08/2026, ~8h45**: agora com
+poder estatistico real, o resultado e claro — ver
+`docs/resultados/comparar_baselines_30folds_2026-08-10.log`:
+
+| Rotulo | Tabular | GNN homogenea | HAN/HGT |
+|---|---|---|---|
+| `y_direto` (principal) | 18,6x | 16,5x | **14,2x** |
+| `y_qualquer` (confundido) | 15,7x | 24,4x | **33,5x** |
+
+**No rotulo principal, o HAN/HGT e estatisticamente PIOR que o tabular**
+(Wilcoxon p=0,0066) **e pior que a GNN homogenea** (p=0,0293) — com so 5
+folds isso parecia empate (ruido mascarando o efeito real). Em
+`y_qualquer` os dois modelos de rede vencem o tabular (p=0,002 e p=0,036)
+— mas esse rotulo e o confundido por circularidade, nao e evidencia limpa
+a favor da hipotese.
+
+**Isso e um resultado negativo genuino pra pergunta de pesquisa central**:
+nesta implementacao, GNN heterogenea nao supera o baseline tabular na
+deteccao de sancao direta — pelo contrario, o modelo mais sofisticado
+piora. Nao e erro de codigo (o bug de reprodutibilidade da secao anterior
+ja foi corrigido antes desta rodada). Pode ser resultado real, ou artefato
+de hiperparametros/epocas de primeira versao — decisao de investir em
+tuning ou reportar como esta em aberto com o pesquisador.
 
 **Bug de reprodutibilidade encontrado e corrigido nesta etapa**:
 `torch.manual_seed(random_state)` era chamado so na construcao da fabrica

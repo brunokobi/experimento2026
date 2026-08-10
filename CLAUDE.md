@@ -175,20 +175,32 @@ antes de comparar.
 **Primeira tentativa de 30 folds perdida** (iniciada 08/08/2026 ~17:33,
 checada 09/08/2026 23:09): a máquina reiniciou entre as duas datas —
 `/tmp` foi limpo no reboot, matando o processo `nohup` e o log junto.
-Nenhum resultado daquela rodada existe.
 
-**Em andamento (retomada 09/08/2026 ~23:11)**: relançada do mesmo jeito
-(`nohup`, mesmo risco aceito pelo pesquisador), PID 2201 (pode ter mudado —
-checar `pgrep -af comparar_baselines`), log em
-`/tmp/comparar_baselines_30folds.log`. Sem notificação automática. Se
-checar de novo e o log não existir mais, mesma causa provável (reboot) —
-decidir com o pesquisador se tenta de novo ou muda a estratégia (ex.:
-salvar checkpoint incremental por fold, não só o resultado final).
+**Feito (relançada 09/08/2026 ~23:11, concluída 10/08/2026 ~06:23,
+~8h45)**: log completo salvo em
+`docs/resultados/comparar_baselines_30folds_2026-08-10.log`. **Resultado
+final, com poder estatístico real**:
 
-**Próximo passo real (depois desse resultado)**: etapa 7.7 — sensibilidade
-`y_direto` vs `y_qualquer` (já há indícios fortes de confusão por
-circularidade nos 3 resultados de 5 folds — GNN homogênea e HAN/HGT
-sistematicamente melhores em `y_qualquer`, nunca em `y_direto`).
+| Rótulo | Tabular | GNN homogênea | HAN/HGT | Wilcoxon |
+|---|---|---|---|---|
+| `y_direto` (principal) | 18,6× | 16,5× | **14,2×** | tabular>HAN/HGT p=0,0066; homogênea>HAN/HGT p=0,0293 |
+| `y_qualquer` (confundido) | 15,7× | 24,4× | **33,5×** | homogênea>tabular p=0,0020; HAN/HGT>tabular p=0,0364 |
+
+**No rótulo principal, HAN/HGT é estatisticamente PIOR que o tabular e que
+a GNN homogênea** — com 5 folds parecia empate (ruído mascarando o efeito
+real; não rerodar decisão em cima de N pequeno). Em `y_qualquer` os
+modelos de rede vencem, mas é o rótulo confundido por circularidade — não
+é evidência limpa a favor da hipótese. **Resultado negativo genuíno pra
+pergunta de pesquisa central**, reportado sem maquiar — pode ser efeito
+real ou artefato de hiperparâmetros/épocas de primeira versão (50 épocas,
+sem tuning).
+
+**Próximo passo real**: decidir com o pesquisador — (a) investir em tuning
+de hiperparâmetros do HAN/HGT antes de aceitar esse resultado como final,
+ou (b) reportar como está e seguir pra etapa 7.7 (sensibilidade `y_direto`
+vs `y_qualquer`, agora com diferença estatística confirmada, não só
+indício) e depois etapa 8 (publicação) com esse resultado negativo
+discutido no texto.
 
 ## Armadilhas já identificadas (não repetir)
 

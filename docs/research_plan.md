@@ -464,29 +464,59 @@ rodar o HAN/HGT — o mais caro dos três — em dobro), mesmo `random_state`,
 mesmo `x`/`y`, garantindo folds pareados de verdade (condição exigida por
 `compare_models`/Wilcoxon).
 
-**Resultado (5 folds, mesmo split para os 3 modelos)**:
+**Resultado com 5 folds (primeira rodada, 08/08/2026)** — inconclusivo por
+baixo poder estatístico (Wilcoxon `p` entre 0,625 e 1,000 em todos os 6
+pares). Não reportado como resultado final — ver rodada de 30 folds abaixo,
+que é a que vale.
+
+**Resultado final, com poder estatístico real — 30 folds (5×6 repeats),
+09-10/08/2026** (~8h45 de execução; log completo em
+`docs/resultados/comparar_baselines_30folds_2026-08-10.log`):
 
 | Rótulo | Tabular | GNN homogênea | HAN/HGT |
 |---|---|---|---|
-| `y_direto` | PR-AUC 0,0077 | PR-AUC 0,0074 | PR-AUC 0,0059 |
-| `y_qualquer` | PR-AUC 0,0081 | PR-AUC 0,0161 | PR-AUC 0,0129 |
+| `y_direto` (principal, 148) | PR-AUC 0,0080 ± 0,0033 — lift 18,6× | PR-AUC 0,0071 ± 0,0025 — lift 16,5× | PR-AUC 0,0061 ± 0,0088 — lift **14,2×** |
+| `y_qualquer` (confundido, 188) | PR-AUC 0,0086 ± 0,0031 — lift 15,7× | PR-AUC 0,0133 ± 0,0105 — lift 24,4× | PR-AUC 0,0183 ± 0,0196 — lift **33,5×** |
 
-**Nenhum dos 6 pares testados (3 modelos × 2 rótulos) teve diferença
-estatisticamente significativa** — Wilcoxon `p` entre 0,625 e 1,000 em
-todos. **Isso não confirma nem refuta a hipótese central da tese** — é
-inconclusivo dado o poder estatístico atual: com só 5 folds e ~30 positivos
-por fold de teste, o teste de Wilcoxon (que precisa de várias diferenças
-consistentes de sinal para rejeitar a hipótese nula) simplesmente não tem
-amostra suficiente para detectar diferenças do tamanho observado entre os
-modelos. Isso deve ser reportado explicitamente no texto como uma
-**limitação do estudo nesta fase**, não escondido nem apresentado como
-"os modelos são equivalentes" (afirmação mais forte do que os dados sustentam).
+**Wilcoxon pareado (30 folds, mesmo split para os 3 modelos)**:
 
-**O que resolveria isso**: mais folds/repeats (mais poder estatístico) —
-mas isso exige mais recursos computacionais do que a máquina local usada
-até aqui permite em tempo hábil (o HAN/HGT já levou ~44min para só 5 folds
-de uma repetição). Rodar a versão definitiva desta comparação numa máquina
-com GPU ou mais RAM é uma pendência de infraestrutura, não só de código.
+| Rótulo | Par | p-valor | Veredito |
+|---|---|---|---|
+| `y_direto` | tabular vs. GNN homogênea | 0,382 | sem diferença significativa |
+| `y_direto` | tabular vs. HAN/HGT | **0,0066** | **tabular > HAN/HGT** |
+| `y_direto` | GNN homogênea vs. HAN/HGT | **0,0293** | **GNN homogênea > HAN/HGT** |
+| `y_qualquer` | tabular vs. GNN homogênea | **0,0020** | **GNN homogênea > tabular** |
+| `y_qualquer` | tabular vs. HAN/HGT | **0,0364** | **HAN/HGT > tabular** |
+| `y_qualquer` | GNN homogênea vs. HAN/HGT | 0,516 | sem diferença significativa |
+
+**Interpretação — reportado como está, sem maquiar**: no rótulo principal
+(`y_direto`), que é o que responde à pergunta de pesquisa de verdade, **o
+HAN/HGT é estatisticamente PIOR que o baseline tabular** (p=0,0066) e
+também pior que a GNN homogênea (p=0,0293). Com apenas 5 folds isso parecia
+um quase-empate (18,2× vs. 18,8×, seção anterior) — a diferença real só
+apareceu com poder estatístico adequado; o resultado de 5 folds estava
+mascarado por ruído, não estava "quase certo".
+
+**Isso não confirma a hipótese central da dissertação (seção 2)** — pelo
+contrário: nesta implementação, tratar os metapaths (sócio comum, endereço
+comum, vínculo político) via GNN heterogênea não melhora a detecção de
+sanção direta em relação a um modelo tabular simples; o modelo mais
+sofisticado (HAN/HGT) piora. Em `y_qualquer` os dois modelos de rede
+vencem o tabular — mas esse rótulo é o confundido por circularidade
+(seção 5): parte do que ele mede é literalmente "o modelo consegue achar
+sócio comum", não descoberta de sinal novo. Não deve ser citado como
+evidência a favor da hipótese sem essa qualificação.
+
+**Isto é um resultado negativo genuíno, não um erro a corrigir às
+pressas** — mas antes de escrever isso como conclusão final da
+dissertação, vale considerar (sem se apressar a "salvar" o resultado):
+hiperparâmetros/épocas de treino ainda são de primeira versão (50 épocas,
+sem busca de hiperparâmetros), o que pode estar subestimando o potencial
+do HAN/HGT; e a HIN usada aqui ainda não inclui `processos_judiciais` nem
+resolve identidade de sócio/vínculo político por nome com rigor (seção 12).
+Um resultado negativo bem fundamentado e discutido é publicável — inclusive
+mais interessante para a literatura do que uma confirmação simples da
+hipótese —, mas a discussão dessas limitações precisa constar no texto.
 
 **Bug de reprodutibilidade encontrado e corrigido nesta etapa** (achado
 justamente ao comparar resultados entre rodadas): `torch.manual_seed` era
@@ -506,19 +536,22 @@ modelo idêntica entre folds, isolando a variância que importa: a dos dados
 de treino/teste de cada fold, não a de inicialização aleatória). Tem teste
 de regressão que "suja" o RNG global de propósito antes de comparar
 (`test_gnn_fit_predict_e_reprodutivel_mesmo_com_rng_global_consumido_antes`).
-Os números acima já refletem o código corrigido; não foram re-rodados após
-o fix (custo computacional), mas a conclusão qualitativa (sem diferença
-significativa) é robusta a essa correção — é uma questão de poder
-estatístico baixo, não de viés sistemático de uma seed específica.
+A rodada de 30 folds (acima) já usa o código corrigido — a diferença
+`y_direto` (tabular/homogênea > HAN/HGT, p<0,03 nos dois casos) é robusta
+a essa correção, não é artefato de seed.
 
 **Pendente a seguir**:
-- Etapa 7.7 (sensibilidade `y_direto` vs `y_qualquer`) — já há indício forte
-  nos 3 resultados de hoje: GNN homogênea e HAN/HGT são sistematicamente
-  melhores em `y_qualquer`, nunca em `y_direto` — consistente com a
-  confusão de circularidade já registrada, mas vale formalizar a análise.
-- Decidir sobre investir em ambiente com mais recursos computacionais
-  (GPU/mais RAM) para uma rodada de 7.6 com poder estatístico real, antes
-  da etapa 8 (publicação).
+- Etapa 7.7 (sensibilidade `y_direto` vs `y_qualquer`) — agora com
+  diferença estatística confirmada (não só indício): GNN homogênea e
+  HAN/HGT são significativamente melhores em `y_qualquer`, e o HAN/HGT é
+  significativamente **pior** em `y_direto` — formalizar a discussão de por
+  que a circularidade infla um e não o outro.
+- Investigar se o resultado negativo do HAN/HGT em `y_direto` é real
+  (metapaths não ajudam mesmo) ou artefato de hiperparâmetros de primeira
+  versão (50 épocas, sem busca de hiperparâmetros, sem `processos_judiciais`)
+  — decidir com o pesquisador se vale investir em tuning antes de escrever
+  isso como conclusão final, ou reportar como está (resultado negativo
+  honesto, com essas limitações discutidas no texto).
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).
 - Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP
