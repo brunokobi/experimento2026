@@ -164,6 +164,27 @@ ja foi corrigido antes desta rodada). Pode ser resultado real, ou artefato
 de hiperparametros/epocas de primeira versao — decisao de investir em
 tuning ou reportar como esta em aberto com o pesquisador.
 
+**Resultado v2, com as 4 features novas da etapa 7.1 (117 colunas), 30
+folds, 11/08/2026, ~7h10** — ver
+`docs/resultados/comparar_baselines_30folds_v2_2026-08-11.log`:
+
+| Rotulo | Tabular | GNN homogenea | HAN/HGT |
+|---|---|---|---|
+| `y_direto` (principal) | 75,8x | **81,2x** | 29,3x |
+| `y_qualquer` | **62,3x** | 41,6x | 45,4x |
+
+Todos os 3 modelos saltaram ~4x em PR-AUC absoluto — as features novas
+(infracao ambiental, contratos publicos, beneficios fiscais) carregam
+sinal real e forte, nao ruido. **A conclusao central fica mais forte, nao
+mudou de direcao**: no rotulo principal, HAN/HGT continua estatisticamente
+PIOR que tabular e GNN homogenea, agora com `p<0,0001` nos dois casos
+(antes 0,0066/0,0293) — o efeito ficou mais claro, nao mais fraco, com
+features melhores. Mudanca qualitativa em `y_qualquer`: com as features
+novas, **nenhuma diferenca e significativa** ali (antes os modelos de rede
+venciam por causa da circularidade) — o tabular deixou de perder pra rede
+mesmo no rotulo confundido. Reforca, com evidencia mais forte, que a
+hipotese central nao se confirma nesta implementacao.
+
 **Bug de reprodutibilidade encontrado e corrigido nesta etapa**:
 `torch.manual_seed(random_state)` era chamado so na construcao da fabrica
 `make_*_fit_predict`, nao a cada fold -- rodar outro modelo torch antes no

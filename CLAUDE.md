@@ -235,15 +235,24 @@ não têm tabela populada ainda, não usáveis. Matriz: 107 → 117 colunas.
 **Os resultados de 7.3–7.6 são com a matriz antiga (107 colunas)** — não
 foram rerodados ainda com os novos sinais.
 
-**Em andamento (iniciado 11/08/2026 ~00:13)**: rerodando
-`scripts/comparar_baselines.py` (30 folds, mesmo `random_state`, agora com
-a matriz de 117 colunas) via `nohup`, PID 4931 (pode ter mudado — checar
-`pgrep -af comparar_baselines`). Log em `~/comparar_baselines_v2_30folds.log`
-(fora de `/tmp` dessa vez, pra sobreviver a reboot — a primeira tentativa
-de 30 folds foi perdida assim, ver acima). ~7h15 estimado. Quando terminar,
-mover o log pra `docs/resultados/` e atualizar esta seção + `README.md` +
-`research_plan.md` com o resultado final (comparar contra a tabela de
-14,2×/33,5× acima, pra ver se os novos sinais mudam a conclusão).
+**Feito (concluído 11/08/2026 ~07:22, ~7h10)**: log movido para
+`docs/resultados/comparar_baselines_30folds_v2_2026-08-11.log`. **Resultado
+final v2, com as features novas (117 colunas)**:
+
+| Rótulo | Tabular | GNN homogênea | HAN/HGT |
+|---|---|---|---|
+| `y_direto` (principal) | 75,8× | **81,2×** | 29,3× |
+| `y_qualquer` | **62,3×** | 41,6× | 45,4× |
+
+Todos os 3 modelos saltaram ~4× em PR-AUC absoluto — as features novas
+carregam sinal real e forte. **Conclusão central fica mais forte, mesma
+direção**: no rótulo principal, HAN/HGT continua estatisticamente PIOR
+que tabular e GNN homogênea, agora com `p<0,0001` nos dois casos (antes
+0,0066/0,0293). Em `y_qualquer`, mudança qualitativa: nenhuma diferença é
+significativa agora (antes os modelos de rede venciam por causa da
+circularidade) — o tabular deixou de perder pra rede até no rótulo
+confundido. Reforça, com evidência mais forte, que a hipótese central da
+tese não se confirma nesta implementação.
 
 ## Armadilhas já identificadas (não repetir)
 

@@ -527,6 +527,48 @@ Um resultado negativo bem fundamentado e discutido é publicável — inclusive
 mais interessante para a literatura do que uma confirmação simples da
 hipótese —, mas a discussão dessas limitações precisa constar no texto.
 
+**Resultado final v2 — com as 4 features novas (etapa 7.1, 117 colunas),
+30 folds, 11/08/2026** (~7h10 de execução; log completo em
+`docs/resultados/comparar_baselines_30folds_v2_2026-08-11.log`):
+
+| Rótulo | Tabular | GNN homogênea | HAN/HGT |
+|---|---|---|---|
+| `y_direto` (principal, 148) | PR-AUC 0,0326 ± 0,0205 — lift 75,8× | PR-AUC 0,0349 ± 0,0238 — lift **81,2×** | PR-AUC 0,0126 ± 0,0119 — lift 29,3× |
+| `y_qualquer` (confundido, 188) | PR-AUC 0,0340 ± 0,0284 — lift **62,3×** | PR-AUC 0,0227 ± 0,0126 — lift 41,6× | PR-AUC 0,0248 ± 0,0139 — lift 45,4× |
+
+**Wilcoxon pareado (30 folds, mesmo split, matriz de 117 colunas)**:
+
+| Rótulo | Par | p-valor | Veredito |
+|---|---|---|---|
+| `y_direto` | tabular vs. GNN homogênea | 0,715 | sem diferença significativa |
+| `y_direto` | tabular vs. HAN/HGT | **<0,0001** | **tabular > HAN/HGT** |
+| `y_direto` | GNN homogênea vs. HAN/HGT | **<0,0001** | **GNN homogênea > HAN/HGT** |
+| `y_qualquer` | tabular vs. GNN homogênea | 0,070 | sem diferença significativa |
+| `y_qualquer` | tabular vs. HAN/HGT | 0,205 | sem diferença significativa |
+| `y_qualquer` | GNN homogênea vs. HAN/HGT | 0,516 | sem diferença significativa |
+
+**As 4 features novas carregam sinal real e forte**: todos os 3 modelos
+saltaram ~4× em PR-AUC absoluto em relação à matriz antiga (107 colunas) —
+não é ruído, é sinal genuíno (infração ambiental, contratos públicos e
+benefícios fiscais parecem capturar algo como "porte/visibilidade
+regulatória da empresa", que correlaciona com estar sujeita a sanção).
+
+**A conclusão central fica mais forte, não mudou de direção**: no rótulo
+principal, HAN/HGT continua sendo estatisticamente PIOR que tabular e que
+GNN homogênea — e agora com `p<0,0001` nos dois casos (antes `p=0,0066` e
+`p=0,0293`), ou seja, o efeito é mais claro, não mais fraco, com features
+melhores. Tabular e GNN homogênea continuam estatisticamente empatados no
+rótulo principal (`p=0,715`, era `p=0,382`).
+
+**Mudança qualitativa em `y_qualquer`**: antes os 2 modelos de rede
+venciam o tabular ali (efeito da circularidade). Com as features novas,
+**nenhuma diferença é significativa** em `y_qualquer` — o tabular deixou
+de perder pra rede mesmo no rótulo confundido. Interpretação: dado tabular
+rico o suficiente captura tanto ou mais sinal preditivo que a estrutura de
+rede, nos dois rótulos — reforça, com evidência mais forte, que a
+hipótese central da dissertação (metapaths melhoram detecção sobre
+baseline tabular) **não se confirma** nesta implementação.
+
 **Bug de reprodutibilidade encontrado e corrigido nesta etapa** (achado
 justamente ao comparar resultados entre rodadas): `torch.manual_seed` era
 chamado uma única vez, na construção da fábrica (`make_gnn_fit_predict`/
