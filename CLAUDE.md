@@ -74,12 +74,25 @@ overflow silencioso em `int32` só visível com a distribuição real
 desigual dos municípios. Os dois têm teste de regressão.
 
 **Feito (08/08/2026, Neo4j)**: Neo4j 5 + GDS rodando num container na VPS
-pessoal (Oracle Cloud/Coolify, `/opt/coolify/apps/neo4j/`) — **acesso só via
-túnel SSH** (`ssh -L 7687:localhost:7687 -L 7474:localhost:7474 -i
-~/ssh-key-2026-07-18.key ubuntu@<vps>`), nenhuma porta exposta publicamente
-(decisão: o grafo tem dado pessoal). `src/graph/neo4j_export.py`
-(`export_hin_to_neo4j`) exporta a HIN real inteira (idempotente, via `MERGE`)
-— rodado com sucesso contra o banco de verdade (`scripts/exportar_hin_neo4j.py`).
+pessoal (Oracle Cloud/Coolify, `/opt/coolify/apps/neo4j/`) — inicialmente
+acesso só via túnel SSH, nenhuma porta pública (decisão: o grafo tem dado
+pessoal). `src/graph/neo4j_export.py` (`export_hin_to_neo4j`) exporta a
+HIN real inteira (idempotente, via `MERGE`) — rodado com sucesso contra o
+banco de verdade (`scripts/exportar_hin_neo4j.py`).
+
+**Decisão revista (11/08/2026)**: exposto publicamente por decisão
+explícita do pesquisador (aceitando o risco — protegido só por
+usuário/senha, sem 2FA). Browser via Traefik/HTTPS/Let's Encrypt em
+`https://neo4j.brunokobi.duckdns.org`; Bolt publicado direto em
+`neo4j.brunokobi.duckdns.org:7687` (porta 7687 aberta no iptables e na NSG
+da OCI — NSG precisou de ação manual do pesquisador na OCI Console, fora
+do alcance de SSH/CLI). `NEO4J_URI` do `.env` real já aponta pro domínio
+público; túnel SSH continua funcionando como alternativa mais segura.
+**Achado de infra**: Traefik desse Coolify tem tendência a ficar com
+estado travado após mudança de labels de um container (mesmo padrão de
+erro "router definido múltiplas vezes" já visto nos logs antigos de outro
+app) — `docker restart coolify-proxy` resolve; vale lembrar disso da
+próxima vez que outro serviço for adicionado/alterado atrás dele.
 
 **Feito (08/08/2026, etapa 7.1)**: `src/features/tabular.py`
 (`build_feature_matrix`) — feature engineering tabular por empresa (capital

@@ -3,15 +3,23 @@ dissertacao. Neo4j **nao treina** o modelo, so explora/valida/visualiza (ver
 docs/research_plan.md, secao 6); PyTorch Geometric continua sendo o motor de
 treino de fato.
 
-Acesso ao Neo4j da VPS pessoal e so via tunel SSH (decisao de seguranca: o
-grafo tem dado pessoal -- nome de socio, endereco -- e as portas do container
-nao sao expostas publicamente, so em ``127.0.0.1`` na VPS)::
+Acesso ao Neo4j da VPS pessoal (decisao revista em 11/08/2026, ver
+``docs/research_plan.md`` secao 6): inicialmente so via tunel SSH (grafo tem
+dado pessoal -- nome de socio, endereco); depois exposto publicamente por
+decisao explicita do pesquisador (aceitando o risco), via Traefik com
+HTTPS/Let's Encrypt:
+
+    https://neo4j.brunokobi.duckdns.org   (Browser, HTTP/HTTPS via Traefik)
+    bolt://neo4j.brunokobi.duckdns.org:7687   (Bolt, porta publicada direto)
+
+Protegido so por usuario/senha (sem 2FA/rate-limit) -- ``NEO4J_URI`` no
+``.env`` real ja aponta pro dominio publico. Alternativa mais segura, ainda
+disponivel, e voltar ao tunel SSH quando quiser (as portas do container
+tambem aceitam conexao via ``127.0.0.1`` na VPS)::
 
     ssh -L 7687:localhost:7687 -L 7474:localhost:7474 \\
         -i ~/ssh-key-2026-07-18.key ubuntu@<vps>
-
-Com o tunel aberto, ``NEO4J_URI=bolt://localhost:7687`` (default do
-``.env.example``) funciona sem configuracao adicional.
+    # com o tunel aberto, usar NEO4J_URI=bolt://localhost:7687
 
 Convencao de nomes: tipo de no ``empresa`` -> label Cypher ``Empresa``
 (PascalCase); relacao ``participa_de`` -> tipo de relacionamento

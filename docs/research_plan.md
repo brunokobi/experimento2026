@@ -167,6 +167,12 @@ nem duplicação de esforço):
   o grafo é pequeno (344k nós — ver seção 4), a imagem oficial do Neo4j é multi-arch
   (sem a armadilha de build ARM64 já vista com outras imagens naquela VPS), e ganha-se
   acesso persistente de qualquer máquina, sem depender do notebook local estar ligado.
+  **Modelo de acesso (revisado 11/08/2026)**: implantado inicialmente com acesso
+  só via túnel SSH (nenhuma porta pública, dado pessoal no grafo); depois exposto
+  publicamente por decisão explícita do pesquisador — `https://neo4j.brunokobi.duckdns.org`
+  (Browser, via Traefik/HTTPS) e `neo4j.brunokobi.duckdns.org:7687` (Bolt) — aceitando
+  o risco de ficar protegido só por usuário/senha. Túnel SSH continua disponível como
+  alternativa mais segura.
 - **PyTorch Geometric / treino da GNN / notebooks**: máquina **local**. A VPS é
   CPU-only/ARM64 (free tier) — sem GPU — e as extensões nativas do PyTorch Geometric
   (`torch-scatter`/`torch-sparse`) são historicamente instáveis em ARM. Treinar ali

@@ -85,7 +85,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 3 | Adaptar `settings.py` / `loaders.py` ao schema real (`empresas`, `socios`, `sancoes_administrativas`, `dividas_ativas`, `vinculos_politicos`) | `src/config`, `src/data/loaders.py` (`GrandeVitoriaLoader`) | ✅ primeira versao — inclui `rotulo_sancao()` (y_direto/y_qualquer, respeitando o risco de circularidade) |
 | 4 | Construir a HIN real em `HeteroData` a partir das tabelas do banco | `src/graph/build_hin.py` (`build_empresas_hin`) | ✅ primeira versao — nos `empresa`/`socio`/`endereco`/`municipio`/`vinculo_politico`; `processos_judiciais` ainda de fora (pipeline `djen` em andamento) |
 | 5 | Extracao de metapath via produto de matriz esparsa (escala para 344k empresas) | `src/graph/metapaths.py` (`SparseMetaPathExtractor`) | ✅ feito e **validado contra o banco real**: HIN completa (344.130 empresas) construida em 23,5s / 0,44 GB; os 3 metapaths de hipotese extraidos em <0,2s cada. Dois bugs reais encontrados e corrigidos so ao rodar contra dado de verdade — ver `scripts/validar_hin_real.py` e a nota abaixo |
-| 6 | Exportar a HIN para Neo4j (exploracao Cypher/GDS, figuras da dissertacao) | `src/graph/neo4j_export.py` + VPS pessoal | ✅ feito — Neo4j 5 + GDS rodando na VPS, **acesso so via tunel SSH** (nunca porta publica: o grafo tem dado pessoal); HIN real exportada (344k+ nos) |
+| 6 | Exportar a HIN para Neo4j (exploracao Cypher/GDS, figuras da dissertacao) | `src/graph/neo4j_export.py` + VPS pessoal | ✅ feito — Neo4j 5 + GDS rodando na VPS; HIN real exportada (344k+ nos). Exposto publicamente via HTTPS (11/08/2026, decisao explicita do pesquisador) — ver secao abaixo |
 | 7.1 | Feature engineering tabular | `src/features/tabular.py` (`build_feature_matrix`) | ✅ feito e **validado contra o banco real**: 344.130 empresas, 117 colunas, 0 `NaN` — inclui infração ambiental, contratos públicos, renúncia/benefício fiscal (10/08/2026) |
 | 7.2 | Harness de avaliacao (PR-AUC, Precision@k, CV estratificada repetida, seeds+Wilcoxon) | `src/evaluation/harness.py` | ✅ feito — generico para os 3 baselines (so precisa de uma funcao `fit_predict`) |
 | 7.3 | Baseline tabular (XGBoost + class weighting) | `src/models/tabular_baseline.py` | ✅ feito e **rodado contra o banco real** — primeiro resultado quantitativo: PR-AUC ~18,8× a taxa-base em `y_direto` (ver nota abaixo) |
@@ -286,20 +286,30 @@ settings.ensure_data_dirs()
 ## Neo4j (exploracao/visualizacao — VPS pessoal)
 
 Neo4j 5 + GDS rodam num container na VPS pessoal (Oracle Cloud, ja orquestrada via
-Coolify) — **acesso exclusivamente via tunel SSH**, nenhuma porta exposta publicamente
-(decisao de seguranca: o grafo carrega dado pessoal — nome de sócio, endereço). Sem o
-túnel aberto, `NEO4J_URI=bolt://localhost:7687` do `.env` não conecta em lugar nenhum.
+Coolify). **Decisao revista em 11/08/2026**: inicialmente so acesso via tunel SSH
+(nenhuma porta publica — o grafo carrega dado pessoal, nome de sócio/endereço); depois
+exposto publicamente por decisao explicita do pesquisador (aceitando o risco: protegido
+só por usuário/senha, sem 2FA/rate-limit), via Traefik com HTTPS automática
+(Let's Encrypt):
+
+- **Browser**: https://neo4j.brunokobi.duckdns.org
+- **Bolt** (driver Python): `bolt://neo4j.brunokobi.duckdns.org:7687` — já é o default
+  do `.env` real.
 
 ```bash
-# 1. Abrir o tunel (mantenha rodando em outro terminal enquanto for usar o Neo4j)
-ssh -L 7687:localhost:7687 -L 7474:localhost:7474 \
-    -i ~/ssh-key-2026-07-18.key ubuntu@<vps>
-
-# 2. Exportar a HIN real para o Neo4j (idempotente — usa MERGE por id)
+# Exportar a HIN real para o Neo4j (idempotente — usa MERGE por id)
 uv run python scripts/exportar_hin_neo4j.py
 
-# 3. Explorar via Neo4j Browser (com o tunel aberto)
-#    http://localhost:7474
+# Explorar via Neo4j Browser
+#    https://neo4j.brunokobi.duckdns.org
+```
+
+Alternativa mais segura, ainda disponível: voltar ao túnel SSH (as portas do
+container também aceitam conexão via `127.0.0.1` na VPS) e usar
+`NEO4J_URI=bolt://localhost:7687`:
+
+```bash
+ssh -L 7687:localhost:7687 -L 7474:localhost:7474 -i ~/ssh-key-2026-07-18.key ubuntu@<vps>
 ```
 
 Convenção de nomes na exportação (`src/graph/neo4j_export.py`): tipo de nó
