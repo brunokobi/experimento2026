@@ -235,6 +235,16 @@ não têm tabela populada ainda, não usáveis. Matriz: 107 → 117 colunas.
 **Os resultados de 7.3–7.6 são com a matriz antiga (107 colunas)** — não
 foram rerodados ainda com os novos sinais.
 
+**Em andamento (iniciado 11/08/2026 ~00:13)**: rerodando
+`scripts/comparar_baselines.py` (30 folds, mesmo `random_state`, agora com
+a matriz de 117 colunas) via `nohup`, PID 4931 (pode ter mudado — checar
+`pgrep -af comparar_baselines`). Log em `~/comparar_baselines_v2_30folds.log`
+(fora de `/tmp` dessa vez, pra sobreviver a reboot — a primeira tentativa
+de 30 folds foi perdida assim, ver acima). ~7h15 estimado. Quando terminar,
+mover o log pra `docs/resultados/` e atualizar esta seção + `README.md` +
+`research_plan.md` com o resultado final (comparar contra a tabela de
+14,2×/33,5× acima, pra ver se os novos sinais mudam a conclusão).
+
 ## Armadilhas já identificadas (não repetir)
 
 - **Não commitar o `.db`/`.db.gz` do dataset** — chega por download da GitHub
