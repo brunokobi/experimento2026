@@ -170,9 +170,12 @@ nem duplicação de esforço):
   **Modelo de acesso (revisado 11/08/2026)**: implantado inicialmente com acesso
   só via túnel SSH (nenhuma porta pública, dado pessoal no grafo); depois exposto
   publicamente por decisão explícita do pesquisador — `https://neo4j.brunokobi.duckdns.org`
-  (Browser, via Traefik/HTTPS) e `neo4j.brunokobi.duckdns.org:7687` (Bolt) — aceitando
-  o risco de ficar protegido só por usuário/senha. Túnel SSH continua disponível como
-  alternativa mais segura.
+  (Browser, via Traefik/HTTPS) e `bolt+s://neo4j.brunokobi.duckdns.org:7687` (Bolt,
+  com TLS próprio via política SSL do Neo4j, mesmo certificado Let's Encrypt do
+  domínio) — aceitando o risco de ficar protegido só por usuário/senha. TLS no
+  Bolt foi necessário porque o navegador bloqueia conexão Bolt sem TLS a partir de
+  uma página HTTPS ("mixed content"); `bolt://` sem TLS continua funcionando por
+  compatibilidade. Túnel SSH continua disponível como alternativa mais segura.
 - **PyTorch Geometric / treino da GNN / notebooks**: máquina **local**. A VPS é
   CPU-only/ARM64 (free tier) — sem GPU — e as extensões nativas do PyTorch Geometric
   (`torch-scatter`/`torch-sparse`) são historicamente instáveis em ARM. Treinar ali

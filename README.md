@@ -293,8 +293,11 @@ só por usuário/senha, sem 2FA/rate-limit), via Traefik com HTTPS automática
 (Let's Encrypt):
 
 - **Browser**: https://neo4j.brunokobi.duckdns.org
-- **Bolt** (driver Python): `bolt://neo4j.brunokobi.duckdns.org:7687` — já é o default
-  do `.env` real.
+- **Bolt** (driver Python): `bolt+s://neo4j.brunokobi.duckdns.org:7687` — já é o
+  default do `.env` real. Bolt tem TLS próprio (mesmo certificado Let's Encrypt do
+  domínio) — necessário porque o Browser carrega via HTTPS e o navegador bloqueia
+  Bolt sem TLS a partir de página segura ("mixed content"); `bolt://` sem TLS ainda
+  funciona por compatibilidade, mas use `bolt+s://`.
 
 ```bash
 # Exportar a HIN real para o Neo4j (idempotente — usa MERGE por id)

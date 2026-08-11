@@ -9,13 +9,19 @@ dado pessoal -- nome de socio, endereco); depois exposto publicamente por
 decisao explicita do pesquisador (aceitando o risco), via Traefik com
 HTTPS/Let's Encrypt:
 
-    https://neo4j.brunokobi.duckdns.org   (Browser, HTTP/HTTPS via Traefik)
-    bolt://neo4j.brunokobi.duckdns.org:7687   (Bolt, porta publicada direto)
+    https://neo4j.brunokobi.duckdns.org        (Browser, via Traefik)
+    bolt+s://neo4j.brunokobi.duckdns.org:7687  (Bolt com TLS -- usar este)
 
-Protegido so por usuario/senha (sem 2FA/rate-limit) -- ``NEO4J_URI`` no
-``.env`` real ja aponta pro dominio publico. Alternativa mais segura, ainda
-disponivel, e voltar ao tunel SSH quando quiser (as portas do container
-tambem aceitam conexao via ``127.0.0.1`` na VPS)::
+O Bolt tem TLS proprio (``dbms.ssl.policy.bolt``, mesmo certificado Let's
+Encrypt do dominio, extraido do ``acme.json`` do Traefik) -- necessario
+porque o Neo4j Browser carrega via HTTPS e o navegador bloqueia Bolt sem
+TLS a partir de uma pagina segura ("mixed content"). ``bolt://`` sem TLS
+ainda funciona (``server.bolt.tls_level=OPTIONAL``, compatibilidade com
+scripts existentes), mas ``bolt+s://`` e o recomendado -- ``NEO4J_URI`` no
+``.env`` real ja usa ``bolt+s://``. Protegido so por usuario/senha (sem
+2FA/rate-limit). Alternativa mais segura, ainda disponivel: voltar ao
+tunel SSH (as portas do container tambem aceitam conexao via
+``127.0.0.1`` na VPS)::
 
     ssh -L 7687:localhost:7687 -L 7474:localhost:7474 \\
         -i ~/ssh-key-2026-07-18.key ubuntu@<vps>

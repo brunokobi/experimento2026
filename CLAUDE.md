@@ -94,6 +94,15 @@ erro "router definido múltiplas vezes" já visto nos logs antigos de outro
 app) — `docker restart coolify-proxy` resolve; vale lembrar disso da
 próxima vez que outro serviço for adicionado/alterado atrás dele.
 
+**Fix do Neo4j Browser (11/08/2026)**: Browser (HTTPS) não conseguia abrir
+conexão Bolt sem TLS (`bolt://`) — navegador bloqueia por "mixed content"
+(página segura tentando conexão insegura). Resolvido configurando TLS
+próprio no Bolt (`dbms.ssl.policy.bolt`), reaproveitando o certificado
+Let's Encrypt do domínio (extraído do `acme.json` do Traefik, convertido
+pra PEM, montado em `/ssl/bolt` no container). `server.bolt.tls_level=OPTIONAL`
+mantém `bolt://` funcionando por compatibilidade; `bolt+s://` é o
+recomendado agora — `NEO4J_URI` do `.env` real já usa `bolt+s://`.
+
 **Feito (08/08/2026, etapa 7.1)**: `src/features/tabular.py`
 (`build_feature_matrix`) — feature engineering tabular por empresa (capital
 social, sócios, dívida ativa agregada, vínculo político, porte/regime/CNAE
