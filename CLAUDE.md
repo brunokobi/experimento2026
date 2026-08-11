@@ -202,6 +202,17 @@ vs `y_qualquer`, agora com diferença estatística confirmada, não só
 indício) e depois etapa 8 (publicação) com esse resultado negativo
 discutido no texto.
 
+**Feito (10/08/2026, novas features)**: `build_feature_matrix` (7.1) ganhou
+4 cruzamentos novos — infração ambiental (IBAMA/IEMA), contratos com
+órgãos públicos, renúncia fiscal federal, habilitação a benefício fiscal,
+e imune/isento de IRPJ (esse último com ressalva de interpretação:
+colinear com elegibilidade a CEPIM, não é vazamento). Identificados a
+partir dos filtros do dashboard do outro repo, conferidos um a um contra o
+banco antes de implementar — 2 candidatos (`contratos_pncp`, `marcas_inpi`)
+não têm tabela populada ainda, não usáveis. Matriz: 107 → 117 colunas.
+**Os resultados de 7.3–7.6 são com a matriz antiga (107 colunas)** — não
+foram rerodados ainda com os novos sinais.
+
 ## Armadilhas já identificadas (não repetir)
 
 - **Não commitar o `.db`/`.db.gz` do dataset** — chega por download da GitHub

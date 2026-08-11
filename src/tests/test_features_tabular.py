@@ -61,3 +61,38 @@ def test_nenhuma_coluna_de_vazamento_de_sancao(grande_vitoria_loader: GrandeVito
     features = build_feature_matrix(grande_vitoria_loader)
     colunas_suspeitas = {"tipo", "match_confianca", "data_fim", "valor_multa", "orgao_sancionador"}
     assert colunas_suspeitas.isdisjoint(features.columns)
+
+
+def test_infracao_ambiental_e_contrato_governamental_so_para_emp5(
+    grande_vitoria_loader: GrandeVitoriaLoader,
+) -> None:
+    features = build_feature_matrix(grande_vitoria_loader)
+
+    assert features.loc["55555555000105", "tem_infracao_ambiental"]
+    assert features.loc["55555555000105", "num_infracoes_ambientais"] == 2
+    assert features.loc["55555555000105", "valor_multas_ambientais_log1p"] == np.log1p(1500.0)
+
+    assert features.loc["55555555000105", "tem_contrato_governamental"]
+    assert features.loc["55555555000105", "num_contratos_governamentais"] == 1
+    assert features.loc["55555555000105", "valor_contratos_governamentais_log1p"] == np.log1p(20000.0)
+
+    for cnpj in ["11111111000101", "22222222000102", "33333333000103", "44444444000104"]:
+        assert not features.loc[cnpj, "tem_infracao_ambiental"]
+        assert not features.loc[cnpj, "tem_contrato_governamental"]
+
+
+def test_beneficios_fiscais_por_tipo(grande_vitoria_loader: GrandeVitoriaLoader) -> None:
+    features = build_feature_matrix(grande_vitoria_loader)
+
+    # emp_5: renuncia fiscal (valor 300.0)
+    assert features.loc["55555555000105", "tem_renuncia_fiscal"]
+    assert features.loc["55555555000105", "valor_renuncia_fiscal_log1p"] == np.log1p(300.0)
+    assert not features.loc["11111111000101", "tem_renuncia_fiscal"]
+
+    # emp_1: habilitado a beneficio fiscal
+    assert features.loc["11111111000101", "tem_beneficio_fiscal_habilitado"]
+    assert not features.loc["22222222000102", "tem_beneficio_fiscal_habilitado"]
+
+    # emp_2: imune/isento de IRPJ
+    assert features.loc["22222222000102", "tem_imune_isento_irpj"]
+    assert not features.loc["11111111000101", "tem_imune_isento_irpj"]

@@ -118,6 +118,35 @@ class GrandeVitoriaLoader:
         """Vinculos politicos (TSE) por empresa -- sinal/no auxiliar, nao e rotulo."""
         return self._sqlite.read_table("vinculos_politicos")
 
+    def infracoes_ambientais(self) -> pd.DataFrame:
+        """Infracoes ambientais (IBAMA/IEMA) -- sinal auxiliar, match direto por
+        CNPJ (confirmado: 100% ``match_confianca='direto'`` no banco real, nao
+        e rotulo)."""
+        return self._sqlite.read_table("infracoes_ambientais")
+
+    def contratos_governamentais(self) -> pd.DataFrame:
+        """Contratos com orgaos publicos -- sinal auxiliar (nao e rotulo).
+        Sem coluna ``match_confianca`` no schema (fonte traz CNPJ direto)."""
+        return self._sqlite.read_table("contratos_governamentais")
+
+    def beneficios_fiscais(self, tipo: str | None = None) -> pd.DataFrame:
+        """Beneficios/renuncias fiscais federais -- sinal auxiliar (nao e rotulo).
+
+        Args:
+            tipo: se informado, filtra por ``'IMUNE_ISENTO'`` (imune/isenta de
+                IRPJ -- majoritariamente entidades sem fins lucrativos, mesma
+                populacao elegivel a sancao CEPIM: usar como feature e
+                legitimo, mas capta "elegibilidade a CEPIM", nao
+                necessariamente risco em si), ``'RENUNCIA'`` (renuncia fiscal
+                federal, tem valor monetario) ou ``'HABILITADO'`` (habilitada
+                a regime de beneficio fiscal, ex.: Reidi/Recap/Reporto).
+                ``None`` retorna todos os tipos.
+        """
+        df = self._sqlite.read_table("beneficios_fiscais")
+        if tipo is not None:
+            df = df[df["tipo"] == tipo]
+        return df
+
     def sancoes_administrativas(self, match_confianca: str | None = None) -> pd.DataFrame:
         """Sancoes administrativas (CEIS/CNEP/CEPIM/TCEES/TRABALHO_ESCRAVO).
 

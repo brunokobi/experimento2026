@@ -86,7 +86,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 4 | Construir a HIN real em `HeteroData` a partir das tabelas do banco | `src/graph/build_hin.py` (`build_empresas_hin`) | ✅ primeira versao — nos `empresa`/`socio`/`endereco`/`municipio`/`vinculo_politico`; `processos_judiciais` ainda de fora (pipeline `djen` em andamento) |
 | 5 | Extracao de metapath via produto de matriz esparsa (escala para 344k empresas) | `src/graph/metapaths.py` (`SparseMetaPathExtractor`) | ✅ feito e **validado contra o banco real**: HIN completa (344.130 empresas) construida em 23,5s / 0,44 GB; os 3 metapaths de hipotese extraidos em <0,2s cada. Dois bugs reais encontrados e corrigidos so ao rodar contra dado de verdade — ver `scripts/validar_hin_real.py` e a nota abaixo |
 | 6 | Exportar a HIN para Neo4j (exploracao Cypher/GDS, figuras da dissertacao) | `src/graph/neo4j_export.py` + VPS pessoal | ✅ feito — Neo4j 5 + GDS rodando na VPS, **acesso so via tunel SSH** (nunca porta publica: o grafo tem dado pessoal); HIN real exportada (344k+ nos) |
-| 7.1 | Feature engineering tabular | `src/features/tabular.py` (`build_feature_matrix`) | ✅ feito e **validado contra o banco real**: 344.130 empresas, 5,5s, 107 colunas, 0 `NaN` |
+| 7.1 | Feature engineering tabular | `src/features/tabular.py` (`build_feature_matrix`) | ✅ feito e **validado contra o banco real**: 344.130 empresas, 117 colunas, 0 `NaN` — inclui infração ambiental, contratos públicos, renúncia/benefício fiscal (10/08/2026) |
 | 7.2 | Harness de avaliacao (PR-AUC, Precision@k, CV estratificada repetida, seeds+Wilcoxon) | `src/evaluation/harness.py` | ✅ feito — generico para os 3 baselines (so precisa de uma funcao `fit_predict`) |
 | 7.3 | Baseline tabular (XGBoost + class weighting) | `src/models/tabular_baseline.py` | ✅ feito e **rodado contra o banco real** — primeiro resultado quantitativo: PR-AUC ~18,8× a taxa-base em `y_direto` (ver nota abaixo) |
 | 7.4 | Baseline GNN homogenea (via `SparseMetaPathExtractor`) | `src/models/gnn_homogeneous.py` | ✅ feito e rodado — **pior que o tabular em `y_direto`** (13,0x vs 18,8x de lift), ver nota abaixo |
@@ -173,6 +173,17 @@ mesmo `random_state`. Corrigido movendo a chamada pra dentro do
 da variancia dos dados). Tem teste de regressao que "suja" o RNG global de
 proposito antes de comparar. Ver `src/models/gnn_homogeneous.py` e
 `src/models/han_hgt.py`.
+
+**Features novas adicionadas (10/08/2026)**: infração ambiental (IBAMA/IEMA,
+match direto por CNPJ), contratos com órgãos públicos, renúncia fiscal
+federal e habilitação a benefício fiscal, e imune/isento de IRPJ — 4
+cruzamentos válidos identificados a partir do dashboard do dataset,
+conferidos linha a linha contra o banco antes de implementar (2 candidatos
+adicionais, contrato via PNCP e marca registrada no INPI, ainda não têm
+tabela populada no banco — não usáveis agora). Matriz foi de 107 para 117
+colunas. **Atenção**: os resultados dos baselines (7.3–7.6) abaixo foram
+rodados com a matriz de 107 colunas, antes dessa adição — para refletir os
+novos sinais nos números, é preciso rerodar.
 
 **Dois bugs reais encontrados só ao validar contra o banco de verdade** (nenhum
 aparecia no dado sintético dos testes — registrado para não repetir):

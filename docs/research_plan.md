@@ -540,6 +540,26 @@ A rodada de 30 folds (acima) já usa o código corrigido — a diferença
 `y_direto` (tabular/homogênea > HAN/HGT, p<0,03 nos dois casos) é robusta
 a essa correção, não é artefato de seed.
 
+**Feito também (10/08/2026 — novos cruzamentos na feature engineering)**:
+a partir dos filtros disponíveis no dashboard do repo do dataset, foram
+identificados e conferidos um a um contra o banco real 4 cruzamentos
+válidos ainda não usados: infração ambiental (`infracoes_ambientais`,
+IBAMA/IEMA, 100% match direto por CNPJ, 639 empresas), contratos com
+órgãos públicos (`contratos_governamentais`, 282 empresas), renúncia
+fiscal federal (`beneficios_fiscais` tipo `RENUNCIA`, 1.067 empresas),
+habilitação a benefício fiscal (tipo `HABILITADO`, 194 empresas) e
+imune/isento de IRPJ (tipo `IMUNE_ISENTO`, 3.991 empresas — com ressalva:
+colinear com elegibilidade a CEPIM, ver nota de interpretação em
+`src/features/tabular.py`, não é vazamento). Dois outros candidatos do
+dashboard (contrato via PNCP, marca registrada no INPI) não têm tabela
+populada no banco ainda — não usáveis nesta fase. "Cadastro de
+Empregadores (MTE)" e "CEPIM" do dashboard **já eram** o próprio rótulo
+(`tipo='TRABALHO_ESCRAVO'`/`'CEPIM'` dentro de `sancoes_administrativas`),
+não cruzamentos novos. Matriz de features: 107 → 117 colunas, validada
+contra o banco real (0 `NaN`). **Os resultados de 7.3–7.6 (acima) usam a
+matriz antiga (107 colunas)** — precisam ser rerodados para refletir os
+novos sinais.
+
 **Pendente a seguir**:
 - Etapa 7.7 (sensibilidade `y_direto` vs `y_qualquer`) — agora com
   diferença estatística confirmada (não só indício): GNN homogênea e

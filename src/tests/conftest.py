@@ -76,6 +76,15 @@ CREATE TABLE dividas_ativas (
 CREATE TABLE vinculos_politicos (
     id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, nome_socio_vinculado TEXT
 );
+CREATE TABLE infracoes_ambientais (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, valor_multa REAL
+);
+CREATE TABLE contratos_governamentais (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, valor_final REAL
+);
+CREATE TABLE beneficios_fiscais (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, tipo TEXT, valor REAL
+);
 """
 
 # 5 empresas: emp_1 e emp_2 compartilham o socio "soc_A" (metapath socio
@@ -102,6 +111,16 @@ _SANCOES = [
 ]
 _DIVIDAS = [("33333333000103", 500.0), ("33333333000103", 250.0)]
 _VINCULOS = [("44444444000104", "BELTRANO SOUZA")]
+# emp_5 (antes "limpa") ganha infracao ambiental + contrato governamental +
+# renuncia fiscal, pra testar os 3 novos agregados numa empresa sem nenhum
+# outro sinal; emp_1 ganha beneficio HABILITADO, emp_2 ganha IMUNE_ISENTO.
+_INFRACOES = [("55555555000105", 1000.0), ("55555555000105", 500.0)]
+_CONTRATOS = [("55555555000105", 20000.0)]
+_BENEFICIOS = [
+    ("55555555000105", "RENUNCIA", 300.0),
+    ("11111111000101", "HABILITADO", None),
+    ("22222222000102", "IMUNE_ISENTO", None),
+]
 
 
 @fixture
@@ -123,6 +142,15 @@ def grande_vitoria_loader(tmp_path: Path) -> GrandeVitoriaLoader:
         conn.executemany("INSERT INTO dividas_ativas (cnpj_empresa, valor) VALUES (?, ?)", _DIVIDAS)
         conn.executemany(
             "INSERT INTO vinculos_politicos (cnpj_empresa, nome_socio_vinculado) VALUES (?, ?)", _VINCULOS
+        )
+        conn.executemany(
+            "INSERT INTO infracoes_ambientais (cnpj_empresa, valor_multa) VALUES (?, ?)", _INFRACOES
+        )
+        conn.executemany(
+            "INSERT INTO contratos_governamentais (cnpj_empresa, valor_final) VALUES (?, ?)", _CONTRATOS
+        )
+        conn.executemany(
+            "INSERT INTO beneficios_fiscais (cnpj_empresa, tipo, valor) VALUES (?, ?, ?)", _BENEFICIOS
         )
         conn.commit()
     finally:
