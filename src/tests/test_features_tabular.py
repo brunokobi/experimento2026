@@ -6,6 +6,7 @@ travar o achado de circularidade do rotulo (sancao via socio comum).
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from src.data.loaders import GrandeVitoriaLoader
 from src.features.tabular import build_feature_matrix
@@ -76,9 +77,19 @@ def test_infracao_ambiental_e_contrato_governamental_so_para_emp5(
     assert features.loc["55555555000105", "num_contratos_governamentais"] == 1
     assert features.loc["55555555000105", "valor_contratos_governamentais_log1p"] == np.log1p(20000.0)
 
-    for cnpj in ["11111111000101", "22222222000102", "33333333000103", "44444444000104"]:
+    for cnpj in ["11111111000101", "22222222000102", "33333333000103"]:
         assert not features.loc[cnpj, "tem_infracao_ambiental"]
         assert not features.loc[cnpj, "tem_contrato_governamental"]
+
+    # emp_4 tem contrato via Dispensa de Licitacao, sem sobrepreco
+    assert features.loc["44444444000104", "tem_contrato_governamental"]
+    assert features.loc["44444444000104", "tem_contrato_sem_competicao"]
+    assert features.loc["44444444000104", "sobrepreco_contrato_max"] == 0.0
+    for cnpj in ["11111111000101", "22222222000102", "33333333000103", "55555555000105"]:
+        assert not features.loc[cnpj, "tem_contrato_sem_competicao"]
+
+    # emp_5 tem sobrepreco de contrato (15000 -> 20000)
+    assert features.loc["55555555000105", "sobrepreco_contrato_max"] == pytest.approx((20000.0 - 15000.0) / 15000.0)
 
 
 def test_beneficios_fiscais_por_tipo(grande_vitoria_loader: GrandeVitoriaLoader) -> None:
@@ -96,3 +107,47 @@ def test_beneficios_fiscais_por_tipo(grande_vitoria_loader: GrandeVitoriaLoader)
     # emp_2: imune/isento de IRPJ
     assert features.loc["22222222000102", "tem_imune_isento_irpj"]
     assert not features.loc["11111111000101", "tem_imune_isento_irpj"]
+
+
+def test_grau_do_socio_conta_outras_empresas_do_socio_mais_conectado(
+    grande_vitoria_loader: GrandeVitoriaLoader,
+) -> None:
+    features = build_feature_matrix(grande_vitoria_loader)
+
+    # emp_1 e emp_2 compartilham "FULANO DE TAL" -- 1 outra empresa cada
+    assert features.loc["11111111000101", "grau_do_socio"] == 1
+    assert features.loc["22222222000102", "grau_do_socio"] == 1
+    # emp_3 (CICLANO, so nela) e emp_5 (sem socio) -- grau 0
+    assert features.loc["33333333000103", "grau_do_socio"] == 0
+    assert features.loc["55555555000105", "grau_do_socio"] == 0
+
+
+def test_grau_metapath_bate_com_a_estrutura_da_hin(grande_vitoria_loader: GrandeVitoriaLoader) -> None:
+    features = build_feature_matrix(grande_vitoria_loader)
+
+    # emp_1 e emp_2: socio comum -> grau_socio_comum = 1 pra cada um dos dois
+    assert features.loc["11111111000101", "grau_socio_comum"] == 1
+    assert features.loc["22222222000102", "grau_socio_comum"] == 1
+    assert features.loc["33333333000103", "grau_socio_comum"] == 0
+
+    # emp_1 e emp_3: mesmo endereco -> grau_endereco_comum = 1 pra cada
+    assert features.loc["11111111000101", "grau_endereco_comum"] == 1
+    assert features.loc["33333333000103", "grau_endereco_comum"] == 1
+    assert features.loc["22222222000102", "grau_endereco_comum"] == 0
+
+    # nenhuma empresa compartilha vinculo politico com outra no fixture
+    assert (features["grau_vinculo_politico_comum"] == 0).all()
+
+
+def test_idade_empresa_usa_registro_jucees_ou_sentinela_menos_um(
+    grande_vitoria_loader: GrandeVitoriaLoader,
+) -> None:
+    features = build_feature_matrix(grande_vitoria_loader)
+
+    # emp_1: constituida em 2000 -> bem mais que 20 anos antes da referencia (31/07/2026)
+    assert features.loc["11111111000101", "idade_empresa_anos"] > 20
+    # emp_3: constituida em 01/06/2026 -> menos de 1 ano antes da referencia
+    assert 0 < features.loc["33333333000103", "idade_empresa_anos"] < 1
+    # emp_2/emp_4/emp_5: sem registro na JUCEES -> sentinela -1 (nao 0)
+    for cnpj in ["22222222000102", "44444444000104", "55555555000105"]:
+        assert features.loc[cnpj, "idade_empresa_anos"] == -1

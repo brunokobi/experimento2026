@@ -80,10 +80,14 @@ CREATE TABLE infracoes_ambientais (
     id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, valor_multa REAL
 );
 CREATE TABLE contratos_governamentais (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, valor_final REAL
+    id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, valor_inicial REAL,
+    valor_final REAL, modalidade_compra TEXT
 );
 CREATE TABLE beneficios_fiscais (
     id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, tipo TEXT, valor REAL
+);
+CREATE TABLE registros_jucees (
+    cnpj_empresa TEXT PRIMARY KEY, data_constituicao TEXT
 );
 """
 
@@ -115,7 +119,18 @@ _VINCULOS = [("44444444000104", "BELTRANO SOUZA")]
 # renuncia fiscal, pra testar os 3 novos agregados numa empresa sem nenhum
 # outro sinal; emp_1 ganha beneficio HABILITADO, emp_2 ganha IMUNE_ISENTO.
 _INFRACOES = [("55555555000105", 1000.0), ("55555555000105", 500.0)]
-_CONTRATOS = [("55555555000105", 20000.0)]
+# emp_5: contrato com sobrepreco (15000 -> 20000, modalidade competitiva);
+# emp_4: contrato sem sobrepreco, mas via Dispensa de Licitacao (sem competicao).
+_CONTRATOS = [
+    ("55555555000105", 15000.0, 20000.0, "Pregão"),
+    ("44444444000104", 1000.0, 1000.0, "Dispensa de Licitação"),
+]
+# emp_1: constituida ha muito tempo; emp_3: constituida pouco antes da
+# referencia (empresa "jovem"); emp_2/emp_4/emp_5: sem registro (-> -1).
+_JUCEES = [
+    ("11111111000101", "2000-01-01T00:00:00"),
+    ("33333333000103", "2026-06-01T00:00:00"),
+]
 _BENEFICIOS = [
     ("55555555000105", "RENUNCIA", 300.0),
     ("11111111000101", "HABILITADO", None),
@@ -147,10 +162,15 @@ def grande_vitoria_loader(tmp_path: Path) -> GrandeVitoriaLoader:
             "INSERT INTO infracoes_ambientais (cnpj_empresa, valor_multa) VALUES (?, ?)", _INFRACOES
         )
         conn.executemany(
-            "INSERT INTO contratos_governamentais (cnpj_empresa, valor_final) VALUES (?, ?)", _CONTRATOS
+            "INSERT INTO contratos_governamentais "
+            "(cnpj_empresa, valor_inicial, valor_final, modalidade_compra) VALUES (?, ?, ?, ?)",
+            _CONTRATOS,
         )
         conn.executemany(
             "INSERT INTO beneficios_fiscais (cnpj_empresa, tipo, valor) VALUES (?, ?, ?)", _BENEFICIOS
+        )
+        conn.executemany(
+            "INSERT INTO registros_jucees (cnpj_empresa, data_constituicao) VALUES (?, ?)", _JUCEES
         )
         conn.commit()
     finally:

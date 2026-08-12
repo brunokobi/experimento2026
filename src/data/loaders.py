@@ -129,6 +129,11 @@ class GrandeVitoriaLoader:
         Sem coluna ``match_confianca`` no schema (fonte traz CNPJ direto)."""
         return self._sqlite.read_table("contratos_governamentais")
 
+    def registros_jucees(self) -> pd.DataFrame:
+        """Metadados de constituicao (JUCEES) -- sinal auxiliar (nao e rotulo).
+        ``data_constituicao`` cobre 100% das 88.349 linhas no banco real."""
+        return self._sqlite.read_table("registros_jucees")
+
     def beneficios_fiscais(self, tipo: str | None = None) -> pd.DataFrame:
         """Beneficios/renuncias fiscais federais -- sinal auxiliar (nao e rotulo).
 
