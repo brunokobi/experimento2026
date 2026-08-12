@@ -271,17 +271,18 @@ compras públicas — cobertura baixa, só 5 empresas), `idade_empresa_anos`
 `y_direto` 0,0242 (lift ~56×, era 18,8×) / `y_qualquer` 0,0218 (lift ~40×,
 era 15,5×). Ganho real confirmado — vale rodar o experimento completo.
 
-**Em andamento (iniciado 11/08/2026, ver horário no log)**: rodando
-`scripts/comparar_baselines.py` (30 folds, 124 colunas) via `nohup`, log
-fora de `/tmp` (mesma lição da rodada anterior perdida por reboot) —
-checar `pgrep -af comparar_baselines` pro PID atual e o caminho do log
-mais recente em `~/`. ~7h estimado. Quando terminar, mover o log pra
-`docs/resultados/` e atualizar esta seção + `README.md` +
-`research_plan.md` com o resultado final (comparar contra a tabela de
-81,2×/62,3× acima — essas features de grafo explícitas podem inclusive
-mudar a conclusão sobre o HAN/HGT, já que a literatura sugere que dar
-sinal de grafo explícito ao tabular pode fechar (ou nao) a lacuna que a
-GNN deveria capturar implicitamente).
+**Em andamento (iniciado 11/08/2026 ~22:46)**: rodando
+`scripts/comparar_baselines.py` (30 folds, 124 colunas) via `nohup`, PID
+12095 (pode ter mudado — checar `pgrep -af comparar_baselines`), log em
+`~/comparar_baselines_v3_30folds.log` (fora de `/tmp`, mesma lição da
+rodada anterior perdida por reboot). ~7h estimado (deve terminar por
+volta das 05h30-06h00 do dia seguinte). Sem notificação automática. Quando
+terminar, mover o log pra `docs/resultados/` e atualizar esta seção +
+`README.md` + `research_plan.md` com o resultado final (comparar contra a
+tabela de 81,2×/62,3× acima — essas features de grafo explícitas podem
+inclusive mudar a conclusão sobre o HAN/HGT, já que a literatura sugere
+que dar sinal de grafo explícito ao tabular pode fechar, ou não, a lacuna
+que a GNN deveria capturar implicitamente).
 
 ## Armadilhas já identificadas (não repetir)
 
