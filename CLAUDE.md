@@ -254,6 +254,35 @@ circularidade) — o tabular deixou de perder pra rede até no rótulo
 confundido. Reforça, com evidência mais forte, que a hipótese central da
 tese não se confirma nesta implementação.
 
+**Feito (11/08/2026, segunda rodada de features — com base em
+literatura)**: pesquisei antes de implementar (não "achismo") — literatura
+de grafo-features-vs-GNN em fraude, risco de corrupção em compras públicas
+(Fazekas & Tóth), detecção de shell company (Moody's). Ver referências
+completas em `docs/research_plan.md`, seção 7. 5 features novas:
+`grau_socio_comum`/`grau_endereco_comum`/`grau_vinculo_politico_comum`
+(grau explícito de cada empresa em cada metapath, direto da HIN),
+`grau_do_socio` (concentração do sócio mais conectado),
+`tem_contrato_sem_competicao`/`sobrepreco_contrato_max` (red flags de
+compras públicas — cobertura baixa, só 5 empresas), `idade_empresa_anos`
+(via `registros_jucees`, 25,7% de cobertura, sentinela `-1`). Matriz:
+117 → 124 colunas, validada contra o banco real (0 `NaN`).
+
+**Teste rápido antes de comprometer ~7h**: só o tabular, 50 folds — PR-AUC
+`y_direto` 0,0242 (lift ~56×, era 18,8×) / `y_qualquer` 0,0218 (lift ~40×,
+era 15,5×). Ganho real confirmado — vale rodar o experimento completo.
+
+**Em andamento (iniciado 11/08/2026, ver horário no log)**: rodando
+`scripts/comparar_baselines.py` (30 folds, 124 colunas) via `nohup`, log
+fora de `/tmp` (mesma lição da rodada anterior perdida por reboot) —
+checar `pgrep -af comparar_baselines` pro PID atual e o caminho do log
+mais recente em `~/`. ~7h estimado. Quando terminar, mover o log pra
+`docs/resultados/` e atualizar esta seção + `README.md` +
+`research_plan.md` com o resultado final (comparar contra a tabela de
+81,2×/62,3× acima — essas features de grafo explícitas podem inclusive
+mudar a conclusão sobre o HAN/HGT, já que a literatura sugere que dar
+sinal de grafo explícito ao tabular pode fechar (ou nao) a lacuna que a
+GNN deveria capturar implicitamente).
+
 ## Armadilhas já identificadas (não repetir)
 
 - **Não commitar o `.db`/`.db.gz` do dataset** — chega por download da GitHub

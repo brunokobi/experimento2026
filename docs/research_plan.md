@@ -611,6 +611,53 @@ contra o banco real (0 `NaN`). **Os resultados de 7.3–7.6 (acima) usam a
 matriz antiga (107 colunas)** — precisam ser rerodados para refletir os
 novos sinais.
 
+**Feito também (11/08/2026 — segunda rodada de features, com base em
+literatura)**: antes de implementar, pesquisei literatura sobre o que
+costuma carregar sinal em tarefas parecidas (não "achismo"):
+
+- **Graph features vs. GNN em detecção de fraude**: features de grafo
+  explícitas (grau, centralidade, PageRank) alimentando gradient boosting
+  costumam igualar ou superar GNN treinada de ponta a ponta em tarefas como
+  essa — GNN "brilha" mais em detectar padrões estruturais complexos (anéis
+  de fraude), não sinal direto de proximidade. Referências: [Kumo.ai — XGBoost
+  vs GNN for Fraud Detection](https://kumo.ai/resources/learn/fraud-detection-xgboost-vs-gnn/);
+  [Graph Based Feature Engineering for Gradient Boosted Fraud Detection in
+  Financial Networks](https://www.researchgate.net/publication/402543692_Graph_Based_Feature_Engineering_for_Gradient_Boosted_Fraud_Detection_in_Financial_Networks).
+  Isso motivou testar se dar à GNN (implicitamente) e ao tabular
+  (explicitamente) o mesmo tipo de sinal estrutural muda a comparação —
+  ver `y_direto`/`grau_socio_comum` etc. abaixo.
+- **Risco de corrupção em compras públicas**: modalidade de contratação sem
+  concorrência (dispensa/inexigibilidade de licitação) e sobrepreço
+  contratual (divergência entre valor inicial e final) são red flags
+  clássicos e amplamente adotados na literatura como proxy objetivo de
+  corrupção. Referências: [Fazekas & Tóth, "Uncovering High-Level
+  Corruption", Cambridge](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/8A1742693965AA92BE4D2BA53EADFDF0/S0007123417000461a.pdf/uncovering_highlevel_corruption_crossnational_objective_corruption_risk_indicators_using_public_procurement_data.pdf);
+  [IMF — A Method to Assess Corruption Risks in Public Procurement](https://www.imf.org/-/media/Files/Publications/WP/2022/English/wpiea2022094-print-pdf.ashx).
+- **Detecção de shell company**: idade da empresa (formation date) e
+  concentração de poucos sócios/diretores controlando muitas empresas são
+  indicadores citados na literatura de KYC/AML. Referência: [Moody's — 7
+  Indicators of Shell Company Risk](https://www.moodys.com/web/en/us/kyc/resources/insights/seven-indicators-shell-company-risk.html).
+
+5 features novas implementadas com base nisso: `grau_socio_comum` /
+`grau_endereco_comum` / `grau_vinculo_politico_comum` (grau de cada empresa
+em cada metapath de hipótese, via `SparseMetaPathExtractor` — feature de
+grafo explícita); `grau_do_socio` (concentração do sócio mais conectado);
+`tem_contrato_sem_competicao` / `sobrepreco_contrato_max` (red flags de
+compras públicas — cobertura baixa no banco real: só 5 empresas têm
+modalidade sem competição registrada, não esperar impacto grande so dessas
+duas); `idade_empresa_anos` (via `registros_jucees.data_constituicao`,
+25,7% de cobertura, sentinela `-1` para empresa sem registro). Matriz:
+117 → 124 colunas, validada contra o banco real (0 `NaN`).
+
+**Teste rápido antes do experimento completo (11/08/2026)**: rodei só o
+baseline tabular (50 folds) com a matriz de 124 colunas pra confirmar que
+valia investir no rerun completo (~7h) antes de comprometer o tempo.
+Resultado: PR-AUC `y_direto` 0,0242 (lift **~56×**, era 18,8× com a matriz
+de 107 colunas) / `y_qualquer` 0,0218 (lift **~40×**, era 15,5×) — ganho
+real e grande, confirmado antes de escalar. Comparação completa (3
+modelos, 30 folds, com as 124 colunas) em andamento — ver `CLAUDE.md` para
+o estado.
+
 **Pendente a seguir**:
 - Etapa 7.7 (sensibilidade `y_direto` vs `y_qualquer`) — agora com
   diferença estatística confirmada (não só indício): GNN homogênea e
