@@ -271,18 +271,44 @@ compras públicas — cobertura baixa, só 5 empresas), `idade_empresa_anos`
 `y_direto` 0,0242 (lift ~56×, era 18,8×) / `y_qualquer` 0,0218 (lift ~40×,
 era 15,5×). Ganho real confirmado — vale rodar o experimento completo.
 
-**Em andamento (iniciado 11/08/2026 ~22:46)**: rodando
-`scripts/comparar_baselines.py` (30 folds, 124 colunas) via `nohup`, PID
-12095 (pode ter mudado — checar `pgrep -af comparar_baselines`), log em
-`~/comparar_baselines_v3_30folds.log` (fora de `/tmp`, mesma lição da
-rodada anterior perdida por reboot). ~7h estimado (deve terminar por
-volta das 05h30-06h00 do dia seguinte). Sem notificação automática. Quando
-terminar, mover o log pra `docs/resultados/` e atualizar esta seção +
-`README.md` + `research_plan.md` com o resultado final (comparar contra a
-tabela de 81,2×/62,3× acima — essas features de grafo explícitas podem
-inclusive mudar a conclusão sobre o HAN/HGT, já que a literatura sugere
-que dar sinal de grafo explícito ao tabular pode fechar, ou não, a lacuna
-que a GNN deveria capturar implicitamente).
+**Interrompido de novo (3º reboot, entre 11/08 ~22:46 e 12/08 ~06:51 —
+uptime resetado pra "2 min" quando checado)**: a rodada v3 acima morreu no
+meio (chegou a completar 4 das 6 etapas: `tabular`/`gnn_homogenea` em
+`y_direto`, `tabular` em `y_qualquer`, mais uma métrica agregada de
+`han_hgt`/`y_direto` — sem dado por fold reaproveitável pra Wilcoxon).
+Terceira vez que um `nohup` de longa duração é matado por reboot
+imprevisto desta máquina local (WSL2) — as duas primeiras vezes perderam
+o progresso inteiro.
+
+**Checkpoint adicionado (12/08/2026) antes de relançar**:
+`scripts/comparar_baselines.py` agora salva cada combinação modelo×rótulo
+(6 no total) em `~/checkpoints_comparar_baselines/<nome>_ncols<N>.csv` assim
+que termina — se rodar de novo, pula direto as etapas já concluídas em vez
+de recomputar do zero (só perde a etapa que estava rodando no momento exato
+da interrupção). Nome do arquivo inclui a contagem de colunas da matriz de
+features pra não reusar por engano um checkpoint de uma versão antiga (não
+detecta mudança de conteúdo com a MESMA contagem de colunas — limitação
+conhecida, aceitável pro uso atual). Também corrigido nessa mexida:
+`main()` construía a HIN (`builder`) e depois `build_feature_matrix`
+reconstruía outra por dentro (não recebia `builder=builder`) — agora passa
+a HIN já construída, evitando custo duplicado (~8s) a cada relançamento.
+
+**Relançado (12/08/2026 ~06:57)**: `nohup uv run python
+scripts/comparar_baselines.py > ~/comparar_baselines_v3_30folds_v2.log 2>&1
+& disown`, PID 2021 (pode ter mudado — checar `pgrep -af
+comparar_baselines`), log em `~/comparar_baselines_v3_30folds_v2.log`
+(fora de `/tmp`). Sem checkpoint prévio reaproveitável (diretório de
+checkpoint não existia ainda) — rodando as 6 etapas do zero, mas agora
+protegido contra um 4º reboot: cada etapa concluída sobrevive mesmo que o
+processo morra depois. ~7h estimado. Sem notificação automática. Quando
+terminar (ou se for interrompido de novo — só relançar o mesmo comando,
+vai pular o que já tiver checkpoint), mover o log pra `docs/resultados/`,
+apagar `~/checkpoints_comparar_baselines/` (não faz sentido versionar) e
+atualizar esta seção + `README.md` + `research_plan.md` com o resultado
+final (comparar contra a tabela de 81,2×/62,3× acima — essas features de
+grafo explícitas podem inclusive mudar a conclusão sobre o HAN/HGT, já que
+a literatura sugere que dar sinal de grafo explícito ao tabular pode
+fechar, ou não, a lacuna que a GNN deveria capturar implicitamente).
 
 ## Armadilhas já identificadas (não repetir)
 
