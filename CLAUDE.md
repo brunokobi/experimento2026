@@ -293,22 +293,46 @@ conhecida, aceitável pro uso atual). Também corrigido nessa mexida:
 reconstruía outra por dentro (não recebia `builder=builder`) — agora passa
 a HIN já construída, evitando custo duplicado (~8s) a cada relançamento.
 
-**Relançado (12/08/2026 ~06:57)**: `nohup uv run python
-scripts/comparar_baselines.py > ~/comparar_baselines_v3_30folds_v2.log 2>&1
-& disown`, PID 2021 (pode ter mudado — checar `pgrep -af
-comparar_baselines`), log em `~/comparar_baselines_v3_30folds_v2.log`
-(fora de `/tmp`). Sem checkpoint prévio reaproveitável (diretório de
-checkpoint não existia ainda) — rodando as 6 etapas do zero, mas agora
-protegido contra um 4º reboot: cada etapa concluída sobrevive mesmo que o
-processo morra depois. ~7h estimado. Sem notificação automática. Quando
-terminar (ou se for interrompido de novo — só relançar o mesmo comando,
-vai pular o que já tiver checkpoint), mover o log pra `docs/resultados/`,
-apagar `~/checkpoints_comparar_baselines/` (não faz sentido versionar) e
-atualizar esta seção + `README.md` + `research_plan.md` com o resultado
-final (comparar contra a tabela de 81,2×/62,3× acima — essas features de
-grafo explícitas podem inclusive mudar a conclusão sobre o HAN/HGT, já que
-a literatura sugere que dar sinal de grafo explícito ao tabular pode
-fechar, ou não, a lacuna que a GNN deveria capturar implicitamente).
+**Relançado e concluído (12/08/2026, ~06:57→14:09, ~7h11, sem
+interrupção)**: PID 2021, log movido para
+`docs/resultados/comparar_baselines_30folds_v3_2026-08-12.log`. Checkpoint
+por etapa funcionou como planejado (nenhum reboot ocorreu durante essa
+rodada, mas o mecanismo ficou validado para a próxima vez);
+`~/checkpoints_comparar_baselines/` apagado após a conclusão. **Resultado
+final v3, com as 5 features de literatura (124 colunas)**:
+
+| Rótulo | Tabular | GNN homogênea | HAN/HGT |
+|---|---|---|---|
+| `y_direto` (principal) | 50,7× | **76,3×** | 23,5× |
+| `y_qualquer` | 43,2× | 40,1× | 42,8× |
+
+**Achado contraintuitivo**: o PR-AUC absoluto de todos os 3 modelos *caiu*
+em relação ao v2 (117 colunas) — apesar do teste rápido antes de rodar ter
+indicado ganho. O teste rápido comparou contra a baseline errada (v1
+original, 18,8×, não o v2 mais recente, 75,8×) — lição registrada: sempre
+comparar contra o último resultado completo, não o primeiro.
+
+**Conclusão central (repetida pela 4ª vez, cada vez com mais dados)**:
+HAN/HGT continua estatisticamente PIOR que tabular (p=0,0001) e que GNN
+homogênea (p<0,0001) em `y_direto` — a hipótese central da tese (GNN
+heterogênea supera tabular via metapaths) não se confirma em nenhuma das
+3 versões de feature set testadas (107/117/124 colunas), e o efeito é
+estatisticamente robusto, não ruído de poucos folds.
+
+**Achado novo nesta rodada**: pela primeira vez, GNN homogênea vence o
+tabular de forma significativa em `y_direto` (p=0,0145 — em v1 p=0,38, em
+v2 p=0,72, nunca significativo antes). Em `y_qualquer`, nenhuma diferença
+é significativa entre os 3 (p=0,84/0,87/0,89) — os 3 convergem para ~40-43×
+em vez de o tabular vencer com folga como no v2, consistente com a ideia
+de que dar sinal de grafo explícito ao tabular (`grau_socio_comum` etc.)
+reduz a vantagem que os modelos de rede tinham nesse rótulo confundido.
+
+**Próximo passo real**: decidir com o pesquisador entre (a) investir em
+tuning de hiperparâmetros do HAN/HGT antes de aceitar esse resultado como
+final — já reproduzido 4 vezes, então não é claramente falta de sorte com
+seeds — ou (b) reportar como está e seguir para a etapa 7.7 (sensibilidade
+`y_direto` vs. `y_qualquer`, com diferença estatística confirmada) e depois
+etapa 8 (publicação), discutindo esse resultado negativo robusto no texto.
 
 ## Armadilhas já identificadas (não repetir)
 

@@ -653,23 +653,76 @@ duas); `idade_empresa_anos` (via `registros_jucees.data_constituicao`,
 baseline tabular (50 folds) com a matriz de 124 colunas pra confirmar que
 valia investir no rerun completo (~7h) antes de comprometer o tempo.
 Resultado: PR-AUC `y_direto` 0,0242 (lift **~56×**, era 18,8× com a matriz
-de 107 colunas) / `y_qualquer` 0,0218 (lift **~40×**, era 15,5×) — ganho
-real e grande, confirmado antes de escalar. Comparação completa (3
-modelos, 30 folds, com as 124 colunas) em andamento — ver `CLAUDE.md` para
-o estado.
+de 107 colunas) / `y_qualquer` 0,0218 (lift **~40×**, era 15,5×) — parecia
+ganho real e grande. **Esse teste comparou contra a baseline errada** (ver
+nota abaixo) — o resultado completo mostrou o oposto.
+
+**Resultado final v3 — com as 5 features de literatura (124 colunas), 30
+folds, 12/08/2026** (~7h11 de execução, concluído sem interrupção graças ao
+checkpoint por etapa adicionado após o 3º reboot ter matado a rodada
+anterior no meio; log completo em
+`docs/resultados/comparar_baselines_30folds_v3_2026-08-12.log`):
+
+| Rótulo | Tabular | GNN homogênea | HAN/HGT |
+|---|---|---|---|
+| `y_direto` (principal, 148) | PR-AUC 0,0218 ± 0,0146 — lift 50,7× | PR-AUC 0,0328 ± 0,0228 — lift **76,3×** | PR-AUC 0,0101 ± 0,0087 — lift 23,5× |
+| `y_qualquer` (confundido, 188) | PR-AUC 0,0236 ± 0,0200 — lift 43,2× | PR-AUC 0,0219 ± 0,0124 — lift 40,1× | PR-AUC 0,0234 ± 0,0229 — lift 42,8× |
+
+**Wilcoxon pareado (30 folds, mesmo split, matriz de 124 colunas)**:
+
+| Rótulo | Par | p-valor | Veredito |
+|---|---|---|---|
+| `y_direto` | tabular vs. GNN homogênea | **0,0145** | **GNN homogênea > tabular** |
+| `y_direto` | tabular vs. HAN/HGT | **0,0001** | **tabular > HAN/HGT** |
+| `y_direto` | GNN homogênea vs. HAN/HGT | **<0,0001** | **GNN homogênea > HAN/HGT** |
+| `y_qualquer` | tabular vs. GNN homogênea | 0,839 | sem diferença significativa |
+| `y_qualquer` | tabular vs. HAN/HGT | 0,871 | sem diferença significativa |
+| `y_qualquer` | GNN homogênea vs. HAN/HGT | 0,887 | sem diferença significativa |
+
+**Achado contraintuitivo, reportado sem maquiar**: o PR-AUC absoluto de
+**todos os 3 modelos caiu** em relação ao v2 (117 colunas) — tabular
+0,0326→0,0218, GNN homogênea 0,0349→0,0328, HAN/HGT 0,0126→0,0101 (todos
+em `y_direto`). O teste rápido acima (0,0242, lift ~56×) tinha comparado
+contra o resultado v1 original (18,8×, antes das 4 features de dashboard),
+não contra o v2 mais recente (75,8×, já com essas features) — comparação
+contra a baseline errada, o que deu uma falsa impressão de ganho. **Lição
+registrada**: sempre comparar um teste rápido contra o último resultado
+completo, nunca contra o primeiro da série.
+
+**A conclusão central da dissertação continua sem se confirmar — 4ª rodada
+seguida** (107→117→124 colunas): no rótulo principal, HAN/HGT é
+estatisticamente PIOR que tabular (p=0,0001) e que GNN homogênea
+(p<0,0001). O efeito é robusto a três feature sets diferentes, não é
+sensibilidade a uma versão específica das features.
+
+**Achado novo nesta rodada**: pela primeira vez, a diferença tabular vs.
+GNN homogênea em `y_direto` é estatisticamente significativa — e a favor
+da GNN homogênea (p=0,0145; em v1 p=0,382, em v2 p=0,715, sempre "sem
+diferença" antes). Ranking completo e significativo: homogênea > tabular >
+HAN/HGT. Em `y_qualquer`, mudança oposta à esperada pela leitura de
+"graph-features-vs-GNN" da literatura: com sinal de grafo explícito
+(`grau_socio_comum` etc.) agora disponível pro tabular, os 3 modelos
+convergem para ~40-43× sem diferença significativa entre eles — nem o
+tabular vence com folga (como em v2), nem os modelos de rede recuperam a
+vantagem de v1. Interpretação: o sinal estrutural que antes só a rede via
+implicitamente agora está disponível a todos igualmente, então nenhum
+modelo tem mais vantagem "de dentro" nesse rótulo confundido por
+circularidade.
 
 **Pendente a seguir**:
-- Etapa 7.7 (sensibilidade `y_direto` vs `y_qualquer`) — agora com
-  diferença estatística confirmada (não só indício): GNN homogênea e
-  HAN/HGT são significativamente melhores em `y_qualquer`, e o HAN/HGT é
-  significativamente **pior** em `y_direto` — formalizar a discussão de por
-  que a circularidade infla um e não o outro.
+- Etapa 7.7 (sensibilidade `y_direto` vs `y_qualquer`) — com a versão v3
+  (124 colunas), a assimetria mudou de forma: em `y_direto` o HAN/HGT é
+  significativamente pior; em `y_qualquer` não há mais diferença
+  significativa entre os 3 modelos (era vantagem da rede em v1). Formalizar
+  a discussão de como a circularidade e as features de grafo explícitas
+  interagem nos dois rótulos.
 - Investigar se o resultado negativo do HAN/HGT em `y_direto` é real
   (metapaths não ajudam mesmo) ou artefato de hiperparâmetros de primeira
   versão (50 épocas, sem busca de hiperparâmetros, sem `processos_judiciais`)
   — decidir com o pesquisador se vale investir em tuning antes de escrever
   isso como conclusão final, ou reportar como está (resultado negativo
-  honesto, com essas limitações discutidas no texto).
+  honesto e já reproduzido em 4 rodadas com feature sets diferentes, com
+  essas limitações discutidas no texto).
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).
 - Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP

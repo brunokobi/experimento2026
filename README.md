@@ -91,7 +91,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 7.3 | Baseline tabular (XGBoost + class weighting) | `src/models/tabular_baseline.py` | ✅ feito e **rodado contra o banco real** — primeiro resultado quantitativo: PR-AUC ~18,8× a taxa-base em `y_direto` (ver nota abaixo) |
 | 7.4 | Baseline GNN homogenea (via `SparseMetaPathExtractor`) | `src/models/gnn_homogeneous.py` | ✅ feito e rodado — **pior que o tabular em `y_direto`** (13,0x vs 18,8x de lift), ver nota abaixo |
 | 7.5 | HAN/HGT (heterogenea de verdade) | `src/models/han_hgt.py` | ✅ feito e rodado — recupera quase todo o sinal perdido na GNN homogenea (18,2x vs 13,0x em `y_direto`), quase empata com o tabular |
-| 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | `scripts/comparar_baselines.py` | ✅ feito (30 folds, poder estatistico real) — **HAN/HGT e significativamente PIOR que o tabular em `y_direto`** (p=0,007), ver nota abaixo |
+| 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | `scripts/comparar_baselines.py` | ✅ feito e **rerodado 3x** (30 folds, 107→117→124 colunas) — **HAN/HGT e significativamente PIOR que o tabular em `y_direto` nas 3 rodadas** (p=0,007 / p<0,0001 / p=0,0001), ver nota abaixo |
 | 7.7 | Analise de sensibilidade: rotulo `direto` (148) vs. `direto+socio` (188) | — | ⏳ pendente — decidido, nao implementado |
 | 8 | Publicacao: resultado parcial em workshop/BRACIS, depois artigo principal em periodico-alvo | — | ⏳ pendente |
 
@@ -225,10 +225,61 @@ confirmou ganho real antes de rodar o experimento completo**: PR-AUC
 `y_qualquer` 0,0218 (lift **~40×**, era 15,5×). Ver
 `scripts/rodar_baseline_tabular.py`.
 
-**Atenção**: os resultados dos baselines (7.3–7.6) abaixo — incluindo o
-"Resultado v2" com 117 colunas — ainda não refletem essas 5 features mais
-recentes (124 colunas). Comparação completa (3 modelos, 30 folds) em
-andamento — ver estado no `CLAUDE.md`.
+**Resultado v3, com as 5 features de literatura (124 colunas), 30 folds,
+12/08/2026, ~7h11 (concluído sem interrupção, protegido por checkpoint por
+etapa após 3 reboots terem perdido rodadas anteriores)** — ver
+`docs/resultados/comparar_baselines_30folds_v3_2026-08-12.log`:
+
+| Rotulo | Tabular | GNN homogenea | HAN/HGT |
+|---|---|---|---|
+| `y_direto` (principal) | 50,7x | **76,3x** | 23,5x |
+| `y_qualquer` | 43,2x | 40,1x | 42,8x |
+
+**Resultado contraintuitivo, reportado sem maquiar**: o PR-AUC absoluto de
+**todos os 3 modelos caiu** em relação ao v2 (ex.: tabular em `y_direto`
+0,0326→0,0218; GNN homogênea 0,0349→0,0328; HAN/HGT 0,0126→0,0101) —
+apesar de as 5 features novas terem sido validadas com um teste rápido
+antes de comprometer o experimento completo. **Esse teste rápido comparou
+contra a baseline errada**: comparou o ganho contra o resultado v1 original
+(18,8x, antes de qualquer feature de dashboard) em vez do v2 mais recente
+(75,8x, já com as 4 features de dashboard) — dando a falsa impressão de
+melhora quando na verdade, frente ao v2, o resultado caiu. Fica registrado
+como lição: sempre comparar contra o *último* resultado completo, não
+contra o primeiro.
+
+Dito isso, a **conclusão central da tese continua de pé, e mais um achado
+novo apareceu**:
+
+- `y_direto` (rótulo principal): HAN/HGT continua **estatisticamente PIOR**
+  que os outros dois (p=0,0001 vs. tabular, p<0,0001 vs. GNN homogênea) —
+  quarta rodada seguida confirmando esse resultado negativo central.
+- **Achado novo em `y_direto`**: pela primeira vez, a GNN homogênea é
+  **estatisticamente melhor que o tabular** (p=0,0145) — em v1 (p=0,38) e
+  v2 (p=0,72) essa diferença nunca foi significativa. Ranking completo e
+  significativo em todos os pares: homogênea > tabular > HAN/HGT.
+- `y_qualquer` (confundido por circularidade): **nenhuma diferença é
+  significativa** entre os 3 modelos (p=0,84 / 0,87 / 0,89) — mesma
+  conclusão qualitativa do v2, mas agora os 3 modelos convergem para
+  praticamente o mesmo lift (~40-43x) em vez de o tabular vencer com
+  margem. Consistente com a leitura de que dar sinal de grafo explícito
+  (`grau_socio_comum` etc.) ao tabular reduz a vantagem que os modelos de
+  rede tinham nesse rótulo especificamente — a literatura de
+  graph-features-vs-GNN prevê exatamente esse tipo de "empate técnico"
+  quando o sinal estrutural já está disponível como feature.
+
+**Interpretação de conjunto (v1→v2→v3)**: a hipótese central da tese — GNN
+heterogênea (HAN/HGT) supera baseline tabular na detecção de sanção direta
+— **não se confirma em nenhuma das três rodadas**, e o efeito negativo é
+estatisticamente robusto (não é ruído de poucos folds). O que mudou com as
+features de literatura não foi essa conclusão central, e sim uma nuance
+nova: a GNN *homogênea* (mais simples, sem tipagem de relação) passou a
+vencer o tabular de forma significativa — sugerindo que o ganho de ter
+*algum* sinal de grafo (mesmo colapsado) supera o tabular puro, mas
+tipar explicitamente cada relação (HAN/HGT) piora em vez de ajudar, mesmo
+com features melhores. Decisão em aberto com o pesquisador: investir em
+tuning de hiperparâmetros do HAN/HGT antes de aceitar isso como definitivo,
+ou seguir para a etapa 7.7 e depois a etapa 8 (publicação) com esse
+resultado negativo — já reproduzido 4 vezes — discutido no texto.
 
 **Dois bugs reais encontrados só ao validar contra o banco de verdade** (nenhum
 aparecia no dado sintético dos testes — registrado para não repetir):
