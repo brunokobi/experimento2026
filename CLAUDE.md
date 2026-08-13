@@ -335,15 +335,29 @@ tuning, e isso é a vulnerabilidade mais provável a ser atacada por um
 revisor de periódico Qualis alto ("vocês só concluíram que é pior porque
 não tentaram direito?").
 
-**Em andamento (lançado 12/08/2026 ~21:41)**: `scripts/tunar_han_hgt.py`
-(+ worker `scripts/_tunar_han_hgt_candidato.py`, chamado em subprocesso
-isolado por candidato — sobrevive a um OOM killer sem perder os outros
-candidatos, mesma lógica do checkpoint por etapa, em granularidade de
-processo). 5 candidatos, variando um eixo por vez a partir do baseline
-(`hidden=32/heads=1/epochs=50`): mais épocas (150), mais hidden (64), mais
-heads (2), e uma config maior combinando os três (`hidden=64/heads=2/
-epochs=100`). Só `y_direto`, só 5 folds (rankeamento, não decisão
-estatística). PID 14108, log em `~/tunar_han_hgt.log`, checkpoints em
+**Feito (lançado 12/08/2026 ~21:41, concluído 13/08/2026 ~00:57, ~3h15)**:
+`scripts/tunar_han_hgt.py` (+ worker `scripts/_tunar_han_hgt_candidato.py`,
+em subprocesso isolado por candidato). 5 candidatos, variando um eixo por
+vez a partir do baseline (`hidden=32/heads=1/epochs=50`), só `y_direto`, só
+5 folds:
+
+| Candidato | hidden | heads | epochs | PR-AUC (5 folds) |
+|---|---|---|---|---|
+| baseline | 32 | 1 | 50 | 0,0105 |
+| mais_epocas | 32 | 1 | **150** | **0,0244** |
+| mais_heads | 32 | **2** | 50 | 0,0182 |
+| mais_hidden | 64 | 1 | 50 | 0,0100 (sem ganho) |
+| maior | 64 | 2 | 100 | **OOM (falhou)** |
+
+**Achado real: o modelo estava subtreinado**, não subdimensionado — só
+aumentar épocas (50→150) quase triplicou o PR-AUC; aumentar `hidden`
+isoladamente não ajudou nada; `heads=2` ajudou por si só; a combinação
+`hidden=64+heads=2` confirma de novo o limite de memória da máquina local
+(mesmo problema já visto na etapa 7.5 original). **Em andamento (2a
+rodada, lançada 13/08/2026 ~07:14)**: testando o 6º candidato
+(`hidden=32/heads=2/epochs=150` — combina os dois fatores que ajudaram,
+evitando a zona de OOM) antes de travar a config final. Log em
+`~/tunar_han_hgt_v2.log`, checkpoints em
 `~/checkpoints_tunar_han_hgt/<candidato>.csv`.
 
 **Próximo passo real (depois da busca)**: pegar a config vencedora e rodar

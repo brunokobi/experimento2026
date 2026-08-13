@@ -39,6 +39,10 @@ CANDIDATOS = [
     {"nome": "mais_hidden_h64_hd1_e50", "hidden": 64, "heads": 1, "epochs": 50},
     {"nome": "mais_heads_h32_hd2_e50", "hidden": 32, "heads": 2, "epochs": 50},
     {"nome": "maior_h64_hd2_e100", "hidden": 64, "heads": 2, "epochs": 100},
+    # 6o candidato, adicionado apos ver os 5 primeiros: os dois fatores que
+    # mais ajudaram (mais epocas, mais heads) combinados, mantendo hidden=32
+    # (fora da zona de OOM confirmada em maior_h64_hd2_e100).
+    {"nome": "epocas_e_heads_h32_hd2_e150", "hidden": 32, "heads": 2, "epochs": 150},
 ]
 
 
