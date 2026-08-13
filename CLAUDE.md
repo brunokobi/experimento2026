@@ -327,12 +327,34 @@ em vez de o tabular vencer com folga como no v2, consistente com a ideia
 de que dar sinal de grafo explícito ao tabular (`grau_socio_comum` etc.)
 reduz a vantagem que os modelos de rede tinham nesse rótulo confundido.
 
-**Próximo passo real**: decidir com o pesquisador entre (a) investir em
-tuning de hiperparâmetros do HAN/HGT antes de aceitar esse resultado como
-final — já reproduzido 4 vezes, então não é claramente falta de sorte com
-seeds — ou (b) reportar como está e seguir para a etapa 7.7 (sensibilidade
-`y_direto` vs. `y_qualquer`, com diferença estatística confirmada) e depois
-etapa 8 (publicação), discutindo esse resultado negativo robusto no texto.
+**Decidido com o pesquisador (12/08/2026)**: investir numa busca pequena de
+hiperparâmetros do HAN/HGT antes de aceitar o resultado como final —
+motivação: os defaults atuais (`hidden_channels=32`, `num_heads=1`,
+`epochs=50`) foram reduzidos por causa de OOM na máquina local, não por
+tuning, e isso é a vulnerabilidade mais provável a ser atacada por um
+revisor de periódico Qualis alto ("vocês só concluíram que é pior porque
+não tentaram direito?").
+
+**Em andamento (lançado 12/08/2026 ~21:41)**: `scripts/tunar_han_hgt.py`
+(+ worker `scripts/_tunar_han_hgt_candidato.py`, chamado em subprocesso
+isolado por candidato — sobrevive a um OOM killer sem perder os outros
+candidatos, mesma lógica do checkpoint por etapa, em granularidade de
+processo). 5 candidatos, variando um eixo por vez a partir do baseline
+(`hidden=32/heads=1/epochs=50`): mais épocas (150), mais hidden (64), mais
+heads (2), e uma config maior combinando os três (`hidden=64/heads=2/
+epochs=100`). Só `y_direto`, só 5 folds (rankeamento, não decisão
+estatística). PID 14108, log em `~/tunar_han_hgt.log`, checkpoints em
+`~/checkpoints_tunar_han_hgt/<candidato>.csv`.
+
+**Próximo passo real (depois da busca)**: pegar a config vencedora e rodar
+a comparação completa de 30 folds (`scripts/comparar_baselines.py`, editando
+os kwargs de `make_han_hgt_fit_predict` em `main()`) — isso se torna o
+resultado v4, substituindo o v3 como resultado final reportado. Se a config
+vencedora bater ou perder pro baseline atual dentro do ruído (5 folds tem
+pouco poder estatístico), o resultado negativo fica mais defensável de
+qualquer forma: "buscamos e não adiantou" é uma afirmação mais forte que
+"usamos uma config só". Depois disso: etapa 7.7 (sensibilidade) e etapa 8
+(publicação).
 
 ## Armadilhas já identificadas (não repetir)
 
