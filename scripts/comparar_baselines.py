@@ -84,7 +84,14 @@ def main() -> None:
     modelos = {
         "tabular": xgboost_fit_predict(random_state=RANDOM_STATE),
         "gnn_homogenea": make_gnn_fit_predict(builder, features, random_state=RANDOM_STATE),
-        "han_hgt": make_han_hgt_fit_predict(builder, features, random_state=RANDOM_STATE),
+        # epochs=150 (heads=1, hidden=32 default): vencedor pratico da busca
+        # de hiperparametros (scripts/tunar_han_hgt.py, 12-13/08/2026) --
+        # defaults antigos (epochs=50) estavam subtreinados, nao
+        # subdimensionados. O candidato com heads=2 empatou dentro do ruido
+        # (0,0249 vs 0,0244 em 5 folds, desvio-padrao ~0,025-0,029) por ~3x
+        # mais custo computacional -- preferido o mais simples (parcimonia,
+        # isola epochs como a alavanca real, menos exposicao a reboot).
+        "han_hgt": make_han_hgt_fit_predict(builder, features, epochs=150, random_state=RANDOM_STATE),
     }
 
     for rotulo in ["y_direto", "y_qualquer"]:
