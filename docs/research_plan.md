@@ -630,9 +630,17 @@ costuma carregar sinal em tarefas parecidas (não "achismo"):
   concorrência (dispensa/inexigibilidade de licitação) e sobrepreço
   contratual (divergência entre valor inicial e final) são red flags
   clássicos e amplamente adotados na literatura como proxy objetivo de
-  corrupção. Referências: [Fazekas & Tóth, "Uncovering High-Level
-  Corruption", Cambridge](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/8A1742693965AA92BE4D2BA53EADFDF0/S0007123417000461a.pdf/uncovering_highlevel_corruption_crossnational_objective_corruption_risk_indicators_using_public_procurement_data.pdf);
-  [IMF — A Method to Assess Corruption Risks in Public Procurement](https://www.imf.org/-/media/Files/Publications/WP/2022/English/wpiea2022094-print-pdf.ashx).
+  corrupção. Referências: [Fazekas & Kocsis (2020), "Uncovering High-Level
+  Corruption: Cross-National Objective Corruption Risk Indicators Using
+  Public Procurement Data", British Journal of Political Science
+  50(1):155-164](https://www.cambridge.org/core/journals/british-journal-of-political-science/article/abs/uncovering-highlevel-corruption-crossnational-objective-corruption-risk-indicators-using-public-procurement-data/8A1742693965AA92BE4D2BA53EADFDF0);
+  [Abdou, Basdevant, David-Barrett & Fazekas (2022), IMF Working Paper
+  22/094 — Assessing Vulnerabilities to Corruption in Public Procurement
+  and Their Price Impact](https://www.imf.org/en/Publications/WP/Issues/2022/05/20/Assessing-Vulnerabilities-to-Corruption-in-Public-Procurement-and-Their-Price-Impact-518197).
+  **Correção (14/08/2026)**: a referência estava incorretamente atribuída a
+  "Fazekas & Tóth" desde 11/08/2026 — o coautor correto é Kocsis, não Tóth;
+  corrigido em todos os arquivos do repositório após verificação explícita
+  a pedido do pesquisador, antes de qualquer publicação.
 - **Detecção de shell company**: idade da empresa (formation date) e
   concentração de poucos sócios/diretores controlando muitas empresas são
   indicadores citados na literatura de KYC/AML. Referência: [Moody's — 7

@@ -56,7 +56,8 @@ Features incluidas (nenhuma derivada de sancao):
 - ``tem_contrato_sem_competicao`` -- booleano, tem contrato publico via
   modalidade sem concorrencia (``Dispensa de Licitação``/``Inexigibilidade
   de Licitação``) -- red flag classico na literatura de risco de corrupcao
-  em compras publicas (Fazekas & Tóth). **Cobertura muito baixa no banco
+  em compras publicas (Fazekas & Kocsis, 2020, British Journal of Political
+  Science). **Cobertura muito baixa no banco
   real**: so 5 empresas -- a maioria dos contratos (834/894) nao tem
   modalidade informada (``"Sem Informação"``); nao esperar impacto grande
   no modelo so por essa feature.

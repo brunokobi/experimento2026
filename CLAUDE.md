@@ -257,7 +257,7 @@ tese não se confirma nesta implementação.
 **Feito (11/08/2026, segunda rodada de features — com base em
 literatura)**: pesquisei antes de implementar (não "achismo") — literatura
 de grafo-features-vs-GNN em fraude, risco de corrupção em compras públicas
-(Fazekas & Tóth), detecção de shell company (Moody's). Ver referências
+(Fazekas & Kocsis, 2020), detecção de shell company (Moody's). Ver referências
 completas em `docs/research_plan.md`, seção 7. 5 features novas:
 `grau_socio_comum`/`grau_endereco_comum`/`grau_vinculo_politico_comum`
 (grau explícito de cada empresa em cada metapath, direto da HIN),
