@@ -360,15 +360,25 @@ evitando a zona de OOM) antes de travar a config final. Log em
 `~/tunar_han_hgt_v2.log`, checkpoints em
 `~/checkpoints_tunar_han_hgt/<candidato>.csv`.
 
-**Próximo passo real (depois da busca)**: pegar a config vencedora e rodar
-a comparação completa de 30 folds (`scripts/comparar_baselines.py`, editando
-os kwargs de `make_han_hgt_fit_predict` em `main()`) — isso se torna o
-resultado v4, substituindo o v3 como resultado final reportado. Se a config
-vencedora bater ou perder pro baseline atual dentro do ruído (5 folds tem
-pouco poder estatístico), o resultado negativo fica mais defensável de
-qualquer forma: "buscamos e não adiantou" é uma afirmação mais forte que
-"usamos uma config só". Depois disso: etapa 7.7 (sensibilidade) e etapa 8
-(publicação).
+**Busca concluída (13/08/2026 ~09:00, 2ª rodada)**: 6º candidato
+(`hidden=32/heads=2/epochs=150`) venceu por margem dentro do ruído (PR-AUC
+0,0249 vs. 0,0244 do candidato só-com-mais-épocas, desvio-padrão
+~0,025-0,029 nos dois) — mas custava ~3x mais tempo de treino. Decisão:
+descartar o `heads=2` (empate estatístico não justifica o custo) e usar
+**`epochs=150` isolado** (`heads=1`, `hidden=32` default) — mais simples,
+mais barato, e isola `epochs` como a alavanca real do ganho (a busca já
+mostrou que `hidden`/`heads` sozinhos não ajudam muito).
+
+**Em andamento (relançado 13/08/2026 ~23:43)**: `comparar_baselines.py`
+com `han_hgt` usando `epochs=150` (commit `affe891`). PID 36441, log em
+`~/comparar_baselines_v4_han_hgt_tunado.log`. Estimativa corrigida: ~17-
+17,5h total (tabular ~5min + GNN homogênea ~2,8h + HAN/HGT ~14,4h — o
+HAN/HGT sozinho já é ~7,2h **por rótulo**, 2 rótulos). Isso vira o
+resultado v4, substituindo o v3 como resultado final reportado — se o
+HAN/HGT tunado ainda perder pro tabular/GNN homogênea, o resultado
+negativo fica muito mais defensável ("buscamos hiperparâmetros e não
+adiantou" é mais forte que "usamos uma config só"). Depois disso: etapa
+7.7 (sensibilidade) e etapa 8 (publicação).
 
 ## Armadilhas já identificadas (não repetir)
 
