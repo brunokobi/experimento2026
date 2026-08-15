@@ -178,6 +178,15 @@ design requirement rather than a caveat added after the fact: Section 3.1
 deliberately scopes the study to a dataset and compute budget realistic for
 an under-resourced oversight body, and Section 5.4 evaluates each model
 explicitly against that constraint, not only against predictive performance.
+A related design-principles literature on digital transparency in
+government (Matheus, Janssen, & Janowski, 2021) treats auditability and
+institutional legibility of a digital tool as design goals in their own
+right, not only as compliance afterthoughts — a consideration this paper
+extends from transparency of *process* to transparency of *model*: a
+gradient-boosted model whose feature importances are directly inspectable
+is more legible to an oversight body's own audit function than a
+heterogeneous graph transformer's learned embeddings, independent of any
+difference in predictive performance between them (Section 5.4).
 
 Within this constraint, prior Brazilian work on corporate risk and fraud
 detection using public registry data is predominantly tabular, treating each
@@ -198,15 +207,15 @@ public-data context, comparatively unexplored.
 Heterogeneous graph attention/transformer architectures — HAN (Wang et al.,
 2019) and HGT (Hu et al., 2020) foremost among them — extend graph neural
 networks beyond a single node/edge type, learning type-specific attention
-weights across metapaths or relations. They have been applied to corporate
-ownership networks for shell-company and beneficial-ownership risk (Moody's,
-2023) and to financial fraud detection more broadly, where fraud rings are
-argued to leave a structural signature — shared infrastructure, shared
-counterparties — that is "invisible in feature space but detectable in graph
-topology." A parallel literature on organized-crime shell-company networks in
-public procurement documents concretely how ownership/management data,
-combined with contracting data, reveals connected components indicative of
-collusion risk (see Section 2.4).
+weights across metapaths or relations. Applied to corporate networks, this
+family of models targets shell-company and beneficial-ownership risk
+(Moody's, 2023) and financial fraud more broadly, on the premise that fraud
+rings leave a structural signature — shared infrastructure, shared
+counterparties — "invisible in feature space but detectable in graph
+topology." A parallel literature on shell-company networks in public
+procurement corroborates this premise with a concrete mechanism: ownership
+and management data, combined with contracting data, surfaces connected
+components indicative of collusion risk (Section 2.4).
 
 ### 2.3 Graph features versus end-to-end GNN training
 
@@ -233,17 +242,15 @@ structure — is a direct test of this claim in a new domain.
 ### 2.4 Corruption-risk indicators in public procurement and shell-company detection
 
 Cross-national empirical work on public-procurement corruption risk (Fazekas
-& Kocsis, 2020; Abdou et al., 2022) establishes objective, non-competitive-award and
-cost-overrun indicators — sole-source or waived-competition contract
-modality, and divergence between initial and final contract value — as
-robust, auditable proxies for corruption risk, independent of any
-prosecutorial outcome. Shell-company detection practice (Moody's, 2023;
-organized-crime shell-network literature in procurement) further identifies
-company age and partner/director concentration across many firms as
-practical red flags. These four indicators are directly relevant to, and
-feasible to construct from, the registry data used in this study (Section
-3.4), and motivated a dedicated round of literature-grounded feature
-engineering prior to the final experiment reported here.
+& Kocsis, 2020; Abdou et al., 2022) establishes non-competitive-award and
+cost-overrun indicators — sole-source contract modality, and divergence
+between initial and final contract value — as robust, auditable corruption-risk
+proxies, independent of any prosecutorial outcome. Shell-company detection
+practice adds company age and partner/director concentration across many
+firms as further red flags (Moody's, 2023). All four indicators are feasible
+to construct from the registry data used here (Section 3.4) and motivated a
+dedicated round of literature-grounded feature engineering prior to the
+final experiment reported below.
 
 ### 2.5 Imbalanced and few-label graph learning
 
@@ -641,6 +648,29 @@ architecture, at least until node types other than "company" carry genuine
 attribute data of their own (Section 5.2) rather than only a learned
 embedding.
 
+Concretely, an oversight body adopting the recommended tabular model faces
+three operational decisions this study's results directly inform. First,
+retraining cadence: since confirmed sanctions accrue slowly (188 over the
+registry's full history here), retraining need not be more frequent than
+new sanction decisions are handed down and ingested — quarterly or
+semi-annually is plausible, not the continuous retraining a production ML
+system might default to. Second, queue sizing: Precision@k at the k=10–20
+scale is, in our own exploratory runs, noisy enough (standard deviation
+comparable to or exceeding the mean, at roughly 30 positives per evaluation
+fold) that we would recommend an oversight body size its review queue
+larger — k=50 or k=100 — matching it to realistic monthly analyst capacity
+rather than to the top of a ranked list alone. Third, and following from
+Section 2.1's transparency-by-design premise (Matheus et al., 2021): a
+gradient-boosted model's feature importances (e.g., SHAP values) can be
+attached to every flagged company as a stated reason for review — "flagged
+for shared partner with N other companies, one under active sanction" — in
+a form directly usable in an audit finding. The HGT offers no equivalent
+without substantial additional engineering, since its risk signal is
+distributed across learned embeddings with no natural per-company
+explanation. This transparency gap is a further, independent reason to
+prefer the simpler model here, beyond the compute-cost and predictive-performance
+arguments already given.
+
 ### 5.5 Limitations
 
 Our pairwise significance tests use the Wilcoxon signed-rank test on 30
@@ -789,6 +819,10 @@ detection with few labels: A data-centric approach. In *Proceedings of the
 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining* (KDD
 '24) (pp. 2153–2164). Association for Computing Machinery.
 https://doi.org/10.1145/3637528.3671929
+
+Matheus, R., Janssen, M., & Janowski, T. (2021). Design principles for
+creating digital transparency in government. *Government Information
+Quarterly*, *38*(1), 101550. https://doi.org/10.1016/j.giq.2020.101550
 
 Moody's Analytics. (2023, January 22). *7 indicators of shell company risk*.
 https://www.moodys.com/web/en/us/kyc/resources/insights/seven-indicators-shell-company-risk.html

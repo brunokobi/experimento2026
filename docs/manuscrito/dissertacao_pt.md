@@ -9,14 +9,21 @@ o momento; estrutura livre de dissertação de mestrado, capítulos de
 conteúdo. Capa/folha de rosto/ficha catalográfica/resumo formal ficam para
 quando o formato institucional for confirmado.)*
 
-> **Status deste rascunho (atualizado em 14/08/2026)**: todas as seções têm
-> rascunho substantivo agora, incluindo Resultados, Discussão e Conclusão,
-> escritas depois de o experimento final de 30 folds (com o HGT tunado)
-> terminar. Todos os números abaixo foram computados direto do log
+> **Status deste rascunho (atualizado em 15/08/2026)**: sincronizado com a
+> revisão feita em `docs/manuscrito/paper_en.md` a partir de um parecer
+> simulado de revisor experiente (alvo GIQ), que recomendou revisão maior
+> em 5 pontos — todos aplicados aqui também: (1) engajamento com literatura
+> de adoção de IA no setor público (Seção 2.1), (2) alegação de novidade
+> reformulada de "descoberta" pra "replicação rigorosa", (3) ressalva sobre
+> o teste de Wilcoxon em CV repetida (Seção 5.5), (4) explicação da Seção
+> 5.2 suavizada de conclusão direta pra interpretação fundamentada em
+> literatura mas não testada, (5) seção de disponibilidade de dados/código.
+> Mais 2 melhorias de "nota" aplicadas depois: reforço adicional do fit com
+> a GIQ (Matheus et al., 2021) e um esboço de implantação prática na Seção
+> 5.4. Todos os números computados direto do log
 > `docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`
 > e reconferidos contra `docs/research_plan.md`, não recuperados de
-> memória — ver nota de rigor em `docs/research_plan.md`, correção de
-> 14/08/2026.
+> memória; todas as citações verificadas em fonte primária.
 
 ---
 
@@ -35,7 +42,11 @@ uma região metropolitana brasileira, comparando um baseline tabular com
 gradient boosting, uma GNN homogênea, e um transformer de grafo heterogêneo
 (HGT), sob uma moldura positivo-incompleta apropriada à raridade extrema de
 sanção confirmada (148 diretas, 188 incluindo casos inferidos via sócio).
-Ao longo de cinco rodadas de avaliação independentes — três iterações
+Nosso achado ecoa um padrão reportado em pelo menos um benchmark
+contemporâneo num domínio de fraude diferente (Vandervorst et al., 2025); a
+contribuição desta dissertação é testar isso com escrutínio metodológico
+substancialmente maior, e num domínio novo de setor público onde as
+implicações práticas da resposta são diferentes. Ao longo de cinco rodadas de avaliação independentes — três iterações
 sucessivas de engenharia de features mais uma rodada dedicada de busca de
 hiperparâmetros para o HGT, todas sob validação cruzada estratificada
 repetida (30 folds) com teste estatístico pareado —, o modelo heterogêneo é
@@ -81,6 +92,16 @@ tribunal de contas, controladoria, órgão de fiscalização de licitação — 
 pergunta prática não é retrospectiva ("essa empresa foi sancionada?"), é
 prospectiva: *entre as empresas ainda não sancionadas, quais concentram risco
 suficiente para justificar escrutínio agora?*
+
+A adoção de IA e aprendizado de máquina no setor público está se expandindo,
+mas consistentemente limitada por barreiras de capacidade técnica,
+qualidade de dado, e competência de pessoal, não pela disponibilidade de
+modelo (Sun & Medaglia, 2019) — um corpo de evidência que esta dissertação
+trata como restrição de desenho desde o início, não como ressalva
+acrescentada depois: qualquer escolha de modelagem recomendada aqui precisa
+ser justificável a um órgão de controle com exatamente essas restrições,
+não só a um público de aprendizado de máquina com poder computacional
+ilimitado.
 
 Dois fatos estruturais tornam esse um problema de triagem difícil. Primeiro,
 sanção confirmada é extremamente rara frente ao tamanho de qualquer cadastro
@@ -166,12 +187,34 @@ fiscaliza e declara limitações. A Seção 6 conclui.
 
 ## 2. Referencial teórico
 
-### 2.1 Risco administrativo e corporativo em dado público brasileiro
+### 2.1 Adoção de IA na fiscalização do setor público, e risco administrativo e corporativo em dado público brasileiro
 
-Trabalho brasileiro prévio sobre risco corporativo e detecção de fraude com
-dado de cadastro público é majoritariamente tabular, tratando cada empresa
-como uma observação independente descrita por atributos de cadastro, regime
-tributário, dívida, e código de setor. Esse corpo de trabalho não modela,
+A literatura da própria Government Information Quarterly sobre adoção de IA
+na administração pública constata consistentemente que a restrição real
+pra implantar ferramentas preditivas em governo é capacidade organizacional
+e técnica — competência de pessoal, qualidade de dado, infraestrutura —
+não a disponibilidade de um modelo capaz (Sun & Medaglia, 2019). Esta
+dissertação trata esse achado como requisito de desenho, não ressalva
+posterior: a Seção 3.1 delimita deliberadamente o estudo a um conjunto de
+dados e orçamento computacional realista pra um órgão de controle com
+poucos recursos, e a Seção 5.4 avalia cada modelo explicitamente contra
+essa restrição, não só contra desempenho preditivo. Uma literatura
+relacionada de princípios de desenho pra transparência digital em governo
+(Matheus, Janssen, & Janowski, 2021) trata auditabilidade e legibilidade
+institucional de uma ferramenta digital como objetivos de desenho em si,
+não só como formalidade de conformidade — uma consideração que esta
+dissertação estende de transparência de *processo* pra transparência de
+*modelo*: um modelo com gradient boosting cujas importâncias de feature são
+diretamente inspecionáveis é mais legível pra função de auditoria do
+próprio órgão de controle do que os embeddings aprendidos de um transformer
+de grafo heterogêneo, independente de qualquer diferença de desempenho
+preditivo entre eles (Seção 5.4).
+
+Dentro dessa restrição, trabalho brasileiro prévio sobre risco corporativo
+e detecção de fraude com dado de cadastro público é majoritariamente
+tabular, tratando cada empresa como uma observação independente descrita
+por atributos de cadastro, regime tributário, dívida, e código de setor.
+Esse corpo de trabalho não modela,
 até onde se sabe, a *rede* de relações entre empresas — sócio, endereço,
 vínculo político compartilhados — como objeto de primeira classe, apesar de
 essas relações serem diretamente consultáveis nas mesmas fontes de dado
@@ -188,16 +231,16 @@ brasileiro, comparativamente inexplorada.
 Arquiteturas de atenção/transformer para grafo heterogêneo — HAN (Wang et
 al., 2019) e HGT (Hu et al., 2020) à frente — estendem redes neurais em
 grafo além de um único tipo de nó/aresta, aprendendo pesos de atenção
-específicos por tipo ao longo de metapaths ou relações. Foram aplicadas a
-redes de propriedade corporativa para risco de empresa de fachada e
-beneficiário final (Moody's, 2023) e a detecção de fraude financeira mais
-amplamente, onde se argumenta que anéis de fraude deixam uma assinatura
-estrutural — infraestrutura compartilhada, contrapartes compartilhadas —
-"invisível no espaço de features, mas detectável na topologia do grafo". Uma
-literatura paralela sobre redes de empresa de fachada em crime organizado em
-compras públicas documenta concretamente como dado de propriedade/gestão,
+específicos por tipo ao longo de metapaths ou relações. Aplicada a redes
+corporativas, essa família de modelos mira risco de empresa de fachada e
+beneficiário final (Moody's, 2023) e fraude financeira mais amplamente, sob
+a premissa de que anéis de fraude deixam uma assinatura estrutural —
+infraestrutura compartilhada, contrapartes compartilhadas — "invisível no
+espaço de features, mas detectável na topologia do grafo". Uma literatura
+paralela sobre redes de empresa de fachada em compras públicas corrobora
+essa premissa com um mecanismo concreto: dado de propriedade/gestão,
 combinado com dado de contratação, revela componentes conectados indicativos
-de risco de conluio (ver Seção 2.4).
+de risco de conluio (Seção 2.4).
 
 ### 2.3 Features de grafo versus treino de GNN de ponta a ponta
 
@@ -597,18 +640,25 @@ por conta própria, e a GNN homogênea (*mais simples*, um único tipo de
 relação colapsado) supera tanto ele quanto o HGT, muito mais complexo e
 tipado por relação. Segundo, o diagnóstico de "sobrecarga de informação" da
 literatura de detecção de fraude corporativa (Seção 2.5) oferece uma
-explicação mecanicista de por que o modelo *mais* heterogêneo especificamente
-tem desempenho pior: os tipos de nó auxiliares do HGT (sócio, endereço,
-vínculo político) não carregam dado de atributo genuíno próprio, só um
-embedding aprendido — e esses tipos de nó pobres em atributo superam em
-número os nós-empresa ricos em atributo por mais de uma ordem de grandeza
-(142.844 nós de sócio e 181.268 nós de endereço contra 344.130 nós de
-empresa, vários dos quais conectam ao mesmo pequeno número de nós
-auxiliares). Treinar toda essa estrutura adicional e fracamente informada
-de ponta a ponta com só 148 rótulos positivos parece adicionar variância em
-vez de sinal, em relação a um modelo mais simples que ou ignora essa
-estrutura (tabular com features de grau explícitas) ou a agrega
-grosseiramente num único tipo de relação (GNN homogênea).
+explicação mecanicista plausível, consistente com ainda que não diretamente
+demonstrada pelos nossos experimentos, de por que o modelo *mais*
+heterogêneo especificamente tem desempenho pior: os tipos de nó auxiliares
+do HGT (sócio, endereço, vínculo político) não carregam dado de atributo
+genuíno próprio, só um embedding aprendido — e esses tipos de nó pobres em
+atributo superam em número os nós-empresa ricos em atributo por mais de uma
+ordem de grandeza (142.844 nós de sócio e 181.268 nós de endereço contra
+344.130 nós de empresa, vários dos quais conectam ao mesmo pequeno número
+de nós auxiliares). Não rodamos um ablation removendo cada tipo de nó
+auxiliar isoladamente pra isolar qual especificamente causa o efeito (uma
+extensão natural desta análise, apontada na Seção 5.5); o que dá pra
+afirmar com os resultados em mãos é que treinar toda essa estrutura
+adicional e fracamente informada de ponta a ponta com só 148 rótulos
+positivos está associado a desempenho pior que um modelo mais simples que
+ou ignora essa estrutura (tabular com features de grau explícitas) ou a
+agrega grosseiramente num único tipo de relação (GNN homogênea) — um
+padrão que a literatura de sobrecarga de informação preveria, ainda que
+tratemos isso aqui como interpretação fundamentada em literatura, não como
+mecanismo causal demonstrado de forma independente.
 
 ### 5.3 A reversão no rótulo secundário é evidência de exploração de circularidade, não de vantagem genuína
 
@@ -650,7 +700,50 @@ arquitetura totalmente heterogênea — pelo menos até que tipos de nó além d
 "empresa" carreguem dado de atributo genuíno próprio (Seção 5.2), não só um
 embedding aprendido.
 
+Concretamente, um órgão de controle que adote o modelo tabular recomendado
+enfrenta três decisões operacionais que os resultados deste estudo informam
+diretamente. Primeiro, cadência de retreino: como sanção confirmada se
+acumula devagar (188 em todo o histórico do cadastro aqui), o retreino não
+precisa ser mais frequente do que novas decisões de sanção são publicadas e
+ingeridas — trimestral ou semestral é plausível, não o retreino contínuo
+que um sistema de ML em produção teria por padrão. Segundo, dimensionamento
+da fila: Precision@k na escala k=10–20 é, nas nossas próprias rodadas
+exploratórias, ruidoso o suficiente (desvio-padrão comparável ou maior que
+a média, com ~30 positivos por fold de avaliação) que recomendaríamos a um
+órgão de controle dimensionar sua fila de revisão maior — k=50 ou k=100 —
+compatível com a capacidade mensal realista de um analista, não só o topo
+de uma lista ranqueada. Terceiro, e decorrendo da premissa de transparência-
+por-desenho da Seção 2.1 (Matheus et al., 2021): as importâncias de feature
+de um modelo com gradient boosting (ex.: valores SHAP) podem ser anexadas a
+cada empresa sinalizada como motivo declarado de revisão — "sinalizada por
+sócio comum com N outras empresas, uma sob sanção ativa" — numa forma
+diretamente usável num achado de auditoria. O HGT não oferece equivalente
+sem engenharia adicional substancial, já que seu sinal de risco é
+distribuído em embeddings aprendidos sem explicação natural por empresa.
+Essa lacuna de transparência é mais uma razão, independente, pra preferir o
+modelo mais simples aqui, além dos argumentos de custo computacional e
+desempenho preditivo já dados.
+
 ### 5.5 Limitações
+
+Nossos testes de significância pareados usam o teste de postos sinalizados
+de Wilcoxon sobre 30 folds de validação cruzada estratificada repetida — os
+mesmos folds entre modelos, o que é o que permite o pareamento, mas folds
+extraídos por CV repetida de um único conjunto de dados não são amostras
+totalmente independentes, já que empresas são reusadas em splits
+sobrepostos. Testes de significância aplicados ingenuamente sobre folds de
+CV repetida são conhecidos por subestimar variância e podem inflar a taxa de
+falso positivo em relação a alternativas corrigidas desenhadas pra esse
+cenário, como o teste pareado 5×2cv (Dietterich, 1998). Consideramos nossa
+conclusão qualitativa robusta a essa ressalva porque o ranking do rótulo
+principal não é um único p-valor no limiar, é um efeito grande e
+consistente replicado ao longo de cinco rodadas de avaliação independentes
+com conjuntos de features diferentes e um modelo re-tunado
+independentemente (Seção 4.3) — o tipo de replicação entre rodadas que um
+teste corrigido de rodada única não consegue substituir — mas registramos a
+ressalva explicitamente, em vez de deixar os p-valores específicos da Seção
+4 serem lidos como mais precisos do que um teste de Wilcoxon em CV repetida
+de fato sustenta.
 
 O próprio rótulo principal é positivo-incompleto, não exaustivo: ausência
 de sanção confirmada não estabelece ausência de irregularidade, só ausência
@@ -689,7 +782,13 @@ rodada. Um ablation separando esses grupos foi julgado de prioridade menor
 que completar a busca de hiperparâmetros (Seção 4.4), dado o orçamento
 computacional finito na máquina de desenvolvimento, mas seria um próximo
 passo natural para refinar a afirmação de features-de-grafo-vs-GNN da
-Seção 5.2.
+Seção 5.2. De forma similar, a explicação de "sobrecarga de informação" da
+Seção 5.2 pra por que o HGT especificamente tem desempenho pior não foi
+testada via um ablation removendo cada tipo de nó auxiliar (sócio,
+endereço, vínculo político) isoladamente — oferecemos isso como
+interpretação fundamentada em literatura, não como mecanismo demonstrado de
+forma independente, e isolar a contribuição de cada tipo de nó fica como
+trabalho futuro.
 
 ## 6. Conclusão
 
@@ -715,6 +814,23 @@ não um transformer de grafo heterogêneo, como a escolha defensável para
 triagem de risco de sanção administrativa nessa escala e escassez de
 rótulo.
 
+## Disponibilidade de dados e código
+
+Todo o código (carregadores de dado, construção da HIN, extração de
+metapath, engenharia de features, os três modelos, o harness de avaliação,
+e os scripts usados pra rodar todo experimento reportado nas Seções
+4.3–4.4) está publicamente disponível em
+https://github.com/brunokobi/experimento2026, incluindo o arquivo-fonte
+desta dissertação e os logs completos de experimento por trás da Seção 4
+(em `docs/resultados/`). O cadastro empresarial subjacente
+(`projeto_grande_vitoria_empresas`) é um pipeline de ETL e release de
+dataset mantido separadamente e publicamente disponível (ver o `README` do
+repositório para a release atual). O cadastro contém dado pessoal (nome de
+sócio, CPF mascarado, endereço); é publicado sob os termos de governança de
+dado do próprio projeto-fonte, não redistribuído por esta dissertação. A
+Figura 1 anonimiza todo identificador individual e de empresa conforme o
+compromisso ético descrito na Seção 3.1.
+
 ## Referências
 
 *(Formato ABNT NBR 6023. Todas as entradas foram verificadas diretamente
@@ -736,6 +852,11 @@ https://www.imf.org/en/Publications/WP/Issues/2022/05/20/Assessing-Vulnerabiliti
 CHENG, Dawei; ZOU, Yao; XIANG, Sheng; JIANG, Changjun. Graph neural
 networks for financial fraud detection: a review. **arXiv**, 2024.
 Disponível em: https://arxiv.org/abs/2411.05815.
+
+DIETTERICH, Thomas G. Approximate statistical tests for comparing
+supervised classification learning algorithms. **Neural Computation**, v.
+10, n. 7, p. 1895-1923, 1998. Disponível em:
+https://doi.org/10.1162/089976698300017197.
 
 DOU, Yingtong; LIU, Zhiwei; SUN, Li; DENG, Yutong; PENG, Hao; YU, Philip S.
 Enhancing graph neural network-based fraud detectors against camouflaged
@@ -768,9 +889,19 @@ KNOWLEDGE DISCOVERY AND DATA MINING, 30., 2024. **Anais [...]**. New York:
 ACM, 2024. p. 2153-2164. Disponível em:
 https://doi.org/10.1145/3637528.3671929.
 
+MATHEUS, Ricardo; JANSSEN, Marijn; JANOWSKI, Tomasz. Design principles for
+creating digital transparency in government. **Government Information
+Quarterly**, v. 38, n. 1, artigo 101550, 2021. Disponível em:
+https://doi.org/10.1016/j.giq.2020.101550.
+
 MOODY'S ANALYTICS. **7 indicators of shell company risk**. [S. l.], 22 jan.
 2023. Disponível em:
 https://www.moodys.com/web/en/us/kyc/resources/insights/seven-indicators-shell-company-risk.html.
+
+SUN, Tara Qian; MEDAGLIA, Rony. Mapping the challenges of artificial
+intelligence in the public sector: evidence from public healthcare.
+**Government Information Quarterly**, v. 36, n. 2, p. 368-383, 2019.
+Disponível em: https://doi.org/10.1016/j.giq.2018.09.008.
 
 VANDERVORST, Félix; DEPREZ, Bruno; VERBEKE, Wouter; VERDONCK, Tim. Inductive
 inference of gradient-boosted decision trees on graphs for insurance fraud
