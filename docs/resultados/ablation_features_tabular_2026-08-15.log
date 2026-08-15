@@ -1,0 +1,79 @@
+2026-08-15 16:20:41.341 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 16:20:43.211 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM socios
+2026-08-15 16:20:43.526 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM dividas_ativas
+2026-08-15 16:20:43.856 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM vinculos_politicos
+2026-08-15 16:20:43.858 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM sancoes_administrativas
+2026-08-15 16:20:43.860 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 16:20:45.686 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'empresa': 344130 nos registrados.
+2026-08-15 16:20:46.276 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'socio': 142844 nos registrados.
+2026-08-15 16:20:46.616 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'socio-participa_de-empresa': 231890 arestas.
+2026-08-15 16:20:47.947 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'endereco': 181268 nos registrados.
+2026-08-15 16:20:48.386 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-sediada_em-endereco': 344130 arestas.
+2026-08-15 16:20:48.407 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'municipio': 7 nos registrados.
+2026-08-15 16:20:48.758 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-localizada_em-municipio': 344130 arestas.
+2026-08-15 16:20:48.773 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'vinculo_politico': 519 nos registrados.
+2026-08-15 16:20:48.774 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-tem_vinculo_politico-vinculo_politico': 866 arestas.
+2026-08-15 16:20:48.774 | INFO     | src.graph.build_hin:build_empresas_hin:192 - HIN real construida: {'node_types': {'empresa': 344130, 'socio': 142844, 'endereco': 181268, 'municipio': 7, 'vinculo_politico': 519}, 'edge_types': {'socio__participa_de__empresa': 231890, 'empresa__rev_participa_de__socio': 231890, 'empresa__sediada_em__endereco': 344130, 'endereco__rev_sediada_em__empresa': 344130, 'empresa__localizada_em__municipio': 344130, 'municipio__rev_localizada_em__empresa': 344130, 'empresa__tem_vinculo_politico__vinculo_politico': 866, 'vinculo_politico__rev_tem_vinculo_politico__empresa': 866}}
+2026-08-15 16:20:48.779 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 16:20:50.553 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM socios
+2026-08-15 16:20:50.885 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM dividas_ativas
+2026-08-15 16:20:51.229 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM vinculos_politicos
+2026-08-15 16:20:51.231 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM infracoes_ambientais
+2026-08-15 16:20:51.235 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM contratos_governamentais
+2026-08-15 16:20:51.238 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-15 16:20:51.278 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-15 16:20:51.318 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-15 16:20:51.356 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM registros_jucees
+2026-08-15 16:20:51.538 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM sancoes_administrativas
+2026-08-15 16:20:51.540 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 16:20:54.600 | INFO     | src.features.tabular:build_feature_matrix:315 - Matriz de features: 344130 empresas x 122 features (+ 2 colunas de rotulo).
+2026-08-15 16:20:54.603 | INFO     | __main__:main:89 - {'base_117cols': 115, 'so_grafo_121cols': 119, 'so_compras_120cols': 118, 'completa_124cols': 122}
+2026-08-15 16:20:54.603 | INFO     | __main__:_rodar:57 - Rodando CV para 'base_117cols_y_direto' (115 colunas)...
+2026-08-15 16:23:23.911 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 30 folds validos, PR-AUC medio=0.0326 (+-0.0205)
+2026-08-15 16:23:23.911 | INFO     | __main__:_rodar:63 - 'base_117cols_y_direto' concluido em 149.3s.
+2026-08-15 16:23:23.913 | INFO     | __main__:_rodar:57 - Rodando CV para 'so_grafo_121cols_y_direto' (119 colunas)...
+2026-08-15 16:25:52.793 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 30 folds validos, PR-AUC medio=0.0300 (+-0.0176)
+2026-08-15 16:25:52.800 | INFO     | __main__:_rodar:63 - 'so_grafo_121cols_y_direto' concluido em 148.9s.
+2026-08-15 16:25:52.801 | INFO     | __main__:_rodar:57 - Rodando CV para 'so_compras_120cols_y_direto' (118 colunas)...
+2026-08-15 16:28:16.990 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 30 folds validos, PR-AUC medio=0.0261 (+-0.0155)
+2026-08-15 16:28:16.990 | INFO     | __main__:_rodar:63 - 'so_compras_120cols_y_direto' concluido em 144.2s.
+2026-08-15 16:28:16.991 | INFO     | __main__:_rodar:57 - Rodando CV para 'completa_124cols_y_direto' (122 colunas)...
+2026-08-15 16:30:45.228 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 30 folds validos, PR-AUC medio=0.0218 (+-0.0146)
+2026-08-15 16:30:45.233 | INFO     | __main__:_rodar:63 - 'completa_124cols_y_direto' concluido em 148.2s.
+2026-08-15 16:30:45.239 | INFO     | __main__:_rodar:57 - Rodando CV para 'base_117cols_y_qualquer' (115 colunas)...
+2026-08-15 16:33:05.498 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 30 folds validos, PR-AUC medio=0.0340 (+-0.0284)
+2026-08-15 16:33:05.498 | INFO     | __main__:_rodar:63 - 'base_117cols_y_qualquer' concluido em 140.3s.
+2026-08-15 16:33:05.499 | INFO     | __main__:_rodar:57 - Rodando CV para 'so_grafo_121cols_y_qualquer' (119 colunas)...
+2026-08-15 16:35:30.201 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 30 folds validos, PR-AUC medio=0.0278 (+-0.0209)
+2026-08-15 16:35:30.203 | INFO     | __main__:_rodar:63 - 'so_grafo_121cols_y_qualquer' concluido em 144.7s.
+2026-08-15 16:35:30.203 | INFO     | __main__:_rodar:57 - Rodando CV para 'so_compras_120cols_y_qualquer' (118 colunas)...
+2026-08-15 16:37:52.484 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 30 folds validos, PR-AUC medio=0.0268 (+-0.0219)
+2026-08-15 16:37:52.488 | INFO     | __main__:_rodar:63 - 'so_compras_120cols_y_qualquer' concluido em 142.3s.
+2026-08-15 16:37:52.489 | INFO     | __main__:_rodar:57 - Rodando CV para 'completa_124cols_y_qualquer' (122 colunas)...
+2026-08-15 16:40:17.292 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 30 folds validos, PR-AUC medio=0.0236 (+-0.0200)
+2026-08-15 16:40:17.296 | INFO     | __main__:_rodar:63 - 'completa_124cols_y_qualquer' concluido em 144.8s.
+
+--- Comparacoes pareadas (Wilcoxon, y_direto) ---
+base_117cols (media=0.0326) vs so_grafo_121cols (media=0.0300): Wilcoxon p=0.6702 -- sem diferenca significativa
+base_117cols (media=0.0326) vs so_compras_120cols (media=0.0261): Wilcoxon p=0.0879 -- sem diferenca significativa
+base_117cols (media=0.0326) vs completa_124cols (media=0.0218): Wilcoxon p=0.0062 -- diferenca significativa (p<0.05)
+so_grafo_121cols (media=0.0300) vs completa_124cols (media=0.0218): Wilcoxon p=0.0062 -- diferenca significativa (p<0.05)
+so_compras_120cols (media=0.0261) vs completa_124cols (media=0.0218): Wilcoxon p=0.0879 -- sem diferenca significativa
+
+--- Comparacoes pareadas (Wilcoxon, y_qualquer) ---
+base_117cols (media=0.0340) vs so_grafo_121cols (media=0.0278): Wilcoxon p=0.0919 -- sem diferenca significativa
+base_117cols (media=0.0340) vs so_compras_120cols (media=0.0268): Wilcoxon p=0.0016 -- diferenca significativa (p<0.05)
+base_117cols (media=0.0340) vs completa_124cols (media=0.0236): Wilcoxon p=0.0001 -- diferenca significativa (p<0.05)
+so_grafo_121cols (media=0.0278) vs completa_124cols (media=0.0236): Wilcoxon p=0.0145 -- diferenca significativa (p<0.05)
+so_compras_120cols (media=0.0268) vs completa_124cols (media=0.0236): Wilcoxon p=0.1094 -- sem diferenca significativa
+
+=== Resumo ===
+    rotulo           variante  n_cols  pr_auc_medio  pr_auc_std
+  y_direto       base_117cols     115      0.032587    0.020498
+  y_direto   so_grafo_121cols     119      0.029969    0.017570
+  y_direto so_compras_120cols     118      0.026061    0.015526
+  y_direto   completa_124cols     122      0.021807    0.014624
+y_qualquer       base_117cols     115      0.033997    0.028441
+y_qualquer   so_grafo_121cols     119      0.027750    0.020876
+y_qualquer so_compras_120cols     118      0.026776    0.021896
+y_qualquer   completa_124cols     122      0.023586    0.019987

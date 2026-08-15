@@ -20,9 +20,15 @@ quando o formato institucional for confirmado.)*
 > literatura mas não testada, (5) seção de disponibilidade de dados/código.
 > Mais 2 melhorias de "nota" aplicadas depois: reforço adicional do fit com
 > a GIQ (Matheus et al., 2021) e um esboço de implantação prática na Seção
-> 5.4. Todos os números computados direto do log
+> 5.4. Mais uma melhoria (15/08/2026): ablation dedicado (Seção 4.6)
+> isolando a contribuição marginal dos dois grupos de feature da rodada 3 —
+> revisou a leitura original da Seção 5.2 ("features de grafo explícitas
+> fecham a diferença") pra uma explicação mais nuançada e melhor
+> sustentada pelos dados (ver Seção 4.6/5.2). Todos os números computados
+> direto dos logs
 > `docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`
-> e reconferidos contra `docs/research_plan.md`, não recuperados de
+> e `docs/resultados/ablation_features_tabular_2026-08-15.log`, reconferidos
+> contra `docs/research_plan.md`, não recuperados de
 > memória; todas as citações verificadas em fonte primária.
 
 ---
@@ -548,7 +554,10 @@ engenharia de features. O PR-AUC absoluto não é monótono entre as rodadas
 adicionadas) — um teste rápido inicial comparou a rodada 3 contra a rodada
 1 em vez da rodada 2, criando uma falsa impressão de melhora; isso está
 corrigido aqui e documentado como lição metodológica no diário de pesquisa
-interno do projeto (`docs/research_plan.md`).
+interno do projeto (`docs/research_plan.md`). A Seção 4.6 reporta um
+ablation dedicado que rastreia essa queda, pro modelo tabular, até a
+combinação dos dois grupos de feature da rodada 3, não a nenhum grupo
+isoladamente.
 
 ### 4.4 Efeito do ajuste de hiperparâmetros sobre o HGT
 
@@ -608,6 +617,50 @@ rótulo, não por uma vantagem de detecção de risco estrutural que se
 esperaria generalizar para o rótulo principal, não-circular — onde, ao
 contrário, ele é consistentemente o modelo mais fraco.
 
+### 4.6 Ablation: isolando a contribuição dos grupos de feature da rodada 3
+
+A Seção 5.5 (numa versão anterior desta análise) apontou uma questão em
+aberto: as sete colunas novas da rodada 3 agrupam dois grupos de feature
+distintos — quatro features de grau de grafo explícitas (Seção 3.4,
+primeiro item) e três indicadores de compras públicas/empresa de fachada
+(Seção 3.4, segundo item) — adicionados juntos, tornando impossível
+atribuir a mudança de desempenho da rodada 2→3 a um grupo especificamente.
+Fechamos essa lacuna com um ablation dedicado, treinando só o modelo
+tabular (sem GNN/HGT — esse ablation é barato) em quatro variantes de
+conjunto de features sob o mesmo protocolo de 30 folds: o baseline da
+rodada 2 (117 colunas), rodada 2 mais só as features de grau de grafo (121
+colunas), rodada 2 mais só os indicadores de compras/fachada (120 colunas),
+e o conjunto completo da rodada 3 (124 colunas).
+
+| Variante | Lift `y_direto` | Lift `y_qualquer` |
+|---|---|---|
+| Baseline rodada 2 | **75,8×** | **62,2×** |
+| + só features de grau de grafo | 69,7× | 50,8× |
+| + só indicadores de compras/fachada | 60,6× | 49,0× |
+| + os dois (rodada 3 completa) | 50,7× | 43,2× |
+
+O resultado não é o que a formulação original da Seção 5.2 (abaixo, já
+revisada) assumia. Nenhum dos dois grupos isoladamente é significativamente
+pior que o baseline da rodada 2 em `y_direto` (só grafo: Wilcoxon p = 0,670;
+só compras: p = 0,088), e só o grupo de compras é significativamente pior
+em `y_qualquer` (p = 0,0016; só grafo: p = 0,092, no limiar). Mas a
+*combinação* dos dois grupos é significativamente pior que o baseline nos
+dois rótulos (p = 0,0062, p = 0,0001) — e significativamente pior que a
+variante só-grafo nos dois rótulos também (p = 0,0062, p = 0,0145). Em
+outras palavras, o baseline tabular da rodada 2, *sem* nenhuma das sete
+colunas adicionais da rodada 3, é a configuração tabular de melhor
+desempenho entre as que testamos — melhor que a configuração de 124
+colunas usada como baseline tabular ao longo das Seções 4.1–4.5. Adicionar
+features individualmente plausíveis e fundamentadas em literatura ainda
+assim piorou o desempenho quando combinadas, um efeito grande o suficiente
+pra ser estatisticamente significativo, provavelmente refletindo risco de
+overfitting da dimensionalidade adicional em relação a só 148–188 rótulos
+positivos, não recompensado por nenhum reajuste de hiperparâmetro quando o
+conjunto de features cresceu (as configurações de regularização do XGBoost
+foram mantidas fixas nas quatro versões de conjunto de features da Seção
+4.3, de propósito, pra isolar o efeito das features sozinhas — ver Seção
+5.5).
+
 ## 5. Discussão
 
 ### 5.1 Um resultado negativo que sobrevive ao seu desafio metodológico mais forte
@@ -627,18 +680,37 @@ faz: detectar empresas com sanção administrativa *direta*, não-circular.
 Tratamos isso como um achado empírico robusto, não provisório à espera de
 mais ajuste.
 
-### 5.2 Por que um modelo mais simples pode vencer aqui? Duas literaturas convergem
+### 5.2 Por que um modelo mais simples pode vencer aqui? Um quadro mais nuançado que "features explícitas fecham a diferença"
 
-O resultado é consistente com, e mutuamente reforçado por, duas linhas
-distintas de literatura revisadas na Seção 2. Primeiro, a literatura de
-features-de-grafo-vs-GNN (Seção 2.3) prevê que dar a um modelo tabular com
-gradient boosting acesso explícito à mesma informação estrutural que uma
-GNN aprenderia implicitamente fecha a maior parte da diferença de
-desempenho — exatamente o que observamos: o modelo tabular, alimentado com
-features de grau de grafo explícitas, atinge um respeitável lift de 50,7×
-por conta própria, e a GNN homogênea (*mais simples*, um único tipo de
-relação colapsado) supera tanto ele quanto o HGT, muito mais complexo e
-tipado por relação. Segundo, o diagnóstico de "sobrecarga de informação" da
+Nossa leitura de primeira passagem deste resultado, antes de rodar o
+ablation da Seção 4.6, era que ele se encaixava bem na literatura de
+features-de-grafo-vs-GNN (Seção 2.3): dar a um modelo tabular com gradient
+boosting acesso explícito à mesma informação estrutural que uma GNN
+aprenderia implicitamente fecha a maior parte da diferença de desempenho. O
+ablation complica essa história em vez de confirmá-la. O desempenho
+respeitável do modelo tabular é real, mas não é atribuível especificamente
+às features de grau de grafo — essas features, adicionadas sozinhas, não
+melhoram significativamente o baseline da rodada 2 do modelo tabular (Seção
+4.6), e o baseline da rodada 2 (sem nenhuma feature de grafo) é, de fato, a
+única configuração tabular de melhor desempenho que testamos (lift de
+75,8× em `y_direto`, à frente do 50,7× da configuração de 124 colunas usada
+como baseline tabular ao longo das Seções 4.1–4.5). O que a literatura de
+features-de-grafo-vs-GNN acerta aqui é o ponto mais amplo de que um modelo
+tabular bem especificado, ajudem ou não as features estruturais
+especificamente testadas, é um concorrente forte de uma GNN heterogênea —
+só não pelo mecanismo preciso ("features de grafo explícitas substituem o
+que a GNN aprenderia implicitamente") que motivou o desenho de features da
+Seção 3.4. Uma lição mais geral e útil sobrevive de qualquer forma: sob a
+escassez extrema de rótulo estudada aqui (148–188 positivos), adicionar
+mais features fundamentadas em literatura sem reajustar a regularização do
+modelo pode piorar mensuravelmente um modelo com gradient boosting,
+independente de essas features serem derivadas de grafo ou não (Seção
+4.6) — uma cautela sobre engenharia de features sob desbalanceamento
+extremo que, até onde sabemos, não é a ênfase da literatura de
+features-de-grafo-vs-GNN que usamos, que tipicamente não testa crescimento
+de features sob escassez de rótulo tão severa.
+
+Segundo, o diagnóstico de "sobrecarga de informação" da
 literatura de detecção de fraude corporativa (Seção 2.5) oferece uma
 explicação mecanicista plausível, consistente com ainda que não diretamente
 demonstrada pelos nossos experimentos, de por que o modelo *mais*
@@ -767,22 +839,20 @@ cobriu seis configurações escolhidas para isolar três eixos específicos
 (profundidade de treino, largura oculta, cabeças de atenção), não uma busca
 exaustiva ou bayesiana; consideramos isso proporcional dado que testou
 diretamente, e fechou, a objeção mais provável ao resultado, mas uma busca
-maior continua sendo trabalho futuro possível. Por fim, as duas iterações
-de conjunto de features que mais contribuem para os resultados das rodadas
-2 e 3 (Seção 4.3) agruparam múltiplos grupos de feature juntos — a rodada 2
-adicionou quatro indicadores derivados do dashboard de uma vez, e a rodada 3
-adicionou cinco features fundamentadas em literatura (features de grau de
-grafo explícitas *e* indicadores de compras públicas/empresa de fachada,
-Seção 3.4) na mesma passada. Por isso conseguimos atribuir o fechamento da
-diferença tabular-versus-modelo-de-grafo (Seção 5.2) ao conjunto de features
-*combinado* da rodada 3, mas não isolar de forma limpa quanto desse efeito
-se deve especificamente às features de grau de grafo explícitas versus aos
-indicadores de compras públicas e empresa de fachada adicionados na mesma
-rodada. Um ablation separando esses grupos foi julgado de prioridade menor
-que completar a busca de hiperparâmetros (Seção 4.4), dado o orçamento
-computacional finito na máquina de desenvolvimento, mas seria um próximo
-passo natural para refinar a afirmação de features-de-grafo-vs-GNN da
-Seção 5.2. De forma similar, a explicação de "sobrecarga de informação" da
+maior continua sendo trabalho futuro possível. Round 3's dois grupos de
+feature (features de grau de grafo explícitas e indicadores de compras
+públicas/empresa de fachada, Seção 3.4) foram inicialmente adicionados
+juntos, na mesma passada, o que teria tornado impossível atribuir a
+mudança de desempenho da rodada 2→3 a um grupo especificamente; fechamos
+essa lacuna com o ablation reportado na Seção 4.6, que constatou — ao
+contrário da nossa leitura inicial — que nenhum grupo isoladamente melhora
+significativamente o baseline da rodada 2, e que a *combinação* dos dois é
+o que causa uma queda estatisticamente significativa (Seção 5.2). O
+ablation foi restrito ao modelo tabular, já que é barato de rerodar em
+relação à GNN e ao HGT (Seção 4.4); um ablation equivalente pros modelos
+baseados em grafo continua trabalho futuro, e esclareceria se o mesmo
+efeito de combinação de features opera ali. De forma similar, a explicação
+de "sobrecarga de informação" da
 Seção 5.2 pra por que o HGT especificamente tem desempenho pior não foi
 testada via um ablation removendo cada tipo de nó auxiliar (sócio,
 endereço, vínculo político) isoladamente — oferecemos isso como

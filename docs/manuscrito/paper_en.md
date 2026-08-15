@@ -15,13 +15,17 @@ Government Information Quarterly)*
 > unstated, (4) the Section 5.2 mechanism asserted rather than flagged as
 > literature-grounded-but-untested, (5) no data/code availability statement.
 > All five have been addressed in this revision (Sections 1, 2.1, Abstract,
-> 5.2, 5.5, and the new "Data and code availability" section). Word budget
-> target for GIQ: ~8,000–10,000 words. All numbers were computed directly
-> from
+> 5.2, 5.5, and the new "Data and code availability" section), plus two
+> further improvements: a deployment sketch (Section 5.4) and a dedicated
+> ablation (Section 4.6, 2026-08-15) isolating the marginal contribution of
+> round 3's two feature groups — which revised Section 5.2's original
+> "explicit graph features close the gap" reading into a more nuanced,
+> and better-supported, account (see Section 4.6/5.2). Word budget target
+> for GIQ: ~8,000–10,000 words. All numbers were computed directly from
 > `docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`
-> and cross-checked against `docs/research_plan.md`, not reconstructed from
-> memory; all citations verified directly against primary sources (see
-> References note).
+> and `docs/resultados/ablation_features_tabular_2026-08-15.log`, cross-checked
+> against `docs/research_plan.md`, not reconstructed from memory; all
+> citations verified directly against primary sources (see References note).
 
 ---
 
@@ -500,7 +504,9 @@ scores decreased when the literature-grounded features were added) — an
 initial quick sanity check compared round 3 against round 1 rather than
 round 2, creating a false impression of improvement; this is corrected here
 and documented as a methodological lesson in the project's internal
-research log.
+research log. Section 4.6 reports a dedicated ablation that traces this
+decline, for the tabular model, to the combination of round 3's two feature
+groups rather than to either group individually.
 
 ### 4.4 Effect of hyperparameter tuning on the HGT
 
@@ -559,6 +565,48 @@ not by a structural-risk-detection advantage that would be expected to
 generalize to the primary, non-circular label — where, on the contrary, it
 is consistently the weakest model.
 
+### 4.6 Ablation: isolating the contribution of round-3 feature groups
+
+Section 5.5 (in an earlier version of this analysis) flagged an open
+question: round 3's seven new columns bundle two distinct feature groups —
+four explicit graph-degree features (Section 3.4, first bullet) and three
+procurement-corruption/shell-company indicators (Section 3.4, second
+bullet) — added together, making it impossible to attribute round 2→3's
+performance change to either group specifically. We closed this gap with a
+dedicated ablation, training the tabular model alone (no GNN/HGT — this
+ablation is inexpensive) on four feature-set variants under the same
+30-fold protocol: the round-2 baseline (117 columns), round 2 plus only the
+graph-degree features (121 columns), round 2 plus only the procurement/shell
+indicators (120 columns), and the full round-3 set (124 columns).
+
+| Variant | `y_direto` lift | `y_qualquer` lift |
+|---|---|---|
+| Round-2 baseline | **75.8×** | **62.2×** |
+| + graph-degree features only | 69.7× | 50.8× |
+| + procurement/shell indicators only | 60.6× | 49.0× |
+| + both (full round 3) | 50.7× | 43.2× |
+
+The result is not what Section 5.2's original framing (below, since
+revised) assumed. Neither feature group individually is significantly worse
+than the round-2 baseline on `y_direto` (graph-only: Wilcoxon p = 0.670;
+procurement-only: p = 0.088), and only the procurement group is
+significantly worse on `y_qualquer` (p = 0.0016; graph-only: p = 0.092,
+borderline). But the *combination* of both groups is significantly worse
+than the baseline on both labels (p = 0.0062, p = 0.0001) — and
+significantly worse than the graph-only variant on both labels as well
+(p = 0.0062, p = 0.0145). In other words, the round-2 tabular baseline,
+*without* any of round 3's seven additional columns, is the single
+best-performing tabular configuration we tested — better than the 124-column
+configuration used as the tabular baseline throughout Section 4.1–4.5. Adding
+features that are individually plausible and literature-motivated
+nonetheless hurt performance once combined, an effect large enough to be
+statistically significant, most likely reflecting overfitting risk from
+added dimensionality relative to only 148–188 positive labels, not
+re-compensated by any hyperparameter re-tuning when the feature set grew
+(XGBoost's regularization settings were held fixed across all four feature-set
+versions in Section 4.3, by design, to isolate the effect of features
+alone — see Section 5.5).
+
 ## 5. Discussion
 
 ### 5.1 A negative result that survives its strongest methodological challenge
@@ -577,17 +625,36 @@ research question is actually about: detecting companies with a *direct*,
 non-circular administrative sanction. We treat this as a robust empirical
 finding, not a provisional one awaiting further tuning.
 
-### 5.2 Why might a simpler model win here? Two literatures converge
+### 5.2 Why might a simpler model win here? A more nuanced picture than "explicit features close the gap"
 
-The result is consistent with, and mutually reinforcing across, two
-distinct strands of literature reviewed in Section 2. First, the
-graph-features-vs-GNN literature (Section 2.3) predicts that giving a
-gradient-boosted tabular model explicit access to the same structural
-information a GNN would otherwise learn implicitly closes most of the
-performance gap — exactly what we observe: the tabular model, fed explicit
-graph-degree features, achieves a respectable 50.7× lift on its own, and the
-*simpler* homogeneous GNN (a single collapsed relation type) outperforms
-both it and the far more complex, per-relation-typed HGT. Second, the
+Our first-pass reading of this result, before running the ablation in
+Section 4.6, was that it fit neatly into the graph-features-vs-GNN
+literature (Section 2.3): give a gradient-boosted tabular model explicit
+access to the same structural information a GNN would otherwise learn
+implicitly, and it closes most of the performance gap. The ablation
+complicates this story rather than confirming it. The tabular model's
+respectable performance is real, but it is not attributable to the
+graph-degree features specifically — those features, added alone, do not
+significantly improve on the tabular model's round-2 baseline (Section
+4.6), and the round-2 baseline (no graph features at all) is in fact the
+single best-performing tabular configuration we tested (75.8× lift on
+`y_direto`, ahead of the 124-column configuration's 50.7× used as the
+tabular baseline throughout Sections 4.1–4.5). What the graph-features-vs-GNN
+literature gets right here is the broader point that a well-specified
+tabular model, whether or not the specific structural features tested help,
+is a strong competitor to a heterogeneous GNN — just not for the precise
+mechanism ("explicit graph features substitute for what the GNN would learn
+implicitly") that motivated Section 3.4's feature design. A useful,
+more general lesson survives regardless: under the extreme label scarcity
+studied here (148–188 positives), adding more literature-motivated features
+without re-tuning model regularization can measurably hurt a gradient-boosted
+model, independent of whether those features are graph-derived or not
+(Section 4.6) — a caution about feature engineering under extreme
+imbalance that is, to our knowledge, not the emphasis of the
+graph-features-vs-GNN literature we drew on, which does not typically test
+feature growth under label scarcity this severe.
+
+Second, the
 "information overload" diagnosis from corporate fraud-detection literature
 (Section 2.5) offers a plausible mechanistic explanation, consistent with
 though not directly demonstrated by our experiments, for why the *more*
@@ -710,20 +777,19 @@ configurations chosen to isolate three specific axes (depth of training,
 hidden width, attention heads) rather than an exhaustive or Bayesian search;
 we consider this proportionate given that it directly tested, and closed,
 the single most likely objection to the result, but a larger search remains
-possible future work. Finally, the two feature-set iterations that
-contribute most to Section 4.3's round-2 and round-3 results each bundled
-multiple feature groups together — round 2 added four dashboard-derived
-indicators together, and round 3 added five literature-grounded features
-(explicit graph-degree features *and* procurement/shell-company indicators,
-Section 3.4) in the same pass. We can therefore attribute the closing of
-the tabular-versus-graph-model gap (Section 5.2) to the *combined* round-3
-feature set, but not cleanly isolate how much of that effect is due to the
-explicit graph-degree features specifically versus the procurement and
-shell-company indicators added in the same round. An ablation separating
-these groups was judged lower priority than completing the hyperparameter
-search (Section 4.4), given finite compute budget on the development
-machine, but would be a natural next step to sharpen the graph-features-vs-GNN
-claim in Section 5.2. Similarly, the "information overload" explanation in
+possible future work. Round 3's two feature groups (explicit graph-degree
+features and procurement/shell-company indicators, Section 3.4) were
+initially added together, in the same pass, which would have left it
+impossible to attribute round 2→3's performance change to either group
+specifically; we closed this gap with the ablation reported in Section 4.6,
+which found — counter to our initial reading — that neither group
+significantly improves on the round-2 baseline alone, and that the *combination*
+of both is what drives a statistically significant decline (Section 5.2).
+The ablation was restricted to the tabular model, since it is inexpensive
+to re-run relative to the GNN and HGT (Section 4.4); an equivalent ablation
+for the graph-based models remains future work, and would clarify whether
+the same feature-combination effect operates there. Similarly, the
+"information overload" explanation in
 Section 5.2 for why the HGT specifically underperforms was not tested via
 an ablation removing individual auxiliary node types (partner, address,
 political connection) one at a time — we offer it as a literature-grounded

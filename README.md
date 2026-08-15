@@ -93,7 +93,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 7.5 | HAN/HGT (heterogenea de verdade) | `src/models/han_hgt.py` | ✅ feito e rodado — recupera quase todo o sinal perdido na GNN homogenea (18,2x vs 13,0x em `y_direto`), quase empata com o tabular |
 | 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | `scripts/comparar_baselines.py` | ✅ **finalizado** — rerodado 4x (30 folds, 107→117→124 colunas + busca de hiperparametros do HAN/HGT) — **HAN/HGT e significativamente PIOR que o tabular em `y_direto` nas 4 rodadas, inclusive apos tuning dedicado** (p=0,007 / p<0,0001 / p=0,0001 / p=0,0024), ver nota abaixo |
 | 7.7 | Analise de sensibilidade: rotulo `direto` (148) vs. `direto+socio` (188) | — | ⏳ pendente — decidido, nao implementado |
-| 8 | Publicacao: resultado parcial em workshop/BRACIS, depois artigo principal em periodico-alvo | — | ⏳ pendente |
+| 8 | Publicacao: resultado parcial em workshop/BRACIS, depois artigo principal em periodico-alvo | `docs/manuscrito/paper_en.md` (GIQ), `dissertacao_pt.md` | ✅ rascunho completo (Introducao->Conclusao+Referencias+2 figuras), revisado como parecer simulado de revisor experiente + ablation de features (15/08/2026) — falta so revisao de tom pelo pesquisador antes de submeter |
 
 Cronograma por marcos (Marco 1–4) e riscos declarados: ver secoes 9 e 11 de
 [`docs/research_plan.md`](docs/research_plan.md).

@@ -393,13 +393,21 @@ explorar exatamente o mecanismo de rotulagem via sócio comum que confunde
 esse rótulo (não é sinal novo, é melhor exploração do vazamento). Detalhe
 completo em `docs/research_plan.md`, Seção 7.
 
-**Próximo passo real**: escrita. `docs/manuscrito/paper_en.md` (artigo em
-inglês, alvo *Government Information Quarterly*, moldura de política
-pública) e `docs/manuscrito/dissertacao_pt.md` (dissertação em português)
-já têm Introdução/Referencial Teórico/Metodologia — falta preencher
-Resultados/Discussão/Conclusão com os números acima, depois etapa 7.7
-(sensibilidade `y_direto`/`y_qualquer`, já com a leitura mais precisa da
-circularidade que o v4 trouxe).
+**Feito (15/08/2026)**: `docs/manuscrito/paper_en.md` e `dissertacao_pt.md`
+completos de ponta a ponta (Introdução → Conclusão + Referências + 2
+figuras). Passaram por autoavaliação simulando parecer de revisor
+experiente da GIQ (5 correções de revisão maior aplicadas) + 2 melhorias
+de "nota" (fit com GIQ reforçado, esboço de implantação) + um ablation
+dedicado (`scripts/ablation_features_tabular.py`) que revisou a leitura da
+Seção 5.2: não são as features de grafo explícitas que "fecham a diferença
+tabular-vs-GNN" — é que combinar os 2 grupos de feature da rodada 3 piora
+o tabular sob escassez extrema de rótulo, independente do tipo de feature
+(ver `docs/research_plan.md` para o detalhe completo). Conclusão central
+(Seção 4.1) não muda — o ablation só refina o *porquê* do número absoluto.
+
+**Próximo passo real**: revisão de tom/ênfase pelo pesquisador, depois
+etapa 7.7 (sensibilidade `y_direto`/`y_qualquer`, formalizar a discussão),
+depois decidir submissão (BRACIS primeiro ou já direto GIQ).
 
 ## Armadilhas já identificadas (não repetir)
 

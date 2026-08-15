@@ -796,6 +796,51 @@ explícitas, ou GNN homogênea) — pelo contrário, piora, de forma
 estatisticamente robusta a 5 rodadas independentes e a uma busca de
 hiperparâmetros dedicada.
 
+**Feito (15/08/2026 — parecer simulado de revisor experiente + ablation de features)**:
+os dois manuscritos (`docs/manuscrito/paper_en.md` e `dissertacao_pt.md`)
+já tinham Resultados/Discussão/Conclusão completos. Submeti o artigo em
+inglês a uma autoavaliação simulando um revisor experiente da GIQ, que
+recomendou revisão maior em 5 pontos (engajamento com literatura de setor
+público, alegação de novidade reformulada de "descoberta" pra "replicação
+rigorosa", ressalva sobre Wilcoxon em CV repetida — Dietterich, 1998 —,
+suavização da explicação de "sobrecarga de informação" da Seção 5.2, seção
+de disponibilidade de dados/código) — todos aplicados nos dois manuscritos.
+Mais 2 melhorias de "nota": reforço adicional de fit com a GIQ (Matheus,
+Janssen & Janowski, 2021) e esboço de implantação prática (cadência de
+retreino, dimensionamento de fila via Precision@k, auditabilidade via
+SHAP) na Seção 5.4.
+
+**Ablation dedicado (15/08/2026, `scripts/ablation_features_tabular.py`,
+~20min, só XGBoost — barato)**: fechou a lacuna mais citada no parecer —
+isolar a contribuição marginal dos 2 grupos de feature adicionados juntos
+na rodada 3 (features de grau de grafo explícitas vs. indicadores de
+compras públicas/empresa de fachada). Log em
+`docs/resultados/ablation_features_tabular_2026-08-15.log`:
+
+| Variante | Lift `y_direto` | Lift `y_qualquer` |
+|---|---|---|
+| Baseline rodada 2 (117 cols) | **75,8×** | **62,2×** |
+| + só grau de grafo (121 cols) | 69,7× | 50,8× |
+| + só compras/fachada (120 cols) | 60,6× | 49,0× |
+| + os dois (rodada 3 completa, 124 cols) | 50,7× | 43,2× |
+
+**Achado contraintuitivo, revisa a leitura da Seção 5.2**: nenhum grupo
+isoladamente é significativamente pior que o baseline da rodada 2 em
+`y_direto` (Wilcoxon p=0,670 grafo / p=0,088 compras); só compras é
+significativo em `y_qualquer` (p=0,0016). Mas a **combinação** dos dois é
+significativamente pior que o baseline nos dois rótulos (p=0,0062 /
+p=0,0001) — o baseline da rodada 2, sem nenhuma das 7 colunas novas, é a
+melhor configuração tabular testada, melhor que a de 124 colunas usada
+como baseline em todo o experimento principal (Seção 4). Isso revisa a
+leitura anterior ("features de grafo explícitas fecham a diferença
+tabular-vs-GNN") — não são as features de grafo especificamente que
+ajudam; é que adicionar mais features fundamentadas em literatura sem
+reajustar regularização pode piorar um modelo com gradient boosting sob
+escassez extrema de rótulo (148-188 positivos), independente de a feature
+ser derivada de grafo ou não. Não muda a conclusão central (Seção 4.1
+continua usando o mesmo conjunto de 124 colunas pros 3 modelos, comparação
+justa mantida) — só refina o *porquê* do número absoluto do tabular.
+
 **Pendente a seguir**:
 - Etapa 7.7 (sensibilidade `y_direto` vs `y_qualquer`) — agora com uma
   leitura mais precisa da circularidade: o HAN/HGT tunado explora melhor
@@ -803,10 +848,12 @@ hiperparâmetros dedicada.
   saltou de 42,8× pra 60,8× só com mais épocas), o que é evidência adicional
   de que esse ganho é sobre vazamento de rótulo, não sinal novo. Formalizar
   essa discussão.
-- Escrita do artigo (`docs/manuscrito/paper_en.md`, alvo *Government
-  Information Quarterly*, moldura de política pública) e da dissertação
-  (`docs/manuscrito/dissertacao_pt.md`) — Resultados/Discussão/Conclusão a
-  preencher com os números acima.
+- Revisão final de tom/ênfase pelo pesquisador nos dois manuscritos antes
+  de decidir submissão (BRACIS primeiro, ou já direto GIQ).
+- Ablation equivalente pros modelos de grafo (GNN homogênea/HGT) e ablation
+  de tipo de nó no HGT (sócio/endereço/vínculo político isolados) ficam
+  como trabalho futuro — mais caros (horas de máquina), não priorizados
+  ainda.
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).
 - Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP
