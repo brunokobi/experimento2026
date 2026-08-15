@@ -289,6 +289,19 @@ label (`y_qualquer`, including the partner-inferred cases) as a declared
 sensitivity analysis, never conflating the two without stating which is in
 use.
 
+Figure 2 shows a concrete (anonymized) example of this mechanism from the
+dataset: two companies in the same municipality, neither directly sanctioned,
+that share a partner who was personally sanctioned (listed on CEIS as an
+individual). Both companies enter `y_qualquer` as positives solely through
+this shared-partner link — the exact relation the shared-partner metapath is
+built to detect.
+
+![Real, anonymized example: two companies (labeled A and B, company identifiers and the partner's name withheld per the ethical-use commitment in this study) sharing a partner who was personally sanctioned; neither company has a direct sanction of its own.](figuras/figura2_caso_socio_comum.png)
+
+*Figure 2. A real case (identifiers anonymized) illustrating the
+partner-inferred labeling mechanism behind the 40 companies that separate
+`y_qualquer` from `y_direto`.*
+
 ### 3.3 Heterogeneous information network construction
 
 We construct a heterogeneous information network (HIN) with five node types
@@ -307,6 +320,12 @@ explosive and carries no meaningful discriminative signal (every company
 shares a municipality with tens of thousands of others). Metapath extraction
 uses sparse matrix products rather than depth-first search, a scalability
 requirement at this network size (344,130 company nodes).
+
+![Schematic of the HIN's three hypothesis metapaths: shared partner, shared address, and shared political connection, each linking two company nodes through one intermediate node type.](figuras/figura1_esquema_metapaths.png)
+
+*Figure 1. Schematic of the three company–X–company metapaths used to build
+the heterogeneous information network (abstract illustration, not drawn from
+specific companies).*
 
 ### 3.4 Feature engineering
 
@@ -638,43 +657,70 @@ risk screening at this scale and label scarcity.
 
 ## References
 
-*(Working list — every entry below has been verified directly against its
-primary source — arXiv abstract page or publisher DOI record, fetched
-directly, not taken from search-engine summaries — on 2026-08-14, following
-an explicit accuracy check. One entry originally in this draft, an unverifiable
-ResearchGate paper whose "author list" turned out to be a fabricated,
-alphabetically-sequential set of names, was removed rather than fixed — see
-`docs/research_plan.md` for the correction log. To be converted to full
-APA/BibTeX formatting before submission.)*
+*(APA 7th edition. Every entry has been verified directly against its
+primary source — arXiv abstract page or publisher/DOI record, fetched
+directly, not taken from search-engine summaries — on 2026-08-14. Fields not
+directly confirmed during verification — e.g., unlisted DOIs or page ranges
+— are omitted rather than reconstructed. One entry originally in this
+draft, an unverifiable ResearchGate paper whose "author list" turned out to
+be fabricated, was removed rather than fixed — see `docs/research_plan.md`
+for the correction log.)*
 
-- Abdou, A., Basdevant, O., David-Barrett, E., & Fazekas, M. (2022).
-  Assessing vulnerabilities to corruption in public procurement and their
-  price impact. *IMF Working Paper 22/094*.
-- Cheng, D., Zou, Y., Xiang, S., & Jiang, C. (2024). Graph neural networks
-  for financial fraud detection: A review. arXiv:2411.05815.
-- Dou, Y., Liu, Z., Sun, L., Deng, Y., Peng, H., & Yu, P. S. (2020). Enhancing
-  graph neural network-based fraud detectors against camouflaged fraudsters.
-  *CIKM 2020*.
-- Fazekas, M., & Kocsis, G. (2020). Uncovering high-level corruption:
-  Cross-national objective corruption risk indicators using public
-  procurement data. *British Journal of Political Science*, 50(1), 155–164.
-- Hu, Z., Dong, Y., Wang, K., & Sun, Y. (2020). Heterogeneous graph
-  transformer. *WWW 2020*. arXiv:2003.01332.
-- Ivanov, S., & Prokhorenkova, L. (2021). Boost then convolve: Gradient
-  boosting meets graph neural networks. arXiv:2101.08543.
-- Liu, Y., Ao, X., Qin, Z., Chi, J., Feng, J., Yang, H., & He, Q. (2021). Pick
-  and choose: A GNN-based imbalanced learning approach for fraud detection.
-  *WWW 2021*.
-- Ma, X., Li, R., Liu, F., Ding, K., Yang, J., & Wu, J. (2024). Graph anomaly
-  detection with few labels: A data-centric approach. *KDD 2024*, 2153–2164.
-- Moody's Analytics. (2023, January 22). 7 indicators of shell company risk.
-  https://www.moodys.com/web/en/us/kyc/resources/insights/seven-indicators-shell-company-risk.html
-- Vandervorst, F., Deprez, B., Verbeke, W., & Verdonck, T. (2025). Inductive
-  inference of gradient-boosted decision trees on graphs for insurance fraud
-  detection. arXiv:2510.05676.
-- Wang, S., Zhang, Z., Fang, L., Nguyen, C.-T., & Li, W. (2025). Corporate
-  fraud detection in rich-yet-noisy financial graph. arXiv:2502.19305.
-- Wang, X., Ji, H., Shi, C., Wang, B., Cui, P., Yu, P., & Ye, Y. (2019).
-  Heterogeneous graph attention network. *WWW 2019*. arXiv:1903.07293.
-- Yang, H., Zhang, Y., Yao, Q., & Kwok, J. (2023). Positive-unlabeled node
-  classification with structure-aware graph learning. arXiv:2310.13538.
+Abdou, A., Basdevant, O., David-Barrett, E., & Fazekas, M. (2022). *Assessing
+vulnerabilities to corruption in public procurement and their price impact*
+(IMF Working Paper No. 2022/094). International Monetary Fund.
+https://www.imf.org/en/Publications/WP/Issues/2022/05/20/Assessing-Vulnerabilities-to-Corruption-in-Public-Procurement-and-Their-Price-Impact-518197
+
+Cheng, D., Zou, Y., Xiang, S., & Jiang, C. (2024). Graph neural networks for
+financial fraud detection: A review. *arXiv*. https://arxiv.org/abs/2411.05815
+
+Dou, Y., Liu, Z., Sun, L., Deng, Y., Peng, H., & Yu, P. S. (2020). Enhancing
+graph neural network-based fraud detectors against camouflaged fraudsters.
+In *Proceedings of the 29th ACM International Conference on Information and
+Knowledge Management* (CIKM '20). Association for Computing Machinery.
+https://doi.org/10.1145/3340531.3411903
+
+Fazekas, M., & Kocsis, G. (2020). Uncovering high-level corruption:
+Cross-national objective corruption risk indicators using public
+procurement data. *British Journal of Political Science*, *50*(1), 155–164.
+https://www.cambridge.org/core/journals/british-journal-of-political-science/article/abs/uncovering-highlevel-corruption-crossnational-objective-corruption-risk-indicators-using-public-procurement-data/8A1742693965AA92BE4D2BA53EADFDF0
+
+Hu, Z., Dong, Y., Wang, K., & Sun, Y. (2020). Heterogeneous graph
+transformer. In *Proceedings of The Web Conference 2020* (WWW '20).
+https://arxiv.org/abs/2003.01332
+
+Ivanov, S., & Prokhorenkova, L. (2021). Boost then convolve: Gradient
+boosting meets graph neural networks. *arXiv*. https://arxiv.org/abs/2101.08543
+
+Liu, Y., Ao, X., Qin, Z., Chi, J., Feng, J., Yang, H., & He, Q. (2021). Pick
+and choose: A GNN-based imbalanced learning approach for fraud detection.
+In *Proceedings of The Web Conference 2021* (WWW '21). Association for
+Computing Machinery. https://doi.org/10.1145/3442381.3449989
+
+Ma, X., Li, R., Liu, F., Ding, K., Yang, J., & Wu, J. (2024). Graph anomaly
+detection with few labels: A data-centric approach. In *Proceedings of the
+30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining* (KDD
+'24) (pp. 2153–2164). Association for Computing Machinery.
+https://doi.org/10.1145/3637528.3671929
+
+Moody's Analytics. (2023, January 22). *7 indicators of shell company risk*.
+https://www.moodys.com/web/en/us/kyc/resources/insights/seven-indicators-shell-company-risk.html
+
+Vandervorst, F., Deprez, B., Verbeke, W., & Verdonck, T. (2025). Inductive
+inference of gradient-boosted decision trees on graphs for insurance fraud
+detection. *arXiv*. https://arxiv.org/abs/2510.05676
+
+Wang, S., Zhang, Z., Fang, L., Nguyen, C.-T., & Li, W. (2025). Corporate
+fraud detection in rich-yet-noisy financial graph. *arXiv*.
+https://arxiv.org/abs/2502.19305
+
+Wang, X., Ji, H., Shi, C., Wang, B., Cui, P., Yu, P., & Ye, Y. (2019).
+Heterogeneous graph attention network. In *Proceedings of The Web
+Conference 2019* (WWW '19) (pp. 2022–2032). Association for Computing
+Machinery. https://doi.org/10.1145/3308558.3313562
+
+Yang, H., Zhang, Y., Yao, Q., & Kwok, J. (2023). Positive-unlabeled node
+classification with structure-aware graph learning. In *Proceedings of the
+32nd ACM International Conference on Information and Knowledge Management*
+(CIKM '23). Association for Computing Machinery.
+https://doi.org/10.1145/3583780.3615250

@@ -321,6 +321,20 @@ rótulo completo de 188 empresas (`y_qualquer`, incluindo os casos inferidos
 via sócio) como uma análise de sensibilidade declarada, nunca confundindo os
 dois sem explicitar qual está em uso.
 
+A Figura 2 mostra um exemplo concreto (anonimizado) desse mecanismo, extraído
+do banco de dados real: duas empresas do mesmo município, nenhuma sancionada
+diretamente, que compartilham um sócio que foi pessoalmente sancionado
+(listado no CEIS como pessoa física). As duas empresas entram em
+`y_qualquer` como positivas só por causa desse vínculo de sócio comum —
+exatamente a relação que o metapath de sócio comum é desenhado para
+detectar.
+
+![Exemplo real anonimizado: duas empresas (rotuladas A e B, identificadores das empresas e nome do sócio ocultados conforme o compromisso ético desta pesquisa) que compartilham um sócio pessoalmente sancionado; nenhuma das duas tem sanção direta própria.](figuras/figura2_caso_socio_comum.png)
+
+*Figura 2. Um caso real (identificadores anonimizados) ilustrando o
+mecanismo de rotulagem via sócio comum por trás das 40 empresas que separam
+`y_qualquer` de `y_direto`.*
+
 ### 3.3 Construção da rede heterogênea de informação
 
 Construímos uma Rede Heterogênea de Informação (HIN) com cinco tipos de nó —
@@ -340,6 +354,12 @@ combinatorialmente explosivo e não carrega sinal discriminativo relevante
 Extração de metapath usa produto de matrizes esparsas, não busca em
 profundidade — requisito de escalabilidade nesse tamanho de rede (344.130 nós
 de empresa).
+
+![Esquema dos três metapaths de hipótese da HIN: sócio comum, endereço comum, e vínculo político comum, cada um ligando dois nós de empresa através de um tipo de nó intermediário.](figuras/figura1_esquema_metapaths.png)
+
+*Figura 1. Esquema dos três metapaths empresa–X–empresa usados para
+construir a rede heterogênea de informação (ilustração abstrata, não
+extraída de empresas específicas).*
 
 ### 3.4 Engenharia de features
 
@@ -687,41 +707,76 @@ rótulo.
 
 ## Referências
 
-*(Lista de trabalho — a converter para formato ABNT completo antes da
-defesa. Todas verificadas diretamente em fonte primária — arXiv/DOI — em
-14/08/2026.)*
+*(Formato ABNT NBR 6023. Todas as entradas foram verificadas diretamente
+contra a fonte primária — página de resumo do arXiv ou registro de
+DOI/editora, buscada diretamente, não recuperada de sínteses de busca — em
+14/08/2026. Campos não confirmados diretamente na verificação — DOIs ou
+páginas não listadas — foram omitidos em vez de reconstruídos. Uma
+referência original deste rascunho, um artigo do ResearchGate cuja "lista
+de autores" revelou-se fabricada, foi removida em vez de corrigida — ver
+`docs/research_plan.md` para o registro da correção. Acesso a todas as
+URLs: 14 ago. 2026.)*
 
-- ABDOU, A.; BASDEVANT, O.; DAVID-BARRETT, E.; FAZEKAS, M. Assessing
-  vulnerabilities to corruption in public procurement and their price
-  impact. *IMF Working Paper*, 22/094, 2022.
-- CHENG, D.; ZOU, Y.; XIANG, S.; JIANG, C. Graph neural networks for
-  financial fraud detection: a review. arXiv:2411.05815, 2024.
-- DOU, Y.; LIU, Z.; SUN, L.; DENG, Y.; PENG, H.; YU, P. S. Enhancing graph
-  neural network-based fraud detectors against camouflaged fraudsters. In:
-  **CIKM 2020**.
-- FAZEKAS, M.; KOCSIS, G. Uncovering high-level corruption: cross-national
-  objective corruption risk indicators using public procurement data.
-  *British Journal of Political Science*, v. 50, n. 1, p. 155–164, 2020.
-- HU, Z.; DONG, Y.; WANG, K.; SUN, Y. Heterogeneous graph transformer. In:
-  **WWW 2020**. arXiv:2003.01332.
-- IVANOV, S.; PROKHORENKOVA, L. Boost then convolve: gradient boosting meets
-  graph neural networks. arXiv:2101.08543, 2021.
-- LIU, Y.; AO, X.; QIN, Z.; CHI, J.; FENG, J.; YANG, H.; HE, Q. Pick and
-  choose: a GNN-based imbalanced learning approach for fraud detection. In:
-  **WWW 2021**.
-- MA, X.; LI, R.; LIU, F.; DING, K.; YANG, J.; WU, J. Graph anomaly
-  detection with few labels: a data-centric approach. In: **KDD 2024**, p.
-  2153–2164.
-- MOODY'S ANALYTICS. 7 indicators of shell company risk. 22 jan. 2023.
-  Disponível em:
-  https://www.moodys.com/web/en/us/kyc/resources/insights/seven-indicators-shell-company-risk.html
-- VANDERVORST, F.; DEPREZ, B.; VERBEKE, W.; VERDONCK, T. Inductive inference
-  of gradient-boosted decision trees on graphs for insurance fraud
-  detection. arXiv:2510.05676, 2025.
-- WANG, S.; ZHANG, Z.; FANG, L.; NGUYEN, C.-T.; LI, W. Corporate fraud
-  detection in rich-yet-noisy financial graph. arXiv:2502.19305, 2025.
-- WANG, X.; JI, H.; SHI, C.; WANG, B.; CUI, P.; YU, P.; YE, Y. Heterogeneous
-  graph attention network. In: **WWW 2019**. arXiv:1903.07293.
-- YANG, H.; ZHANG, Y.; YAO, Q.; KWOK, J. Positive-unlabeled node
-  classification with structure-aware graph learning. arXiv:2310.13538,
-  2023.
+ABDOU, Aly; BASDEVANT, Olivier; DAVID-BARRETT, Elizabeth; FAZEKAS, Mihály.
+**Assessing vulnerabilities to corruption in public procurement and their
+price impact**. Washington, DC: International Monetary Fund, 2022. (IMF
+Working Paper, WP/2022/094). Disponível em:
+https://www.imf.org/en/Publications/WP/Issues/2022/05/20/Assessing-Vulnerabilities-to-Corruption-in-Public-Procurement-and-Their-Price-Impact-518197.
+
+CHENG, Dawei; ZOU, Yao; XIANG, Sheng; JIANG, Changjun. Graph neural
+networks for financial fraud detection: a review. **arXiv**, 2024.
+Disponível em: https://arxiv.org/abs/2411.05815.
+
+DOU, Yingtong; LIU, Zhiwei; SUN, Li; DENG, Yutong; PENG, Hao; YU, Philip S.
+Enhancing graph neural network-based fraud detectors against camouflaged
+fraudsters. In: ACM INTERNATIONAL CONFERENCE ON INFORMATION AND KNOWLEDGE
+MANAGEMENT, 29., 2020. **Anais [...]**. New York: ACM, 2020. Disponível em:
+https://doi.org/10.1145/3340531.3411903.
+
+FAZEKAS, Mihály; KOCSIS, Gábor. Uncovering high-level corruption:
+cross-national objective corruption risk indicators using public
+procurement data. **British Journal of Political Science**, Cambridge, v.
+50, n. 1, p. 155-164, 2020. Disponível em:
+https://www.cambridge.org/core/journals/british-journal-of-political-science/article/abs/uncovering-highlevel-corruption-crossnational-objective-corruption-risk-indicators-using-public-procurement-data/8A1742693965AA92BE4D2BA53EADFDF0.
+
+HU, Ziniu; DONG, Yuxiao; WANG, Kuansan; SUN, Yizhou. Heterogeneous graph
+transformer. In: THE WEB CONFERENCE, 2020, Taipei. **Anais [...]**. 2020.
+Disponível em: https://arxiv.org/abs/2003.01332.
+
+IVANOV, Sergei; PROKHORENKOVA, Liudmila. Boost then convolve: gradient
+boosting meets graph neural networks. **arXiv**, 2021. Disponível em:
+https://arxiv.org/abs/2101.08543.
+
+LIU, Yang; AO, Xiang; QIN, Zidi; CHI, Jianfeng; FENG, Jinghua; YANG, Hao;
+HE, Qing. Pick and choose: a GNN-based imbalanced learning approach for
+fraud detection. In: THE WEB CONFERENCE, 2021, Ljubljana. **Anais [...]**.
+New York: ACM, 2021. Disponível em: https://doi.org/10.1145/3442381.3449989.
+
+MA, X.; LI, R.; LIU, F.; DING, K.; YANG, J.; WU, J. Graph anomaly detection
+with few labels: a data-centric approach. In: ACM SIGKDD CONFERENCE ON
+KNOWLEDGE DISCOVERY AND DATA MINING, 30., 2024. **Anais [...]**. New York:
+ACM, 2024. p. 2153-2164. Disponível em:
+https://doi.org/10.1145/3637528.3671929.
+
+MOODY'S ANALYTICS. **7 indicators of shell company risk**. [S. l.], 22 jan.
+2023. Disponível em:
+https://www.moodys.com/web/en/us/kyc/resources/insights/seven-indicators-shell-company-risk.html.
+
+VANDERVORST, Félix; DEPREZ, Bruno; VERBEKE, Wouter; VERDONCK, Tim. Inductive
+inference of gradient-boosted decision trees on graphs for insurance fraud
+detection. **arXiv**, 2025. Disponível em: https://arxiv.org/abs/2510.05676.
+
+WANG, Shiqi; ZHANG, Zhibo; FANG, Libing; NGUYEN, Cam-Tu; LI, Wenzhong.
+Corporate fraud detection in rich-yet-noisy financial graph. **arXiv**,
+2025. Disponível em: https://arxiv.org/abs/2502.19305.
+
+WANG, Xiao; JI, Houye; SHI, Chuan; WANG, Bai; CUI, Peng; YU, P.; YE,
+Yanfang. Heterogeneous graph attention network. In: THE WEB CONFERENCE,
+2019, San Francisco. **Anais [...]**. New York: ACM, 2019. p. 2022-2032.
+Disponível em: https://arxiv.org/abs/1903.07293.
+
+YANG, Hansi; ZHANG, Yongqi; YAO, Quanming; KWOK, James. Positive-unlabeled
+node classification with structure-aware graph learning. In: ACM
+INTERNATIONAL CONFERENCE ON INFORMATION AND KNOWLEDGE MANAGEMENT, 32.,
+2023. **Anais [...]**. New York: ACM, 2023. Disponível em:
+https://doi.org/10.1145/3583780.3615250.
