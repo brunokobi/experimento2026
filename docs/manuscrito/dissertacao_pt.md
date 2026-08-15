@@ -296,6 +296,16 @@ tratável em memória em hardware comum — escolha deliberada, já que o públi
 para as conclusões práticas deste trabalho é órgão de controle sem
 infraestrutura de big data dedicada.
 
+**Ética e privacidade de dados.** O CPF do sócio já vem mascarado na fonte
+pelo cadastro federal emissor — sem necessidade de pseudonimização adicional
+pra esta pesquisa. Registros de vínculo político (Seção 3.3) vêm de
+declarações públicas de candidatura/doação eleitoral do TSE. Nomes de sócio
+e identificadores de empresa são usados internamente pra construir a rede e
+as features, mas — compromisso ético desta pesquisa — nunca são publicados
+em resultado agregado, e são substituídos por rótulos genéricos (ex.:
+"Sócio X", "Empresa A/B") em qualquer exemplo ilustrativo extraído de um
+caso específico, incluindo a Figura 1.
+
 ### 3.2 Construção do rótulo e a moldura positivo-incompleta (PU)
 
 Apenas **188 de 344.130 empresas (0,055%)** têm sanção administrativa
@@ -321,7 +331,7 @@ rótulo completo de 188 empresas (`y_qualquer`, incluindo os casos inferidos
 via sócio) como uma análise de sensibilidade declarada, nunca confundindo os
 dois sem explicitar qual está em uso.
 
-A Figura 2 mostra um exemplo concreto (anonimizado) desse mecanismo, extraído
+A Figura 1 mostra um exemplo concreto (anonimizado) desse mecanismo, extraído
 do banco de dados real: duas empresas do mesmo município, nenhuma sancionada
 diretamente, que compartilham um sócio que foi pessoalmente sancionado
 (listado no CEIS como pessoa física). As duas empresas entram em
@@ -329,9 +339,9 @@ diretamente, que compartilham um sócio que foi pessoalmente sancionado
 exatamente a relação que o metapath de sócio comum é desenhado para
 detectar.
 
-![Exemplo real anonimizado: duas empresas (rotuladas A e B, identificadores das empresas e nome do sócio ocultados conforme o compromisso ético desta pesquisa) que compartilham um sócio pessoalmente sancionado; nenhuma das duas tem sanção direta própria.](figuras/figura2_caso_socio_comum.png)
+![Exemplo real anonimizado: duas empresas (rotuladas A e B, identificadores das empresas e nome do sócio ocultados conforme o compromisso ético desta pesquisa) que compartilham um sócio pessoalmente sancionado; nenhuma das duas tem sanção direta própria.](figuras/figura1_caso_socio_comum.png)
 
-*Figura 2. Um caso real (identificadores anonimizados) ilustrando o
+*Figura 1. Um caso real (identificadores anonimizados) ilustrando o
 mecanismo de rotulagem via sócio comum por trás das 40 empresas que separam
 `y_qualquer` de `y_direto`.*
 
@@ -355,9 +365,9 @@ Extração de metapath usa produto de matrizes esparsas, não busca em
 profundidade — requisito de escalabilidade nesse tamanho de rede (344.130 nós
 de empresa).
 
-![Esquema dos três metapaths de hipótese da HIN: sócio comum, endereço comum, e vínculo político comum, cada um ligando dois nós de empresa através de um tipo de nó intermediário.](figuras/figura1_esquema_metapaths.png)
+![Esquema dos três metapaths de hipótese da HIN: sócio comum, endereço comum, e vínculo político comum, cada um ligando dois nós de empresa através de um tipo de nó intermediário.](figuras/figura2_esquema_metapaths.png)
 
-*Figura 1. Esquema dos três metapaths empresa–X–empresa usados para
+*Figura 2. Esquema dos três metapaths empresa–X–empresa usados para
 construir a rede heterogênea de informação (ilustração abstrata, não
 extraída de empresas específicas).*
 

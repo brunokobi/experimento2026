@@ -6,15 +6,22 @@ Networks for Administrative Sanction Risk Screening in Local Government Data**
 *(provisional — revisit once Results/Discussion are finalized; target venue:
 Government Information Quarterly)*
 
-> **Status of this draft (updated 2026-08-14)**: all sections now have a
-> substantive first draft, including Results, Discussion and Conclusion,
-> written after the final 30-fold experiment (with a tuned HGT) completed.
-> Word budget target for GIQ: ~8,000–10,000 words; this draft is longer and
-> will need trimming, especially Section 2 and 4, before submission. All
-> numbers below were computed directly from
+> **Status of this draft (updated 2026-08-15)**: full first draft (2026-08-14)
+> was reviewed as if by an experienced GIQ referee, who recommended major
+> revision on five points: (1) near-zero engagement with the public-sector/AI
+> adoption literature that anchors GIQ's own scope, (2) an overclaimed
+> novelty framing given a contemporaneous parallel finding elsewhere, (3) a
+> known statistical caveat of Wilcoxon tests on repeated-CV folds left
+> unstated, (4) the Section 5.2 mechanism asserted rather than flagged as
+> literature-grounded-but-untested, (5) no data/code availability statement.
+> All five have been addressed in this revision (Sections 1, 2.1, Abstract,
+> 5.2, 5.5, and the new "Data and code availability" section). Word budget
+> target for GIQ: ~8,000–10,000 words. All numbers were computed directly
+> from
 > `docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`
 > and cross-checked against `docs/research_plan.md`, not reconstructed from
-> memory.
+> memory; all citations verified directly against primary sources (see
+> References note).
 
 ---
 
@@ -32,7 +39,11 @@ real, complete registry of 344,130 companies from a Brazilian metropolitan
 region, comparing a tabular gradient-boosting baseline, a homogeneous GNN,
 and a heterogeneous graph transformer (HGT), under a positive-unlabeled
 framing appropriate to the extreme rarity of confirmed sanctions (148 direct,
-188 including partner-inferred cases). Across five independent evaluation
+188 including partner-inferred cases). Our finding echoes a pattern reported
+in at least one contemporaneous benchmark in a different fraud domain
+(Vandervorst et al., 2025); this paper's contribution is to test it with
+substantially more methodological scrutiny, and in a new public-sector
+domain where the practical stakes of the answer differ. Across five independent evaluation
 rounds — three successive feature-engineering iterations plus a dedicated
 hyperparameter-search round for the HGT, all under repeated stratified
 cross-validation (30 folds) with paired statistical testing — the
@@ -72,6 +83,14 @@ accounts, comptroller offices, procurement agencies — the practical question
 is not retrospective ("was this company sanctioned?") but prospective: *among
 the companies not yet sanctioned, which ones carry enough risk to justify
 scrutiny now?*
+
+Public-sector adoption of AI and machine learning tools is expanding, but
+consistently constrained by technical capacity, data quality, and staff
+competency barriers rather than by model availability (Sun & Medaglia,
+2019) — a body of evidence this paper takes as a starting design constraint,
+not an afterthought: any modeling choice recommended here must be
+justifiable to an oversight body with exactly these constraints, not only
+to a machine-learning audience with unlimited compute.
 
 Two structural facts make this a hard screening problem. First, confirmed
 sanctions are extremely rare relative to the size of any real registry — in
@@ -148,21 +167,31 @@ concludes.
 
 ## 2. Related work
 
-### 2.1 Administrative and corporate sanction risk in Brazilian public data
+### 2.1 AI adoption in public-sector oversight, and administrative sanction risk in Brazilian public data
 
-Prior Brazilian work on corporate risk and fraud detection using public
-registry data is predominantly tabular, treating each company as an
-independent observation described by registration attributes, tax regime,
-debt records, and sector codes. This body of work does not, to our knowledge,
-model the *network* of relationships between companies — shared partners,
-shared addresses, shared political ties — as a first-class object, despite
-these relationships being directly queryable in the same public data sources
-(Federal Revenue registry, electoral court records). International work
-applying relational models (HAN, HGT, R-GCN) to corporate networks exists,
-but concentrates heavily on credit/insolvency risk — a comparatively
-data-rich, well-labeled problem — leaving administrative-sanction risk
-detection via ownership/address/political metapaths, in a Brazilian public-data
-context, comparatively unexplored.
+Government Information Quarterly's own literature on AI adoption in public
+administration consistently finds that the binding constraint on deploying
+predictive tools in government is organizational and technical capacity —
+staff competency, data quality, infrastructure — not the availability of a
+capable model (Sun & Medaglia, 2019). This paper takes that finding as a
+design requirement rather than a caveat added after the fact: Section 3.1
+deliberately scopes the study to a dataset and compute budget realistic for
+an under-resourced oversight body, and Section 5.4 evaluates each model
+explicitly against that constraint, not only against predictive performance.
+
+Within this constraint, prior Brazilian work on corporate risk and fraud
+detection using public registry data is predominantly tabular, treating each
+company as an independent observation described by registration attributes,
+tax regime, debt records, and sector codes. This body of work does not, to
+our knowledge, model the *network* of relationships between companies —
+shared partners, shared addresses, shared political ties — as a first-class
+object, despite these relationships being directly queryable in the same
+public data sources (Federal Revenue registry, electoral court records).
+International work applying relational models (HAN, HGT, R-GCN) to corporate
+networks exists, but concentrates heavily on credit/insolvency risk — a
+comparatively data-rich, well-labeled problem — leaving administrative-sanction
+risk detection via ownership/address/political metapaths, in a Brazilian
+public-data context, comparatively unexplored.
 
 ### 2.2 Heterogeneous graph neural networks for corporate and financial networks
 
@@ -266,6 +295,16 @@ in memory on commodity hardware — a deliberate choice, since the target
 audience for this work's practical conclusions is oversight bodies without
 dedicated big-data infrastructure.
 
+**Data ethics and privacy.** Partner tax IDs (CPF) are already masked at
+source by the issuing federal registry; no additional pseudonymization was
+required for this study's purposes. Political-connection records (Section
+3.3) originate from public electoral-court candidacy/donation filings.
+Individual partner names and company identifiers are used internally to
+construct the network and features, but — this study's ethical-use
+commitment — are never published in aggregate results, and are replaced with
+generic labels (e.g., "Partner X", "Company A/B") in any illustrative
+example drawn from a specific case, including Figure 1.
+
 ### 3.2 Label construction and the positive-unlabeled framing
 
 Only 188 of 344,130 companies (0.055%) have a confirmed administrative
@@ -289,16 +328,16 @@ label (`y_qualquer`, including the partner-inferred cases) as a declared
 sensitivity analysis, never conflating the two without stating which is in
 use.
 
-Figure 2 shows a concrete (anonymized) example of this mechanism from the
+Figure 1 shows a concrete (anonymized) example of this mechanism from the
 dataset: two companies in the same municipality, neither directly sanctioned,
 that share a partner who was personally sanctioned (listed on CEIS as an
 individual). Both companies enter `y_qualquer` as positives solely through
 this shared-partner link — the exact relation the shared-partner metapath is
 built to detect.
 
-![Real, anonymized example: two companies (labeled A and B, company identifiers and the partner's name withheld per the ethical-use commitment in this study) sharing a partner who was personally sanctioned; neither company has a direct sanction of its own.](figuras/figura2_caso_socio_comum.png)
+![Real, anonymized example: two companies (labeled A and B, company identifiers and the partner's name withheld per the ethical-use commitment in this study) sharing a partner who was personally sanctioned; neither company has a direct sanction of its own.](figuras/figura1_caso_socio_comum.png)
 
-*Figure 2. A real case (identifiers anonymized) illustrating the
+*Figure 1. A real case (identifiers anonymized) illustrating the
 partner-inferred labeling mechanism behind the 40 companies that separate
 `y_qualquer` from `y_direto`.*
 
@@ -321,9 +360,9 @@ shares a municipality with tens of thousands of others). Metapath extraction
 uses sparse matrix products rather than depth-first search, a scalability
 requirement at this network size (344,130 company nodes).
 
-![Schematic of the HIN's three hypothesis metapaths: shared partner, shared address, and shared political connection, each linking two company nodes through one intermediate node type.](figuras/figura1_esquema_metapaths.png)
+![Schematic of the HIN's three hypothesis metapaths: shared partner, shared address, and shared political connection, each linking two company nodes through one intermediate node type.](figuras/figura2_esquema_metapaths.png)
 
-*Figure 1. Schematic of the three company–X–company metapaths used to build
+*Figure 2. Schematic of the three company–X–company metapaths used to build
 the heterogeneous information network (abstract illustration, not drawn from
 specific companies).*
 
@@ -543,18 +582,25 @@ graph-degree features, achieves a respectable 50.7× lift on its own, and the
 *simpler* homogeneous GNN (a single collapsed relation type) outperforms
 both it and the far more complex, per-relation-typed HGT. Second, the
 "information overload" diagnosis from corporate fraud-detection literature
-(Section 2.5) offers a mechanistic explanation for why the *more*
+(Section 2.5) offers a plausible mechanistic explanation, consistent with
+though not directly demonstrated by our experiments, for why the *more*
 heterogeneous model specifically underperforms: the HGT's auxiliary node
 types (partner, address, political connection) carry no genuine attribute
 data of their own, only a learned embedding — and these attribute-poor node
 types outnumber the attribute-rich company nodes by more than an order of
 magnitude (142,844 partner nodes and 181,268 address nodes against 344,130
 company nodes, several of which connect to the same small number of
-auxiliary nodes). Training this much additional, weakly-informed structure
-end-to-end from only 148 positive labels appears to add variance rather
-than signal, relative to a simpler model that either ignores this structure
-(tabular with explicit degree features) or aggregates it coarsely into a
-single relation type (homogeneous GNN).
+auxiliary nodes). We did not run an ablation removing individual auxiliary
+node types one at a time to isolate which specifically drives the effect
+(a natural extension of this analysis, noted in Section 5.5); what we can
+say from the results in hand is that training this much additional,
+weakly-informed structure end-to-end from only 148 positive labels is
+associated with worse performance than a simpler model that either ignores
+this structure (tabular with explicit degree features) or aggregates it
+coarsely into a single relation type (homogeneous GNN) — a pattern the
+information-overload literature would predict, though we treat it here as
+a consistent, literature-grounded interpretation rather than an
+independently demonstrated causal mechanism.
 
 ### 5.3 The secondary label's reversal is evidence of circularity exploitation, not of genuine advantage
 
@@ -597,6 +643,22 @@ embedding.
 
 ### 5.5 Limitations
 
+Our pairwise significance tests use the Wilcoxon signed-rank test on 30
+repeated stratified cross-validation folds — the same folds across models,
+which is what permits pairing, but folds drawn by repeated k-fold CV from a
+single dataset are not fully independent samples, since companies are reused
+across overlapping splits. Naively applied significance tests on repeated-CV
+folds are known to understate variance and can inflate false-positive rates
+relative to corrected alternatives designed for this setting, such as the
+5×2cv paired test (Dietterich, 1998). We consider our qualitative conclusion
+robust to this caveat because the primary-label ranking is not a single
+borderline p-value but a large, consistent effect replicated across five
+independent evaluation rounds with different feature sets and an
+independently re-tuned model (Section 4.3) — the kind of cross-round
+replication a corrected single-round test cannot substitute for — but we
+note the caveat explicitly rather than let the specific p-values in Section
+4 be read as more precise than a repeated-CV Wilcoxon test actually supports.
+
 The primary label itself is positive-unlabeled, not exhaustive: absence of
 a confirmed sanction does not establish absence of wrongdoing, only absence
 of (so far) confirmed detection — a limitation inherent to this task
@@ -631,7 +693,12 @@ shell-company indicators added in the same round. An ablation separating
 these groups was judged lower priority than completing the hyperparameter
 search (Section 4.4), given finite compute budget on the development
 machine, but would be a natural next step to sharpen the graph-features-vs-GNN
-claim in Section 5.2.
+claim in Section 5.2. Similarly, the "information overload" explanation in
+Section 5.2 for why the HGT specifically underperforms was not tested via
+an ablation removing individual auxiliary node types (partner, address,
+political connection) one at a time — we offer it as a literature-grounded
+interpretation of the result, not an independently demonstrated mechanism,
+and isolating each node type's contribution is left for future work.
 
 ## 6. Conclusion
 
@@ -655,6 +722,22 @@ tabular model with explicit graph-derived features, not a heterogeneous
 graph transformer, as the defensible choice for administrative-sanction
 risk screening at this scale and label scarcity.
 
+## Data and code availability
+
+All code (data loaders, HIN construction, metapath extraction, feature
+engineering, the three models, the evaluation harness, and the scripts used
+to run every experiment reported in Sections 4.3–4.4) is publicly available
+at https://github.com/brunokobi/experimento2026, including this manuscript's
+source file and the full experiment logs underlying Section 4 (in
+`docs/resultados/`). The underlying company registry
+(`projeto_grande_vitoria_empresas`) is a separately maintained, publicly
+available ETL pipeline and dataset release (see the repository's `README`
+for the current release). The registry contains personal data (partner
+names, masked tax IDs, addresses); it is published under the source
+project's own data-governance terms, not re-distributed by this paper.
+Figure 1 anonymizes all individual and company identifiers per the
+ethical-use commitment described in Section 3.1.
+
 ## References
 
 *(APA 7th edition. Every entry has been verified directly against its
@@ -673,6 +756,10 @@ https://www.imf.org/en/Publications/WP/Issues/2022/05/20/Assessing-Vulnerabiliti
 
 Cheng, D., Zou, Y., Xiang, S., & Jiang, C. (2024). Graph neural networks for
 financial fraud detection: A review. *arXiv*. https://arxiv.org/abs/2411.05815
+
+Dietterich, T. G. (1998). Approximate statistical tests for comparing
+supervised classification learning algorithms. *Neural Computation*, *10*(7),
+1895–1923. https://doi.org/10.1162/089976698300017197
 
 Dou, Y., Liu, Z., Sun, L., Deng, Y., Peng, H., & Yu, P. S. (2020). Enhancing
 graph neural network-based fraud detectors against camouflaged fraudsters.
@@ -705,6 +792,11 @@ https://doi.org/10.1145/3637528.3671929
 
 Moody's Analytics. (2023, January 22). *7 indicators of shell company risk*.
 https://www.moodys.com/web/en/us/kyc/resources/insights/seven-indicators-shell-company-risk.html
+
+Sun, T. Q., & Medaglia, R. (2019). Mapping the challenges of artificial
+intelligence in the public sector: Evidence from public healthcare.
+*Government Information Quarterly*, *36*(2), 368–383.
+https://doi.org/10.1016/j.giq.2018.09.008
 
 Vandervorst, F., Deprez, B., Verbeke, W., & Verdonck, T. (2025). Inductive
 inference of gradient-boosted decision trees on graphs for insurance fraud

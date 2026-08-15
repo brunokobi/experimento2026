@@ -1,13 +1,17 @@
-"""Gera as figuras ilustrativas dos manuscritos (`docs/manuscrito/`):
+"""Gera as figuras ilustrativas dos manuscritos (`docs/manuscrito/`). Nomes
+de arquivo numerados pela ordem em que cada figura aparece no texto (Secao
+3.2 antes da 3.3), nao pela ordem em que sao geradas neste script:
 
-1. `figura1_esquema_metapaths.png` -- esquema abstrato dos 3 metapaths de
-   hipotese da HIN (sem dado real, so ilustra a estrutura).
-2. `figura2_caso_socio_comum.png` -- um caso REAL do banco (`data/raw/
+1. `figura1_caso_socio_comum.png` -- um caso REAL do banco (`data/raw/
    grande_vitoria.db`), **anonimizado antes de desenhar** (nome do socio e
    CNPJs das empresas substituidos por rotulos genericos) -- ilustra o
    mecanismo exato de circularidade discutido na Secao 5.3 dos manuscritos:
    duas empresas que so entram em `y_qualquer` (nao em `y_direto`) porque
-   compartilham um socio que foi sancionado como pessoa fisica.
+   compartilham um socio que foi sancionado como pessoa fisica. Aparece na
+   Secao 3.2 dos manuscritos.
+2. `figura2_esquema_metapaths.png` -- esquema abstrato dos 3 metapaths de
+   hipotese da HIN (sem dado real, so ilustra a estrutura). Aparece na
+   Secao 3.3, depois da Figura 1.
 
 Caso escolhido (verificado contra o banco real em 14/08/2026, ver
 `docs/research_plan.md` para a nota de rigor): socio com sancao CEIS
@@ -72,8 +76,10 @@ def _verificar_caso_real(loader: GrandeVitoriaLoader) -> dict:
 
 
 def gerar_figura_esquema_metapaths() -> Path:
-    """Figura 1: esquema abstrato dos 3 metapaths de hipotese -- sem dado
-    real, so estrutura (nos genericos "Empresa 1"/"Empresa 2")."""
+    """Figura 2: esquema abstrato dos 3 metapaths de hipotese -- sem dado
+    real, so estrutura (nos genericos "Empresa 1"/"Empresa 2"). Numerada
+    depois da Figura 1 porque aparece mais tarde no texto dos manuscritos
+    (Secao 3.3, depois do caso real da Secao 3.2)."""
     fig, axes = plt.subplots(1, 3, figsize=(12, 4))
     metapaths = [
         ("Sócio comum", "Sócio"),
@@ -95,15 +101,17 @@ def gerar_figura_esquema_metapaths() -> Path:
 
     fig.suptitle("Metapaths de hipótese da HIN (empresa–X–empresa)", fontsize=12)
     fig.tight_layout()
-    out = FIGURAS_DIR / "figura1_esquema_metapaths.png"
+    out = FIGURAS_DIR / "figura2_esquema_metapaths.png"
     fig.savefig(out, dpi=300, bbox_inches="tight")
     plt.close(fig)
     return out
 
 
 def gerar_figura_caso_socio_comum(municipio_a: str, municipio_b: str) -> Path:
-    """Figura 2: caso real anonimizado -- duas empresas que so entram em
-    `y_qualquer` via socio comum (nenhuma tem sancao direta propria)."""
+    """Figura 1: caso real anonimizado -- duas empresas que so entram em
+    `y_qualquer` via socio comum (nenhuma tem sancao direta propria).
+    Numerada como a primeira figura porque aparece na Secao 3.2, antes do
+    esquema abstrato da Secao 3.3."""
     g = nx.Graph()
     empresa_a = f"Empresa A\n({municipio_a})"
     empresa_b = f"Empresa B\n({municipio_b})"
@@ -130,7 +138,7 @@ def gerar_figura_caso_socio_comum(municipio_a: str, municipio_b: str) -> Path:
     ax.axis("off")
     ax.set_title("Caso real (anonimizado): circularidade via sócio comum", fontsize=11)
     fig.tight_layout()
-    out = FIGURAS_DIR / "figura2_caso_socio_comum.png"
+    out = FIGURAS_DIR / "figura1_caso_socio_comum.png"
     fig.savefig(out, dpi=300, bbox_inches="tight")
     plt.close(fig)
     return out
@@ -141,9 +149,9 @@ def main() -> None:
     loader = GrandeVitoriaLoader()
     municipios = _verificar_caso_real(loader)
 
-    f1 = gerar_figura_esquema_metapaths()
+    f1 = gerar_figura_caso_socio_comum(municipios["municipio_a"], municipios["municipio_b"])
     print(f"Figura 1 salva em: {f1}")
-    f2 = gerar_figura_caso_socio_comum(municipios["municipio_a"], municipios["municipio_b"])
+    f2 = gerar_figura_esquema_metapaths()
     print(f"Figura 2 salva em: {f2}")
 
 
