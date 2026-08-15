@@ -282,9 +282,6 @@ alternatives under the exact conditions (extreme imbalance, few labels,
 attribute-poor auxiliary node types) this literature was designed to
 address.
 
-*(References to be compiled in full BibTeX/APA form once the draft
-stabilizes — see inline citations above for the working list.)*
-
 ---
 
 ## 3. Data and methods
@@ -567,8 +564,7 @@ is consistently the weakest model.
 
 ### 4.6 Ablation: isolating the contribution of round-3 feature groups
 
-Section 5.5 (in an earlier version of this analysis) flagged an open
-question: round 3's seven new columns bundle two distinct feature groups —
+Round 3's seven new columns bundle two distinct feature groups —
 four explicit graph-degree features (Section 3.4, first bullet) and three
 procurement-corruption/shell-company indicators (Section 3.4, second
 bullet) — added together, making it impossible to attribute round 2→3's
@@ -586,8 +582,9 @@ indicators (120 columns), and the full round-3 set (124 columns).
 | + procurement/shell indicators only | 60.6× | 49.0× |
 | + both (full round 3) | 50.7× | 43.2× |
 
-The result is not what Section 5.2's original framing (below, since
-revised) assumed. Neither feature group individually is significantly worse
+The result runs against the more intuitive hypothesis that explicit
+graph-derived features are what let the tabular model compete with the
+graph-based models (Section 5.2). Neither feature group individually is significantly worse
 than the round-2 baseline on `y_direto` (graph-only: Wilcoxon p = 0.670;
 procurement-only: p = 0.088), and only the procurement group is
 significantly worse on `y_qualquer` (p = 0.0016; graph-only: p = 0.092,
@@ -597,7 +594,7 @@ significantly worse than the graph-only variant on both labels as well
 (p = 0.0062, p = 0.0145). In other words, the round-2 tabular baseline,
 *without* any of round 3's seven additional columns, is the single
 best-performing tabular configuration we tested — better than the 124-column
-configuration used as the tabular baseline throughout Section 4.1–4.5. Adding
+configuration used as the tabular baseline throughout Sections 4.1–4.5. Adding
 features that are individually plausible and literature-motivated
 nonetheless hurt performance once combined, an effect large enough to be
 statistically significant, most likely reflecting overfitting risk from
@@ -822,7 +819,7 @@ risk screening at this scale and label scarcity.
 
 All code (data loaders, HIN construction, metapath extraction, feature
 engineering, the three models, the evaluation harness, and the scripts used
-to run every experiment reported in Sections 4.3–4.4) is publicly available
+to run every experiment reported in Section 4) is publicly available
 at https://github.com/brunokobi/experimento2026, including this manuscript's
 source file and the full experiment logs underlying Section 4 (in
 `docs/resultados/`). The underlying company registry

@@ -317,12 +317,6 @@ mais simples exatamente sob as condições (desbalanceamento extremo, poucos
 rótulos, tipos de nó auxiliares pobres em atributo) para as quais essa
 literatura foi desenhada.
 
-*(Lista de trabalho — a converter para formato ABNT completo quando o
-rascunho estabilizar. Todas as referências abaixo foram verificadas
-diretamente na página do arXiv ou registro DOI da editora em 14/08/2026,
-não recuperadas de memória ou só de síntese de busca — ver nota de correção
-em `docs/research_plan.md`, Seção 7.)*
-
 ---
 
 ## 3. Metodologia
@@ -619,8 +613,7 @@ contrário, ele é consistentemente o modelo mais fraco.
 
 ### 4.6 Ablation: isolando a contribuição dos grupos de feature da rodada 3
 
-A Seção 5.5 (numa versão anterior desta análise) apontou uma questão em
-aberto: as sete colunas novas da rodada 3 agrupam dois grupos de feature
+As sete colunas novas da rodada 3 agrupam dois grupos de feature
 distintos — quatro features de grau de grafo explícitas (Seção 3.4,
 primeiro item) e três indicadores de compras públicas/empresa de fachada
 (Seção 3.4, segundo item) — adicionados juntos, tornando impossível
@@ -639,8 +632,9 @@ e o conjunto completo da rodada 3 (124 colunas).
 | + só indicadores de compras/fachada | 60,6× | 49,0× |
 | + os dois (rodada 3 completa) | 50,7× | 43,2× |
 
-O resultado não é o que a formulação original da Seção 5.2 (abaixo, já
-revisada) assumia. Nenhum dos dois grupos isoladamente é significativamente
+O resultado vai contra a hipótese mais intuitiva de que features derivadas
+de grafo explicitamente são o que permite ao modelo tabular competir com os
+modelos baseados em grafo (Seção 5.2). Nenhum dos dois grupos isoladamente é significativamente
 pior que o baseline da rodada 2 em `y_direto` (só grafo: Wilcoxon p = 0,670;
 só compras: p = 0,088), e só o grupo de compras é significativamente pior
 em `y_qualquer` (p = 0,0016; só grafo: p = 0,092, no limiar). Mas a
@@ -839,8 +833,8 @@ cobriu seis configurações escolhidas para isolar três eixos específicos
 (profundidade de treino, largura oculta, cabeças de atenção), não uma busca
 exaustiva ou bayesiana; consideramos isso proporcional dado que testou
 diretamente, e fechou, a objeção mais provável ao resultado, mas uma busca
-maior continua sendo trabalho futuro possível. Round 3's dois grupos de
-feature (features de grau de grafo explícitas e indicadores de compras
+maior continua sendo trabalho futuro possível. Os dois grupos de feature
+da rodada 3 (features de grau de grafo explícitas e indicadores de compras
 públicas/empresa de fachada, Seção 3.4) foram inicialmente adicionados
 juntos, na mesma passada, o que teria tornado impossível atribuir a
 mudança de desempenho da rodada 2→3 a um grupo especificamente; fechamos
@@ -888,8 +882,8 @@ rótulo.
 
 Todo o código (carregadores de dado, construção da HIN, extração de
 metapath, engenharia de features, os três modelos, o harness de avaliação,
-e os scripts usados pra rodar todo experimento reportado nas Seções
-4.3–4.4) está publicamente disponível em
+e os scripts usados pra rodar todo experimento reportado na Seção 4) está
+publicamente disponível em
 https://github.com/brunokobi/experimento2026, incluindo o arquivo-fonte
 desta dissertação e os logs completos de experimento por trás da Seção 4
 (em `docs/resultados/`). O cadastro empresarial subjacente
