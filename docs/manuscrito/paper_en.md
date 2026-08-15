@@ -115,11 +115,13 @@ on public-sector risk screening:
    dedicated hyperparameter-tuning pass — a level of methodological scrutiny
    uncommon in prior graph-based fraud/risk papers, which typically report a
    single configuration.
-2. **[RESULT — TBD]**: whether, and under what conditions, the heterogeneous
-   model's implicit structural learning outperforms giving the *same*
-   structural signal explicitly, as engineered features, to the tabular
-   baseline — directly probing a claim from the graph-features-vs-GNN
-   literature (Section 2.3) in a new domain.
+2. **A direct test of whether implicit structural learning outperforms
+   explicit graph features**, probing a claim from the graph-features-vs-GNN
+   literature (Section 2.3) in a new domain: it does not, here — a tabular
+   model given the same three metapaths as explicit degree features, and an
+   even simpler homogeneous GNN, both significantly outperform the fully
+   heterogeneous model on the primary label (Section 4.1), a result that
+   survives a dedicated hyperparameter-tuning pass (Section 4.4).
 3. **A feature set for administrative-sanction screening grounded in
    procurement-corruption and shell-company literature** (Section 2.4),
    adapted to what is realistically available in a Brazilian municipal-level
@@ -137,8 +139,10 @@ Brazilian public data, heterogeneous GNNs for corporate networks, the
 graph-features-vs-GNN debate in fraud detection, and imbalanced/few-label
 graph learning. Section 3 describes the data, label construction, network
 design, feature engineering, models and evaluation protocol. Section 4
-reports results [TBD]. Section 5 discusses the findings from a public-sector
-practitioner's perspective [TBD]. Section 6 concludes [TBD].
+reports results across five evaluation rounds, a hyperparameter-tuning study,
+and a sensitivity analysis. Section 5 discusses the findings from a
+public-sector practitioner's perspective and states limitations. Section 6
+concludes.
 
 ---
 
@@ -232,10 +236,10 @@ but growing literature on positive-unlabeled (PU) learning on graphs
 (structure-aware PU losses; Yang et al., 2023) addresses the label-incompleteness
 problem this paper's own label construction shares, though not yet integrated
 into a heterogeneous-GNN training objective in the corporate-risk setting. We
-draw on this literature in Section 5 [TBD] to interpret our own findings on
-why a more complex, end-to-end heterogeneous model may or may not out-perform
-simpler alternatives under the exact conditions (extreme imbalance, few
-labels, attribute-poor auxiliary node types) this literature was designed to
+draw on this literature in Section 5.2 to interpret our finding that the
+more complex, end-to-end heterogeneous model underperforms simpler
+alternatives under the exact conditions (extreme imbalance, few labels,
+attribute-poor auxiliary node types) this literature was designed to
 address.
 
 *(References to be compiled in full BibTeX/APA form once the draft
@@ -347,16 +351,23 @@ All three models were re-evaluated across three successive iterations of the
 feature set (107, 117 and 124 columns) as literature-motivated features were
 added (Sections 2.3–2.4), and the HGT's hyperparameters (hidden dimension,
 attention heads, training epochs) were subjected to a dedicated tuning pass
-before the final reported configuration was selected — see Section 4 [TBD]
-for the finding that motivated this step.
+before the final reported configuration was selected — see Section 4.4 for
+the finding (undertraining, not undersizing) that motivated this step.
 
 ### 3.6 Evaluation protocol
 
 We use repeated stratified k-fold cross-validation (5 folds × 6 repeats = 30
 folds), the same folds and random seed shared across all three models to
-permit paired statistical testing. We report PR-AUC and Precision@k (k = 10,
-20, 50) per fold, and compare models pairwise with the Wilcoxon signed-rank
-test on per-fold PR-AUC. All results are reported for both the primary
+permit paired statistical testing. Our evaluation harness computes both
+PR-AUC and Precision@k (k = 10, 20, 50) per fold; we report PR-AUC as the
+primary metric throughout this paper and compare models pairwise with the
+Wilcoxon signed-rank test on per-fold PR-AUC. Precision@k was tracked during
+development but is not reported in the main results: at roughly 148/5 ≈ 30
+positive cases per test fold, Precision@k at these thresholds is
+substantially noisier fold-to-fold than PR-AUC (its standard deviation
+across folds frequently exceeds its mean in early exploratory runs), making
+PR-AUC the more informative and stable metric for the paired comparisons
+this paper relies on. All results are reported for both the primary
 (`y_direto`, 148 positives) and sensitivity (`y_qualquer`, 188 positives)
 labels (Section 3.2).
 
@@ -450,7 +461,38 @@ diagnosis was real, not a rationalization. **The HGT nonetheless remains
 significantly worse than both alternatives on the primary label after
 tuning** (Section 4.1). On the secondary label, tuning increased the HGT's
 lift by more (42.8×→60.8×) than on the primary label — a pattern taken up
-in Section 5.
+in Section 4.5.
+
+### 4.5 Sensitivity analysis: primary versus secondary label, across all rounds
+
+Sections 4.1–4.2 report primary- and secondary-label results for the final
+round only. Table 4.5 computes, for every one of the four evaluation
+rounds, each model's ratio of secondary-label lift to primary-label lift
+(`y_qualquer` lift ÷ `y_direto` lift) — a direct measure of how much *more*
+(ratio > 1) or *less* (ratio < 1) advantage a model gets from the label
+definition that includes the 40 partner-inferred cases.
+
+| Round | Tabular ratio | Homogeneous GNN ratio | HGT ratio |
+|---|---|---|---|
+| 1 (107 cols) | 0.84 | 1.48 | **2.36** |
+| 2 (117 cols) | 0.82 | 0.51 | **1.55** |
+| 3 (124 cols, untuned HGT) | 0.85 | 0.53 | **1.82** |
+| 4 (124 cols, tuned HGT) | 0.85 | 0.53 | **1.87** |
+
+Two patterns are stable across all four rounds, independent of feature-set
+version and HGT tuning: (i) the tabular model's ratio is consistently below
+1 (it does not get an edge from the circular label — if anything, a slight
+disadvantage), (ii) the HGT's ratio is **always the highest of the three
+models, and always above 1**, meaning it consistently extracts more relative
+advantage from the label version whose construction overlaps with the
+metapath it is built to exploit. The homogeneous GNN sits in between,
+above 1 only in round 1 (the least feature-rich, least statistically
+powered round). This is the quantitative basis for the reading proposed in
+Section 5.3: the HGT's apparent strength on the secondary label is
+best explained by its capacity to exploit label-construction circularity,
+not by a structural-risk-detection advantage that would be expected to
+generalize to the primary, non-circular label — where, on the contrary, it
+is consistently the weakest model.
 
 ## 5. Discussion
 
@@ -552,12 +594,25 @@ still-in-development record-linkage pipeline rather than by tax ID, and were
 judged too unreliable to include as either label or feature. The study is
 scoped to a single Brazilian metropolitan region (seven municipalities);
 generalization to other regions, sanction regimes, or company-registry
-structures is untested. Finally, the hyperparameter search (Section 4.4)
-covered six configurations chosen to isolate three specific axes (depth of
-training, hidden width, attention heads) rather than an exhaustive or
-Bayesian search; we consider this proportionate given that it directly
-tested, and closed, the single most likely objection to the result, but a
-larger search remains possible future work.
+structures is untested. The hyperparameter search (Section 4.4) covered six
+configurations chosen to isolate three specific axes (depth of training,
+hidden width, attention heads) rather than an exhaustive or Bayesian search;
+we consider this proportionate given that it directly tested, and closed,
+the single most likely objection to the result, but a larger search remains
+possible future work. Finally, the two feature-set iterations that
+contribute most to Section 4.3's round-2 and round-3 results each bundled
+multiple feature groups together — round 2 added four dashboard-derived
+indicators together, and round 3 added five literature-grounded features
+(explicit graph-degree features *and* procurement/shell-company indicators,
+Section 3.4) in the same pass. We can therefore attribute the closing of
+the tabular-versus-graph-model gap (Section 5.2) to the *combined* round-3
+feature set, but not cleanly isolate how much of that effect is due to the
+explicit graph-degree features specifically versus the procurement and
+shell-company indicators added in the same round. An ablation separating
+these groups was judged lower priority than completing the hyperparameter
+search (Section 4.4), given finite compute budget on the development
+machine, but would be a natural next step to sharpen the graph-features-vs-GNN
+claim in Section 5.2.
 
 ## 6. Conclusion
 

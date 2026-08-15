@@ -131,11 +131,14 @@ exceção a ser contornada por ajuste fino.
    hiperparâmetros — um nível de escrutínio metodológico incomum na
    literatura prévia de fraude/risco em grafo, que tipicamente reporta uma
    única configuração.
-2. **[RESULTADO — a definir]**: se, e sob quais condições, o aprendizado
-   estrutural implícito do modelo heterogêneo supera dar o *mesmo* sinal
-   estrutural explicitamente, como feature de grau, ao baseline tabular —
-   testando diretamente uma afirmação da literatura de features-de-grafo-vs-GNN
-   (Seção 2.3) num domínio novo.
+2. **Um teste direto de se aprendizado estrutural implícito supera feature de
+   grafo explícita**, testando diretamente uma afirmação da literatura de
+   features-de-grafo-vs-GNN (Seção 2.3) num domínio novo: aqui, não supera —
+   um modelo tabular com os mesmos três metapaths como feature de grau
+   explícita, e uma GNN homogênea ainda mais simples, superam
+   significativamente o modelo totalmente heterogêneo no rótulo principal
+   (Seção 4.1), resultado que sobrevive a uma rodada dedicada de ajuste de
+   hiperparâmetros (Seção 4.4).
 3. **Um conjunto de features para triagem de risco de sanção administrativa
    fundamentado em literatura de corrupção em compras públicas e detecção de
    empresa de fachada** (Seção 2.4), adaptado ao que é realisticamente
@@ -154,9 +157,10 @@ em dado público brasileiro, GNNs heterogêneas para redes corporativas, o
 debate features-de-grafo-vs-GNN em detecção de fraude, e aprendizado em grafo
 com desbalanceamento/poucos rótulos. A Seção 3 descreve os dados, a
 construção do rótulo, o desenho da rede, a engenharia de features, os
-modelos e o protocolo de avaliação. A Seção 4 reporta os resultados
-*(a definir)*. A Seção 5 discute os achados da perspectiva de quem fiscaliza
-*(a definir)*. A Seção 6 conclui *(a definir)*.
+modelos e o protocolo de avaliação. A Seção 4 reporta os resultados de cinco
+rodadas de avaliação, um estudo de ajuste de hiperparâmetros, e uma análise
+de sensibilidade. A Seção 5 discute os achados da perspectiva de quem
+fiscaliza e declara limitações. A Seção 6 conclui.
 
 ---
 
@@ -258,11 +262,11 @@ conscientes de estrutura; Yang et al., 2023) endereça o problema de
 incompletude de rótulo que a própria construção de rótulo desta dissertação
 compartilha, ainda que não integrada a um objetivo de treino de GNN
 heterogênea no cenário de risco corporativo. Essa literatura é retomada na
-Seção 5 *(a definir)* para interpretar os próprios achados sobre por que um
-modelo heterogêneo mais complexo, treinado de ponta a ponta, pode ou não
-superar alternativas mais simples exatamente sob as condições
-(desbalanceamento extremo, poucos rótulos, tipos de nó auxiliares pobres em
-atributo) para as quais essa literatura foi desenhada.
+Seção 5.2 para interpretar o achado de que o modelo heterogêneo mais
+complexo, treinado de ponta a ponta, tem desempenho pior que alternativas
+mais simples exatamente sob as condições (desbalanceamento extremo, poucos
+rótulos, tipos de nó auxiliares pobres em atributo) para as quais essa
+literatura foi desenhada.
 
 *(Lista de trabalho — a converter para formato ABNT completo quando o
 rascunho estabilizar. Todas as referências abaixo foram verificadas
@@ -298,8 +302,9 @@ Apenas **188 de 344.130 empresas (0,055%)** têm sanção administrativa
 confirmada em registro. Tratamos isso como um problema positivo-incompleto:
 ausência de registro de sanção indica que a empresa não foi (ainda) pega, não
 que está livre de risco. Consequentemente, enquadramos a tarefa como detecção
-de anomalia/ranking de risco, não classificação binária balanceada, e
-reportamos PR-AUC e Precision@k em vez de acurácia ou ROC-AUC, que são
+de anomalia/ranking de risco, não classificação binária balanceada, e usamos
+PR-AUC (e, de forma exploratória, Precision@k — ver ressalva na Seção 3.6)
+como métrica de avaliação em vez de acurácia ou ROC-AUC, que são
 não-informativas ou enganosas nessa taxa-base.
 
 Uma segunda questão de rotulagem, mais sutil, interage diretamente com a
@@ -389,10 +394,18 @@ estava subtreinado, não subdimensionado).
 
 Usamos validação cruzada estratificada repetida (5 folds × 6 repetições = 30
 folds), com os mesmos folds e semente aleatória compartilhados entre os três
-modelos para permitir teste estatístico pareado. Reportamos PR-AUC e
-Precision@k (k = 10, 20, 50) por fold, e comparamos os modelos dois a dois
-com o teste de postos sinalizados de Wilcoxon sobre o PR-AUC por fold. Todos
-os resultados são reportados tanto para o rótulo principal (`y_direto`, 148
+modelos para permitir teste estatístico pareado. Nosso harness de avaliação
+computa tanto PR-AUC quanto Precision@k (k = 10, 20, 50) por fold; reportamos
+PR-AUC como métrica principal ao longo desta dissertação e comparamos os
+modelos dois a dois com o teste de postos sinalizados de Wilcoxon sobre o
+PR-AUC por fold. Precision@k foi acompanhado durante o desenvolvimento mas
+não é reportado nos resultados principais: com aproximadamente 148/5 ≈ 30
+casos positivos por fold de teste, Precision@k nesses limiares é
+substancialmente mais ruidoso fold a fold que o PR-AUC (seu desvio-padrão
+entre folds frequentemente superou a média em rodadas exploratórias
+iniciais), tornando o PR-AUC a métrica mais informativa e estável para as
+comparações pareadas de que esta dissertação depende. Todos os resultados
+são reportados tanto para o rótulo principal (`y_direto`, 148
 positivas) quanto para o rótulo de sensibilidade (`y_qualquer`, 188
 positivas) (Seção 3.2).
 
@@ -488,7 +501,39 @@ diagnóstico de subtreinamento era real, não uma racionalização. **Ainda
 assim, o HGT continua significativamente pior que as duas alternativas no
 rótulo principal após o ajuste** (Seção 4.1). No rótulo secundário, o
 ajuste aumentou o lift do HGT mais (42,8×→60,8×) do que no rótulo
-principal — um padrão retomado na Seção 5.
+principal — um padrão retomado na Seção 4.5.
+
+### 4.5 Análise de sensibilidade: rótulo principal vs. secundário, em todas as rodadas (etapa 7.7)
+
+As Seções 4.1–4.2 reportam os resultados de rótulo principal e secundário
+só para a rodada final. A Tabela 4.5 calcula, para cada uma das quatro
+rodadas de avaliação, a razão entre o lift do rótulo secundário e o lift do
+rótulo principal de cada modelo (lift `y_qualquer` ÷ lift `y_direto`) — uma
+medida direta de quanto *mais* (razão > 1) ou *menos* (razão < 1) vantagem
+um modelo ganha com a definição de rótulo que inclui as 40 empresas
+inferidas via sócio comum.
+
+| Rodada | Razão tabular | Razão GNN homogênea | Razão HGT |
+|---|---|---|---|
+| 1 (107 colunas) | 0,84 | 1,48 | **2,36** |
+| 2 (117 colunas) | 0,82 | 0,51 | **1,55** |
+| 3 (124 colunas, HGT sem ajuste) | 0,85 | 0,53 | **1,82** |
+| 4 (124 colunas, HGT tunado) | 0,85 | 0,53 | **1,87** |
+
+Dois padrões são estáveis nas quatro rodadas, independente da versão do
+conjunto de features e do ajuste do HGT: (i) a razão do modelo tabular é
+consistentemente abaixo de 1 (ele não ganha vantagem com o rótulo circular
+— se algo, uma leve desvantagem); (ii) a razão do HGT é **sempre a maior
+das três, e sempre acima de 1**, significando que ele consistentemente
+extrai mais vantagem relativa da versão de rótulo cuja construção se
+sobrepõe ao metapath que ele é desenhado para explorar. A GNN homogênea
+fica no meio, acima de 1 só na rodada 1 (a rodada com menos features e
+menor poder estatístico). Essa é a base quantitativa para a leitura proposta
+na Seção 5.3: a força aparente do HGT no rótulo secundário é melhor
+explicada pela sua capacidade de explorar a circularidade da construção do
+rótulo, não por uma vantagem de detecção de risco estrutural que se
+esperaria generalizar para o rótulo principal, não-circular — onde, ao
+contrário, ele é consistentemente o modelo mais fraco.
 
 ## 5. Discussão
 
@@ -590,16 +635,31 @@ variação de grafia — uma fonte de ruído nos três metapaths, que
 provavelmente atenua, em vez de inflar, a vantagem medida dos modelos
 baseados em grafo. Registros de processo judicial foram excluídos da rede
 por completo, já que são casados por nome via um pipeline de resolução de
-registro ainda em desenvolvimento, não por CNPJ, e foram julgados
-confiáveis demais para incluir como rótulo ou feature. O estudo é
+registro ainda em desenvolvimento, não por CNPJ, e foram julgados não
+confiáveis o suficiente para incluir como rótulo ou feature. O estudo é
 delimitado a uma única região metropolitana brasileira (sete municípios);
 generalização para outras regiões, regimes de sanção, ou estruturas de
-cadastro empresarial não foi testada. Por fim, a busca de hiperparâmetros
-(Seção 4.4) cobriu seis configurações escolhidas para isolar três eixos
-específicos (profundidade de treino, largura oculta, cabeças de atenção),
-não uma busca exaustiva ou bayesiana; consideramos isso proporcional dado
-que testou diretamente, e fechou, a objeção mais provável ao resultado, mas
-uma busca maior continua sendo trabalho futuro possível.
+cadastro empresarial não foi testada. A busca de hiperparâmetros (Seção 4.4)
+cobriu seis configurações escolhidas para isolar três eixos específicos
+(profundidade de treino, largura oculta, cabeças de atenção), não uma busca
+exaustiva ou bayesiana; consideramos isso proporcional dado que testou
+diretamente, e fechou, a objeção mais provável ao resultado, mas uma busca
+maior continua sendo trabalho futuro possível. Por fim, as duas iterações
+de conjunto de features que mais contribuem para os resultados das rodadas
+2 e 3 (Seção 4.3) agruparam múltiplos grupos de feature juntos — a rodada 2
+adicionou quatro indicadores derivados do dashboard de uma vez, e a rodada 3
+adicionou cinco features fundamentadas em literatura (features de grau de
+grafo explícitas *e* indicadores de compras públicas/empresa de fachada,
+Seção 3.4) na mesma passada. Por isso conseguimos atribuir o fechamento da
+diferença tabular-versus-modelo-de-grafo (Seção 5.2) ao conjunto de features
+*combinado* da rodada 3, mas não isolar de forma limpa quanto desse efeito
+se deve especificamente às features de grau de grafo explícitas versus aos
+indicadores de compras públicas e empresa de fachada adicionados na mesma
+rodada. Um ablation separando esses grupos foi julgado de prioridade menor
+que completar a busca de hiperparâmetros (Seção 4.4), dado o orçamento
+computacional finito na máquina de desenvolvimento, mas seria um próximo
+passo natural para refinar a afirmação de features-de-grafo-vs-GNN da
+Seção 5.2.
 
 ## 6. Conclusão
 
