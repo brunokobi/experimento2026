@@ -657,6 +657,18 @@ foram mantidas fixas nas quatro versões de conjunto de features da Seção
 
 ## 5. Discussão
 
+Esta seção separa dois tipos de contribuição que esta dissertação faz,
+seguindo a convenção de distinguir implicações pra pesquisa de implicações
+pra prática. As Seções 5.1–5.3 desenvolvem a **contribuição teórica**: por
+que uma rede neural em grafo heterogêneo não supera alternativas mais
+simples aqui, o que isso implica pras literaturas de
+features-de-grafo-vs-GNN e sobrecarga de informação (Seção 2), e por que o
+único rótulo em que o HGT aparenta vencer não deve ser lido como evidência
+contra essa conclusão. A Seção 5.4 passa pra **contribuição prática**: o
+que um órgão de controle deveria de fato implantar, e a que custo real,
+dadas restrições realistas do setor público. A Seção 5.5 declara
+limitações comuns às duas.
+
 ### 5.1 Um resultado negativo que sobrevive ao seu desafio metodológico mais forte
 
 A objeção mais provável que um revisor cético levantaria contra uma versão
@@ -755,11 +767,13 @@ confirmados para aprender — a recomendação prática é direta: **um modelo
 tabular com gradient boosting, aumentado com um pequeno número de features
 explícitas de grau de grafo (contagem de sócio comum, endereço comum,
 vínculo político comum), é mais barato de construir e operar, e mais
-eficaz, que um transformer de grafo heterogêneo para essa tarefa.** O custo
-de treino do modelo tabular é medido em minutos em hardware comum; o do HGT
-tunado é medido em horas por rótulo, e exigiu um procedimento de ajuste
-dedicado e tecnicamente exigente só para chegar ao seu melhor desempenho
-possível — que ainda assim ficou aquém. Onde um órgão de controle tiver
+eficaz, que um transformer de grafo heterogêneo para essa tarefa.** O
+modelo tabular treina em segundos em hardware comum; o HGT tunado, mesmo
+pra um único treino de produção (não a validação cruzada completa por
+trás da Seção 4), leva da ordem de minutos, e exigiu um procedimento de
+ajuste dedicado e tecnicamente exigente (Seção 4.4) só pra chegar ao seu
+melhor desempenho possível — que ainda assim ficou aquém (a conta de custo
+precisa está abaixo). Onde um órgão de controle tiver
 apetite por métodos baseados em grafo, este resultado recomenda a GNN
 homogênea, mais simples e de um único tipo de relação, em vez de uma
 arquitetura totalmente heterogênea — pelo menos até que tipos de nó além de
@@ -789,6 +803,30 @@ distribuído em embeddings aprendidos sem explicação natural por empresa.
 Essa lacuna de transparência é mais uma razão, independente, pra preferir o
 modelo mais simples aqui, além dos argumentos de custo computacional e
 desempenho preditivo já dados.
+
+"Horas" e "minutos" podem descrever coisas diferentes, então vale declarar
+uma conta de custo precisa. A validação cruzada de 30 folds por trás da
+Seção 4 é um custo de pesquisa único, não um custo operacional recorrente:
+aproximadamente 155 segundos no total pro modelo tabular contra
+aproximadamente 6,6 horas por rótulo pro HGT tunado. Uma implantação em
+produção não repete validação cruzada de 30 folds a cada ciclo de
+retreino, porém — um único ajuste de modelo é o que se repete, e aí a
+diferença encolhe bastante: da ordem de 5 segundos pro modelo tabular
+contra aproximadamente 13 minutos pro HGT, os dois confortavelmente dentro
+da cadência trimestral-ou-mais-lenta já defendida acima, num único núcleo
+de CPU, sem precisar de GPU. A assimetria de custo durável entre os dois
+modelos não está, portanto, principalmente no custo computacional
+recorrente. Está, primeiro, no esforço único de desenvolvimento e ajuste
+de hiperparâmetros (Seção 4.4: da ordem de 15 horas de computação, mais a
+expertise especializada em aprendizado em grafo necessária pra desenhar e
+interpretar essa busca — expertise que a maioria das equipes de dado de
+órgão de controle não tem no quadro — contra um modelo tabular que
+qualquer cientista de dados competente consegue ajustar com configurações
+quase-padrão). Está, segundo, num piso de memória: o treino full-batch do
+HGT exigiu ajustes repetidos pra caber em 8 GB de RAM (Seção 3.5), um
+requisito de hardware que nem toda infraestrutura já existente de um órgão
+de controle pode ser assumida como capaz de atender, enquanto o modelo
+tabular treina confortavelmente numa fração pequena disso.
 
 ### 5.5 Limitações
 

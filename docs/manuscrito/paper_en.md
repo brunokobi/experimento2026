@@ -606,6 +606,18 @@ alone — see Section 5.5).
 
 ## 5. Discussion
 
+This section separates two kinds of contribution this paper makes, in line
+with the convention of distinguishing implications for research from
+implications for practice. Sections 5.1–5.3 draw out the **theoretical
+contribution**: why a heterogeneous graph neural network fails to
+outperform simpler alternatives here, what that implies for the
+graph-features-vs-GNN and information-overload literatures (Section 2),
+and why the one label on which the HGT does appear to win should not be
+read as evidence against that conclusion. Section 5.4 turns to the
+**practical contribution**: what an oversight body should actually deploy,
+and at what real cost, given realistic public-sector constraints. Section
+5.5 states limitations common to both.
+
 ### 5.1 A negative result that survives its strongest methodological challenge
 
 The single most likely objection a skeptical reviewer would raise against
@@ -701,11 +713,13 @@ labels to learn from — the practical recommendation is direct: **a
 gradient-boosted tabular model augmented with a small number of explicit
 graph-degree features (shared partner, shared address, shared political
 connection counts) is both cheaper to build and operate, and more effective,
-than a heterogeneous graph transformer for this task.** The tabular
-model's training cost is measured in minutes on commodity hardware; the
-tuned HGT's is measured in hours per label, and required a dedicated,
-technically demanding tuning procedure just to reach its best achievable
-performance — which still fell short. Where an oversight body does have
+than a heterogeneous graph transformer for this task.** The tabular model
+trains in seconds on commodity hardware; the tuned HGT, even for a single
+production fit rather than the full cross-validation exercise behind
+Section 4, takes on the order of minutes, and required a dedicated,
+technically demanding tuning procedure (Section 4.4) just to reach its best
+achievable performance — which still fell short (see the cost accounting
+below). Where an oversight body does have
 appetite for graph-based methods, this result recommends the simpler,
 single-relation-type homogeneous GNN over a fully heterogeneous
 architecture, at least until node types other than "company" carry genuine
@@ -734,6 +748,28 @@ distributed across learned embeddings with no natural per-company
 explanation. This transparency gap is a further, independent reason to
 prefer the simpler model here, beyond the compute-cost and predictive-performance
 arguments already given.
+
+"Hours" and "minutes" can describe different things, so a precise cost
+accounting is worth stating explicitly. The 30-fold cross-validation
+exercise underlying Section 4 is a one-time research cost, not a recurring
+operational one: roughly 155 seconds total for the tabular model against
+roughly 6.6 hours per label for the tuned HGT. A production deployment
+does not repeat 30-fold cross-validation on every retraining cycle,
+however — a single model fit is what recurs, and here the gap narrows
+sharply: on the order of 5 seconds for the tabular model versus roughly 13
+minutes for the HGT, both comfortably inside the quarterly-or-slower
+retraining cadence argued for above, on a single CPU core, no GPU
+required. The durable cost asymmetry between the two models is therefore
+not primarily in recurring compute. It is, first, in the one-time
+development and hyperparameter-tuning effort (Section 4.4: on the order of
+15 hours of compute, plus the specialized graph-learning expertise needed
+to design and interpret that search — expertise most oversight-body data
+teams do not have on staff — against a tabular model any competent data
+scientist can tune with near-default settings). It is, second, in a memory
+floor: full-batch HGT training required repeated adjustments to fit within
+8GB of RAM (Section 3.5), a hardware requirement not every oversight
+body's existing infrastructure can be assumed to meet, where the tabular
+model trains comfortably on a small fraction of that.
 
 ### 5.5 Limitations
 
