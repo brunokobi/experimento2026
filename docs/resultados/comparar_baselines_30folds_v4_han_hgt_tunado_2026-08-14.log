@@ -1,0 +1,68 @@
+2026-08-13 23:43:05.981 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-13 23:43:07.819 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM socios
+2026-08-13 23:43:08.162 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM dividas_ativas
+2026-08-13 23:43:08.509 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM vinculos_politicos
+2026-08-13 23:43:08.511 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM sancoes_administrativas
+2026-08-13 23:43:08.513 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-13 23:43:10.425 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'empresa': 344130 nos registrados.
+2026-08-13 23:43:11.028 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'socio': 142844 nos registrados.
+2026-08-13 23:43:11.329 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'socio-participa_de-empresa': 231890 arestas.
+2026-08-13 23:43:12.650 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'endereco': 181268 nos registrados.
+2026-08-13 23:43:13.107 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-sediada_em-endereco': 344130 arestas.
+2026-08-13 23:43:13.128 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'municipio': 7 nos registrados.
+2026-08-13 23:43:13.487 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-localizada_em-municipio': 344130 arestas.
+2026-08-13 23:43:13.502 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'vinculo_politico': 519 nos registrados.
+2026-08-13 23:43:13.503 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-tem_vinculo_politico-vinculo_politico': 866 arestas.
+2026-08-13 23:43:13.503 | INFO     | src.graph.build_hin:build_empresas_hin:192 - HIN real construida: {'node_types': {'empresa': 344130, 'socio': 142844, 'endereco': 181268, 'municipio': 7, 'vinculo_politico': 519}, 'edge_types': {'socio__participa_de__empresa': 231890, 'empresa__rev_participa_de__socio': 231890, 'empresa__sediada_em__endereco': 344130, 'endereco__rev_sediada_em__empresa': 344130, 'empresa__localizada_em__municipio': 344130, 'municipio__rev_localizada_em__empresa': 344130, 'empresa__tem_vinculo_politico__vinculo_politico': 866, 'vinculo_politico__rev_tem_vinculo_politico__empresa': 866}}
+2026-08-13 23:43:13.508 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-13 23:43:15.306 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM socios
+2026-08-13 23:43:15.628 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM dividas_ativas
+2026-08-13 23:43:15.998 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM vinculos_politicos
+2026-08-13 23:43:16.000 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM infracoes_ambientais
+2026-08-13 23:43:16.004 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM contratos_governamentais
+2026-08-13 23:43:16.007 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-13 23:43:16.045 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-13 23:43:16.089 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-13 23:43:16.127 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM registros_jucees
+2026-08-13 23:43:16.339 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM sancoes_administrativas
+2026-08-13 23:43:16.340 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-13 23:43:19.660 | INFO     | src.features.tabular:build_feature_matrix:314 - Matriz de features: 344130 empresas x 122 features (+ 2 colunas de rotulo).
+2026-08-13 23:43:19.692 | INFO     | src.models.gnn_homogeneous:_podar_colunas_de_alto_grau:96 - Podando 877 colunas com grau > 20 antes da comutacao.
+2026-08-13 23:43:19.813 | INFO     | src.models.gnn_homogeneous:build_combined_adjacency:138 - Grafo homogeneo empresa-empresa: 2,023,424 arestas (direcionadas, grafo simetrico).
+2026-08-13 23:43:20.305 | INFO     | src.models.han_hgt:make_han_hgt_fit_predict:110 - HAN/HGT: 4 tipos de no, 6 tipos de relacao (socio, endereco, vinculo_politico via embedding aprendido).
+2026-08-13 23:43:20.306 | INFO     | __main__:_rodar:57 - Checkpoint encontrado para 'tabular/y_direto' (/home/bruno/checkpoints_comparar_baselines/tabular_y_direto_ncols122.csv) -- pulando recomputo.
+2026-08-13 23:43:20.308 | INFO     | __main__:_rodar:60 - Rodando CV para 'gnn_homogenea/y_direto'...
+2026-08-14 01:11:02.017 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 30 folds validos, PR-AUC medio=0.0328 (+-0.0228)
+2026-08-14 01:11:02.020 | INFO     | __main__:_rodar:65 - 'gnn_homogenea/y_direto' concluido em 5261.7s.
+2026-08-14 01:11:02.042 | INFO     | __main__:_rodar:60 - Rodando CV para 'han_hgt/y_direto'...
+2026-08-14 07:49:15.327 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 30 folds validos, PR-AUC medio=0.0140 (+-0.0181)
+2026-08-14 07:49:15.328 | INFO     | __main__:_rodar:65 - 'han_hgt/y_direto' concluido em 23893.3s.
+2026-08-14 07:49:15.347 | INFO     | __main__:_rodar:60 - Rodando CV para 'tabular/y_qualquer'...
+2026-08-14 07:51:37.722 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 30 folds validos, PR-AUC medio=0.0236 (+-0.0200)
+2026-08-14 07:51:37.723 | INFO     | __main__:_rodar:65 - 'tabular/y_qualquer' concluido em 142.4s.
+2026-08-14 07:51:37.739 | INFO     | __main__:_rodar:60 - Rodando CV para 'gnn_homogenea/y_qualquer'...
+2026-08-14 09:07:10.664 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 30 folds validos, PR-AUC medio=0.0219 (+-0.0124)
+2026-08-14 09:07:10.667 | INFO     | __main__:_rodar:65 - 'gnn_homogenea/y_qualquer' concluido em 4532.9s.
+2026-08-14 09:07:10.676 | INFO     | __main__:_rodar:60 - Rodando CV para 'han_hgt/y_qualquer'...
+2026-08-14 15:35:59.794 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 30 folds validos, PR-AUC medio=0.0332 (+-0.0259)
+2026-08-14 15:35:59.795 | INFO     | __main__:_rodar:65 - 'han_hgt/y_qualquer' concluido em 23329.1s.
+
+========== Rotulo: y_direto (5x6 folds) ==========
+tabular: PR-AUC 0.0218 +- 0.0146
+gnn_homogenea: PR-AUC 0.0328 +- 0.0228
+han_hgt: PR-AUC 0.0140 +- 0.0181
+
+--- Comparacoes (Wilcoxon pareado, pr_auc por fold) ---
+tabular (media=0.0218) vs gnn_homogenea (media=0.0328): Wilcoxon p=0.0145 -- diferenca significativa (p<0.05)
+tabular (media=0.0218) vs han_hgt (media=0.0140): Wilcoxon p=0.0024 -- diferenca significativa (p<0.05)
+gnn_homogenea (media=0.0328) vs han_hgt (media=0.0140): Wilcoxon p=0.0000 -- diferenca significativa (p<0.05)
+
+========== Rotulo: y_qualquer (5x6 folds) ==========
+tabular: PR-AUC 0.0236 +- 0.0200
+gnn_homogenea: PR-AUC 0.0219 +- 0.0124
+han_hgt: PR-AUC 0.0332 +- 0.0259
+
+--- Comparacoes (Wilcoxon pareado, pr_auc por fold) ---
+tabular (media=0.0236) vs gnn_homogenea (media=0.0219): Wilcoxon p=0.8394 -- sem diferenca significativa
+tabular (media=0.0236) vs han_hgt (media=0.0332): Wilcoxon p=0.1579 -- sem diferenca significativa
+gnn_homogenea (media=0.0219) vs han_hgt (media=0.0332): Wilcoxon p=0.0277 -- diferenca significativa (p<0.05)

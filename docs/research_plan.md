@@ -717,20 +717,96 @@ implicitamente agora está disponível a todos igualmente, então nenhum
 modelo tem mais vantagem "de dentro" nesse rótulo confundido por
 circularidade.
 
+**Feito (12-13/08/2026 — busca de hiperparâmetros do HAN/HGT)**: antes de
+aceitar o resultado v3 como final, testamos explicitamente se ele era
+artefato de configuração subótima — os defaults (`hidden_channels=32`,
+`num_heads=1`, `epochs=50`) tinham sido reduzidos por causa de OOM na
+máquina local (etapa 7.5), não por ajuste de hiperparâmetros, o que seria a
+vulnerabilidade mais óbvia para um revisor de periódico atacar. 6
+candidatos testados (`scripts/tunar_han_hgt.py`, 5 folds, só `y_direto`):
+
+| Candidato | hidden | heads | epochs | PR-AUC (5 folds) |
+|---|---|---|---|---|
+| baseline | 32 | 1 | 50 | 0,0105 |
+| mais épocas | 32 | 1 | **150** | **0,0244** |
+| mais heads | 32 | 2 | 50 | 0,0182 |
+| mais hidden | 64 | 1 | 50 | 0,0100 (sem ganho) |
+| maior (combinado) | 64 | 2 | 100 | OOM (falhou) |
+| épocas+heads (combinado) | 32 | 2 | 150 | 0,0249 (empate com "mais épocas" dentro do ruído, ~3x mais custo) |
+
+**Achado real: o modelo estava subtreinado, não subdimensionado** — só
+aumentar épocas quase triplicou o PR-AUC; aumentar `hidden`/`heads`
+isoladamente ajudou pouco ou nada. Config final escolhida: `epochs=150`
+isolado (heads=1) — o candidato combinado empatava dentro do desvio-padrão
+por ~3x mais tempo de treino; preferida a opção mais simples (parcimônia,
+isola `epochs` como a alavanca real, menos exposição a reboot da máquina
+local).
+
+**Resultado final v4, com o HAN/HGT tunado (124 colunas, 30 folds,
+14/08/2026, ~15h52 corridas, sem interrupção)** — ver
+`docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`:
+
+| Rótulo | Tabular | GNN homogênea | HAN/HGT (tunado) |
+|---|---|---|---|
+| `y_direto` (principal, 148) | PR-AUC 0,0218 ± 0,0146 — lift 50,7× | PR-AUC 0,0328 ± 0,0228 — lift **76,3×** | PR-AUC 0,0140 ± 0,0181 — lift 32,6× |
+| `y_qualquer` (confundido, 188) | PR-AUC 0,0236 ± 0,0200 — lift 43,2× | PR-AUC 0,0219 ± 0,0124 — lift 40,1× | PR-AUC 0,0332 ± 0,0259 — lift **60,8×** |
+
+**Wilcoxon pareado (30 folds, mesmo split, HAN/HGT com epochs=150)**:
+
+| Rótulo | Par | p-valor | Veredito |
+|---|---|---|---|
+| `y_direto` | tabular vs. GNN homogênea | **0,0145** | **GNN homogênea > tabular** |
+| `y_direto` | tabular vs. HAN/HGT | **0,0024** | **tabular > HAN/HGT** |
+| `y_direto` | GNN homogênea vs. HAN/HGT | **<0,0001** | **GNN homogênea > HAN/HGT** |
+| `y_qualquer` | tabular vs. GNN homogênea | 0,839 | sem diferença significativa |
+| `y_qualquer` | tabular vs. HAN/HGT | 0,158 | sem diferença significativa |
+| `y_qualquer` | GNN homogênea vs. HAN/HGT | **0,0277** | **HAN/HGT > GNN homogênea** |
+
+**O tuning funcionou de verdade, e o resultado negativo central sobreviveu
+mesmo assim.** Em `y_direto`, o HAN/HGT melhorou 39% frente ao v3 sem tuning
+(23,5×→32,6×) — confirma que o subtreinamento era real, não uma desculpa.
+**Mas continua estatisticamente PIOR que tabular (p=0,0024) e que GNN
+homogênea (p<0,0001)** no rótulo principal — a defesa metodológica mais
+forte possível contra "não tentaram treinar direito" foi feita, com um
+procedimento de busca documentado e reprodutível, e o efeito negativo se
+sustenta. Esta é a 5ª rodada completa (107→117→124 colunas + tuning
+dedicado) confirmando a mesma direção.
+
+**Mudança qualitativa em `y_qualquer` (rótulo confundido por
+circularidade)**: o HAN/HGT tunado agora vence a GNN homogênea de forma
+significativa (p=0,0277) e quase alcança o tabular (p=0,158, não
+significativo, mas o lift saltou de 42,8× pra 60,8×). Interpretação: mais
+épocas de treino deram ao HAN/HGT mais capacidade de explorar exatamente a
+relação sócio-empresa que é o mecanismo de rotulagem circular desse rótulo
+(as 40 empresas rotuladas via sócio comum, não sanção direta na própria
+empresa — Seção 5) — isso **reforça, não contradiz**, a leitura de que o
+"sucesso" do HAN/HGT em `y_qualquer` é sobre explorar melhor o vazamento de
+rótulo (memorizar a regra de rotulagem), não descobrir sinal preditivo
+genuinamente novo. Um modelo mais capaz de aprender é também mais capaz de
+"decorar" essa regra especificamente onde ela existe.
+
+**Conclusão prática desta etapa**: com a busca de hiperparâmetros feita,
+documentada e reprodutível, o resultado negativo do HAN/HGT no rótulo
+principal deixa de ser uma lacuna de rigor a fechar antes da escrita — é a
+conclusão final da comparação empírica desta dissertação. A hipótese
+central (Seção 2) não se confirma: modelar explicitamente cada metapath via
+GNN heterogênea (HAN/HGT) não melhora a detecção de sanção direta em
+relação a alternativas mais simples (tabular com features de grafo
+explícitas, ou GNN homogênea) — pelo contrário, piora, de forma
+estatisticamente robusta a 5 rodadas independentes e a uma busca de
+hiperparâmetros dedicada.
+
 **Pendente a seguir**:
-- Etapa 7.7 (sensibilidade `y_direto` vs `y_qualquer`) — com a versão v3
-  (124 colunas), a assimetria mudou de forma: em `y_direto` o HAN/HGT é
-  significativamente pior; em `y_qualquer` não há mais diferença
-  significativa entre os 3 modelos (era vantagem da rede em v1). Formalizar
-  a discussão de como a circularidade e as features de grafo explícitas
-  interagem nos dois rótulos.
-- Investigar se o resultado negativo do HAN/HGT em `y_direto` é real
-  (metapaths não ajudam mesmo) ou artefato de hiperparâmetros de primeira
-  versão (50 épocas, sem busca de hiperparâmetros, sem `processos_judiciais`)
-  — decidir com o pesquisador se vale investir em tuning antes de escrever
-  isso como conclusão final, ou reportar como está (resultado negativo
-  honesto e já reproduzido em 4 rodadas com feature sets diferentes, com
-  essas limitações discutidas no texto).
+- Etapa 7.7 (sensibilidade `y_direto` vs `y_qualquer`) — agora com uma
+  leitura mais precisa da circularidade: o HAN/HGT tunado explora melhor
+  exatamente o mecanismo de rotulagem via sócio comum em `y_qualquer` (lift
+  saltou de 42,8× pra 60,8× só com mais épocas), o que é evidência adicional
+  de que esse ganho é sobre vazamento de rótulo, não sinal novo. Formalizar
+  essa discussão.
+- Escrita do artigo (`docs/manuscrito/paper_en.md`, alvo *Government
+  Information Quarterly*, moldura de política pública) e da dissertação
+  (`docs/manuscrito/dissertacao_pt.md`) — Resultados/Discussão/Conclusão a
+  preencher com os números acima.
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).
 - Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP

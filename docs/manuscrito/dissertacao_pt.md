@@ -9,23 +9,62 @@ o momento; estrutura livre de dissertação de mestrado, capítulos de
 conteúdo. Capa/folha de rosto/ficha catalográfica/resumo formal ficam para
 quando o formato institucional for confirmado.)*
 
-> **Status deste rascunho**: Introdução, Referencial Teórico e Metodologia
-> são rascunhos substantivos. Resultados, Discussão e Conclusão são
-> placeholders — a preencher quando o experimento final de 30 folds
-> (`docs/resultados/`) terminar. Todos os números e citações abaixo foram
-> reconferidos direto em `docs/research_plan.md` e em fonte primária
-> (arXiv/DOI), não recuperados de memória — ver nota de rigor em
-> `docs/research_plan.md`, correção de 14/08/2026.
+> **Status deste rascunho (atualizado em 14/08/2026)**: todas as seções têm
+> rascunho substantivo agora, incluindo Resultados, Discussão e Conclusão,
+> escritas depois de o experimento final de 30 folds (com o HGT tunado)
+> terminar. Todos os números abaixo foram computados direto do log
+> `docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`
+> e reconferidos contra `docs/research_plan.md`, não recuperados de
+> memória — ver nota de rigor em `docs/research_plan.md`, correção de
+> 14/08/2026.
 
 ---
 
 ## Resumo
 
-*(placeholder — escrever depois dos números finais)*
+Órgãos de controle em governo local e regional são cada vez mais chamados a
+triar grandes cadastros corporativos por risco de sanção administrativa —
+evasão de listas de impedimento, uso de empresa de fachada, e vínculo
+político não declarado — com orçamento limitado de ciência de dados e sem
+infraestrutura dedicada. Redes neurais em grafo (GNNs) que modelam redes
+corporativas explicitamente (sócio comum, endereço comum, vínculo político)
+são frequentemente propostas como a resposta de estado da arte, sob a
+suposição de que risco estrutural só é visível a um modelo relacional.
+Testamos essa suposição num cadastro real e completo de 344.130 empresas de
+uma região metropolitana brasileira, comparando um baseline tabular com
+gradient boosting, uma GNN homogênea, e um transformer de grafo heterogêneo
+(HGT), sob uma moldura positivo-incompleta apropriada à raridade extrema de
+sanção confirmada (148 diretas, 188 incluindo casos inferidos via sócio).
+Ao longo de cinco rodadas de avaliação independentes — três iterações
+sucessivas de engenharia de features mais uma rodada dedicada de busca de
+hiperparâmetros para o HGT, todas sob validação cruzada estratificada
+repetida (30 folds) com teste estatístico pareado —, o modelo heterogêneo é
+consistente e significativamente superado por ambas as alternativas mais
+simples no rótulo principal, não-circular (tabular: lift de 50,7× sobre a
+taxa-base; GNN homogênea: 76,3×; HGT tunado: 32,6×; tabular > HGT,
+p = 0,0024; GNN homogênea > HGT, p < 0,0001). Criticamente, uma busca
+dedicada de hiperparâmetros — motivada pelo achado de que o HGT estava
+subtreinado, não subdimensionado — melhorou seu desempenho em 39%, mas não
+mudou esse ranking, fechando a objeção metodológica mais provável ao
+resultado. Num rótulo secundário, onde o próprio mecanismo de rotulagem se
+sobrepõe ao metapath de sócio comum, a vantagem do HGT tunado cresce em vez
+de diminuir (lift de 60,8×, ante 42,8× antes do ajuste) — um padrão mais
+consistente com o modelo explorando circularidade de rótulo do que
+descobrindo sinal genuíno de risco estrutural. Discutimos a implicação
+prática para órgãos de controle com recursos limitados: um modelo tabular
+bem projetado, aumentado com features explícitas de grau de grafo, não um
+transformer de grafo heterogêneo, é a escolha defensável para essa tarefa
+dado o orçamento computacional e de rotulagem realista do setor público.
+
+**Palavras-chave**: risco de sanção administrativa; redes neurais em grafos
+heterogêneos; detecção de anomalia; ciência de dados no setor público;
+análise de rede corporativa; aprendizado positivo-não-rotulado.
 
 ## Abstract
 
-*(placeholder — versão em inglês do resumo, depois dos números finais)*
+*(English version of the abstract above — see `docs/manuscrito/paper_en.md`
+for the version drafted directly in English, which this should mirror once
+both are finalized together rather than translated mechanically.)*
 
 ---
 
@@ -343,7 +382,8 @@ features (107, 117 e 124 colunas) à medida que features motivadas por
 literatura foram adicionadas (Seções 2.3–2.4), e os hiperparâmetros do HGT
 (dimensão oculta, cabeças de atenção, épocas de treino) passaram por uma
 rodada dedicada de ajuste antes de a configuração final reportada ser
-selecionada — ver Seção 4 *(a definir)* para o achado que motivou essa etapa.
+selecionada — ver Seção 4.4 para o achado que motivou essa etapa (o modelo
+estava subtreinado, não subdimensionado).
 
 ### 3.6 Protocolo de avaliação
 
@@ -360,27 +400,230 @@ positivas) (Seção 3.2).
 
 ## 4. Resultados
 
-*(A definir — pendente do experimento final de 30 folds com o HGT ajustado.
-Estrutura planejada: 4.1 resultados do rótulo principal e testes pareados;
-4.2 resultados do rótulo de sensibilidade; 4.3 efeito da engenharia de
-features motivada por literatura ao longo das três iterações; 4.4 efeito do
-ajuste de hiperparâmetros sobre o HGT.)*
+Todos os valores de PR-AUC abaixo são médias sobre 30 folds (validação
+cruzada estratificada de 5 folds × 6 repetições), com os mesmos folds e
+semente aleatória compartilhados entre modelos dentro de uma mesma rodada,
+permitindo teste de Wilcoxon pareado. "Lift" é o PR-AUC dividido pela
+taxa-base do rótulo (148/344.130 = 0,0430% para `y_direto`; 188/344.130 =
+0,0546% para `y_qualquer`). Cinco rodadas de avaliação foram feitas ao
+todo, à medida que o conjunto de features e a configuração do HGT
+evoluíram; reportamos a quinta (e final) rodada em detalhe, e as quatro
+anteriores como trajetória de robustez (Seção 4.3).
+
+### 4.1 Rótulo principal (`y_direto`, 148 sanções diretas confirmadas)
+
+| Modelo | PR-AUC | Lift |
+|---|---|---|
+| Tabular (XGBoost) | 0,0218 ± 0,0146 | 50,7× |
+| GNN homogênea | 0,0328 ± 0,0228 | **76,3×** |
+| HGT (tunado) | 0,0140 ± 0,0181 | 32,6× |
+
+Testes de Wilcoxon pareados (30 folds): tabular vs. GNN homogênea,
+p = 0,0145 (GNN homogênea significativamente maior); tabular vs. HGT,
+p = 0,0024 (tabular significativamente maior); GNN homogênea vs. HGT,
+p < 0,0001 (GNN homogênea significativamente maior). As três diferenças
+pareadas são estatisticamente significativas, e o ranking é consistente:
+**GNN homogênea > tabular > HGT** no rótulo principal.
+
+### 4.2 Rótulo de sensibilidade (`y_qualquer`, 188 sanções confirmadas,
+incluindo 40 empresas rotuladas como positivas só por vínculo de sócio
+comum com uma entidade já sancionada)
+
+| Modelo | PR-AUC | Lift |
+|---|---|---|
+| Tabular (XGBoost) | 0,0236 ± 0,0200 | 43,2× |
+| GNN homogênea | 0,0219 ± 0,0124 | 40,1× |
+| HGT (tunado) | 0,0332 ± 0,0259 | **60,8×** |
+
+Testes pareados: tabular vs. GNN homogênea, p = 0,8394 (sem diferença
+significativa); tabular vs. HGT, p = 0,1579 (sem diferença significativa);
+GNN homogênea vs. HGT, p = 0,0277 (HGT significativamente maior).
+Diferente do rótulo principal, o HGT tunado é agora o melhor por estimativa
+pontual, e significativamente à frente da GNN homogênea — ainda que não
+(por enquanto, com esse tamanho de amostra) significativamente à frente do
+baseline tabular.
+
+### 4.3 Efeito da engenharia de features ao longo de três iterações (trajetória de robustez)
+
+| Rodada | Features | Lift `y_direto` (tab / GNN homog. / HGT) | Lift `y_qualquer` (tab / GNN homog. / HGT) |
+|---|---|---|---|
+| 1 | 107 colunas | 18,6× / 16,5× / 14,2× | 15,7× / 24,4× / 33,5× |
+| 2 | 117 colunas (+features do dashboard) | 75,8× / 81,2× / 29,3× | 62,3× / 41,6× / 45,4× |
+| 3 | 124 colunas (+features de literatura), HGT sem ajuste | 50,7× / 76,3× / 23,5× | 43,2× / 40,1× / 42,8× |
+| 4 | 124 colunas, HGT tunado (este trabalho) | 50,7× / 76,3× / **32,6×** | 43,2× / 40,1× / **60,8×** |
+
+O ranking no rótulo principal — HGT estatisticamente pior que ambas as
+alternativas — se sustenta nas três versões do conjunto de features
+(rodada 1: tabular > HGT p = 0,0066, GNN homogênea > HGT p = 0,0293;
+rodadas 2/3: tabular > HGT p < 0,0001 / p = 0,0001, GNN homogênea > HGT
+p < 0,0001 nas duas). Não é artefato de uma iteração específica de
+engenharia de features. O PR-AUC absoluto não é monótono entre as rodadas
+2→3 (os três modelos tiveram queda quando as features de literatura foram
+adicionadas) — um teste rápido inicial comparou a rodada 3 contra a rodada
+1 em vez da rodada 2, criando uma falsa impressão de melhora; isso está
+corrigido aqui e documentado como lição metodológica no diário de pesquisa
+interno do projeto (`docs/research_plan.md`).
+
+### 4.4 Efeito do ajuste de hiperparâmetros sobre o HGT
+
+A configuração original do HGT (`hidden_channels=32`, `num_heads=1`,
+`epochs=50`) tinha sido restringida por uma falha de memória (OOM) na
+máquina de desenvolvimento (8 GB de RAM) em configurações maiores, não
+selecionada por busca de hiperparâmetros. Uma busca dedicada (6
+configurações, validação cruzada de 5 folds, só rótulo principal) achou
+que **aumentar só as épocas de treino (50→150) quase triplicou o PR-AUC**
+(0,0105→0,0244 nas rodadas de escala menor da busca), enquanto aumentar só
+a largura da camada oculta não deu ganho nenhum (0,0105→0,0100) e a maior
+configuração combinada (`hidden=64, heads=2, epochs=100`) falhou por OOM de
+novo. Esse diagnóstico — subtreinamento, não subdimensionamento — motivou a
+escolha de `epochs=150` (mantendo `hidden=32, heads=1`) como configuração
+final, em vez de uma alternativa marginalmente melhor mas três vezes mais
+cara (`heads=2` combinado com `epochs=150`) que empatava dentro do ruído
+(PR-AUC de busca 0,0249 vs. 0,0244, desvio-padrão ≈ 0,025–0,029 nos dois).
+
+Aplicar essa configuração tunada na avaliação completa de 30 folds (Seções
+4.1–4.2) melhorou o lift do HGT no rótulo principal em 39% em relação ao
+resultado da rodada 3 sem ajuste (23,5×→32,6×) — confirmando que o
+diagnóstico de subtreinamento era real, não uma racionalização. **Ainda
+assim, o HGT continua significativamente pior que as duas alternativas no
+rótulo principal após o ajuste** (Seção 4.1). No rótulo secundário, o
+ajuste aumentou o lift do HGT mais (42,8×→60,8×) do que no rótulo
+principal — um padrão retomado na Seção 5.
 
 ## 5. Discussão
 
-*(A definir. Ângulos planejados: (a) interpretação via as literaturas de
-features-de-grafo-vs-GNN e sobrecarga de informação da Seção 2; (b)
-implicação prática para órgão de controle com recursos limitados — o que um
-tribunal de contas ou controladoria deveria de fato usar, dado o quadro de
-pessoal, poder computacional e orçamento de rotulagem típicos do setor
-público, não um cenário de pesquisa idealizado; (c) limitações — moldura de
-rótulo incompleto/PU, heurísticas de resolução de identidade de
-sócio/endereço, dado de processo judicial excluído por não-confiabilidade,
-escopo de uma única região.)*
+### 5.1 Um resultado negativo que sobrevive ao seu desafio metodológico mais forte
+
+A objeção mais provável que um revisor cético levantaria contra uma versão
+inicial deste resultado — que o modelo heterogêneo estava simplesmente
+subtreinado em relação aos baselines mais simples — foi testada
+diretamente, não argumentada de lado. Revelou-se parcialmente correta (as
+épocas eram de fato um gargalo real) e irrelevante para a conclusão: uma
+busca de hiperparâmetros que melhorou o HGT de forma mensurável (Seção 4.4)
+não mudou seu ranking em relação aos baselines tabular e de GNN homogênea
+no rótulo principal. Ao longo de cinco rodadas de avaliação independentes —
+três iterações de conjunto de features mais uma rodada dedicada de ajuste —
+o transformer de grafo heterogêneo é consistente e significativamente
+superado na tarefa que a pergunta de pesquisa desta dissertação realmente
+faz: detectar empresas com sanção administrativa *direta*, não-circular.
+Tratamos isso como um achado empírico robusto, não provisório à espera de
+mais ajuste.
+
+### 5.2 Por que um modelo mais simples pode vencer aqui? Duas literaturas convergem
+
+O resultado é consistente com, e mutuamente reforçado por, duas linhas
+distintas de literatura revisadas na Seção 2. Primeiro, a literatura de
+features-de-grafo-vs-GNN (Seção 2.3) prevê que dar a um modelo tabular com
+gradient boosting acesso explícito à mesma informação estrutural que uma
+GNN aprenderia implicitamente fecha a maior parte da diferença de
+desempenho — exatamente o que observamos: o modelo tabular, alimentado com
+features de grau de grafo explícitas, atinge um respeitável lift de 50,7×
+por conta própria, e a GNN homogênea (*mais simples*, um único tipo de
+relação colapsado) supera tanto ele quanto o HGT, muito mais complexo e
+tipado por relação. Segundo, o diagnóstico de "sobrecarga de informação" da
+literatura de detecção de fraude corporativa (Seção 2.5) oferece uma
+explicação mecanicista de por que o modelo *mais* heterogêneo especificamente
+tem desempenho pior: os tipos de nó auxiliares do HGT (sócio, endereço,
+vínculo político) não carregam dado de atributo genuíno próprio, só um
+embedding aprendido — e esses tipos de nó pobres em atributo superam em
+número os nós-empresa ricos em atributo por mais de uma ordem de grandeza
+(142.844 nós de sócio e 181.268 nós de endereço contra 344.130 nós de
+empresa, vários dos quais conectam ao mesmo pequeno número de nós
+auxiliares). Treinar toda essa estrutura adicional e fracamente informada
+de ponta a ponta com só 148 rótulos positivos parece adicionar variância em
+vez de sinal, em relação a um modelo mais simples que ou ignora essa
+estrutura (tabular com features de grau explícitas) ou a agrega
+grosseiramente num único tipo de relação (GNN homogênea).
+
+### 5.3 A reversão no rótulo secundário é evidência de exploração de circularidade, não de vantagem genuína
+
+O rótulo de sensibilidade (`y_qualquer`) inclui 40 empresas cujo único
+caminho para um rótulo positivo é uma conexão de sócio comum com uma
+entidade já sancionada — exatamente a relação que o metapath de sócio
+comum é construído para detectar. Se a vantagem maior do HGT tunado nesse
+rótulo (lift de 60,8×, ante 42,8× antes do ajuste, e agora
+significativamente à frente da GNN homogênea) refletisse sinal de risco
+estrutural recém-descoberto, esperaríamos um ganho comparável no rótulo
+principal, onde essa circularidade não existe. Não é o caso: o ganho do
+ajuste no rótulo principal (23,5×→32,6×) é real, mas bem mais modesto, e o
+HGT continua sendo o modelo mais fraco ali. A explicação mais parcimoniosa
+é que capacidade de treino adicional permite ao HGT aprender de forma mais
+completa a relação de sócio comum especificamente onde fazer isso
+reproduz diretamente parte da regra de rotulagem, em vez de descobrir sinal
+preditivo novo. Reportamos esse padrão explicitamente, em vez de destacar o
+resultado do rótulo de sensibilidade em primeiro plano, precisamente porque
+ilustra como uma leitura acrítica do resultado "a GNN vence" num rótulo
+circular poderia induzir a erro quem fosse aplicar isso na prática.
+
+### 5.4 Implicação prática para órgão de controle com recursos limitados
+
+Para o público a que esta dissertação se dirige — controladorias, tribunais
+de contas, órgãos de fiscalização de licitação operando com quadro limitado
+de ciência de dados, sem infraestrutura de GPU dedicada, e poucos rótulos
+confirmados para aprender — a recomendação prática é direta: **um modelo
+tabular com gradient boosting, aumentado com um pequeno número de features
+explícitas de grau de grafo (contagem de sócio comum, endereço comum,
+vínculo político comum), é mais barato de construir e operar, e mais
+eficaz, que um transformer de grafo heterogêneo para essa tarefa.** O custo
+de treino do modelo tabular é medido em minutos em hardware comum; o do HGT
+tunado é medido em horas por rótulo, e exigiu um procedimento de ajuste
+dedicado e tecnicamente exigente só para chegar ao seu melhor desempenho
+possível — que ainda assim ficou aquém. Onde um órgão de controle tiver
+apetite por métodos baseados em grafo, este resultado recomenda a GNN
+homogênea, mais simples e de um único tipo de relação, em vez de uma
+arquitetura totalmente heterogênea — pelo menos até que tipos de nó além de
+"empresa" carreguem dado de atributo genuíno próprio (Seção 5.2), não só um
+embedding aprendido.
+
+### 5.5 Limitações
+
+O próprio rótulo principal é positivo-incompleto, não exaustivo: ausência
+de sanção confirmada não estabelece ausência de irregularidade, só ausência
+de detecção confirmada (até agora) — uma limitação inerente a esse domínio
+de tarefa, não específica do método usado aqui, mas que delimita como os
+números de PR-AUC/lift reportados devem ser interpretados (como detecção de
+risco *já pego*, com recall desconhecido contra risco ainda não pego).
+Resolução de identidade de sócio e endereço usa heurísticas de nível de
+cadastro (CPF mascarado mais nome normalizado para sócios; logradouro/
+número/CEP normalizados para endereços) que não resolvem homônimos nem
+variação de grafia — uma fonte de ruído nos três metapaths, que
+provavelmente atenua, em vez de inflar, a vantagem medida dos modelos
+baseados em grafo. Registros de processo judicial foram excluídos da rede
+por completo, já que são casados por nome via um pipeline de resolução de
+registro ainda em desenvolvimento, não por CNPJ, e foram julgados
+confiáveis demais para incluir como rótulo ou feature. O estudo é
+delimitado a uma única região metropolitana brasileira (sete municípios);
+generalização para outras regiões, regimes de sanção, ou estruturas de
+cadastro empresarial não foi testada. Por fim, a busca de hiperparâmetros
+(Seção 4.4) cobriu seis configurações escolhidas para isolar três eixos
+específicos (profundidade de treino, largura oculta, cabeças de atenção),
+não uma busca exaustiva ou bayesiana; consideramos isso proporcional dado
+que testou diretamente, e fechou, a objeção mais provável ao resultado, mas
+uma busca maior continua sendo trabalho futuro possível.
 
 ## 6. Conclusão
 
-*(A definir.)*
+Testando se uma rede neural em grafo heterogêneo melhora a detecção de
+risco de sanção administrativa em relação a alternativas mais simples, num
+cadastro real e completo de 344.130 empresas com rótulo positivo-incompleto
+e extremamente raro, constatamos que não melhora — e que esse achado
+sobrevive ao seu desafio metodológico mais sério. Uma busca dedicada de
+hiperparâmetros confirmou que o modelo heterogêneo (HGT) estava subtreinado
+em sua configuração inicial e o melhorou de forma significativa uma vez
+corrigido, ainda assim o modelo melhorado continua sendo significativamente
+superado tanto por um baseline tabular com features de grau de grafo
+explícitas quanto por uma GNN homogênea mais simples, no rótulo de sanção
+principal, não-circular, ao longo de cinco rodadas de avaliação
+independentes. Onde o modelo heterogêneo de fato mostra vantagem — num
+rótulo secundário parcialmente construído via a mesma relação de sócio
+comum que o modelo explora — o padrão é mais consistente com exploração de
+circularidade de rótulo do que com descoberta de sinal genuíno de risco
+estrutural. Para órgãos de controle do setor público operando com poder
+computacional e capacidade técnica limitados, este resultado recomenda um
+modelo tabular bem projetado com features derivadas de grafo explícitas,
+não um transformer de grafo heterogêneo, como a escolha defensável para
+triagem de risco de sanção administrativa nessa escala e escassez de
+rótulo.
 
 ## Referências
 

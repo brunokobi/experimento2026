@@ -369,16 +369,37 @@ descartar o `heads=2` (empate estatístico não justifica o custo) e usar
 mais barato, e isola `epochs` como a alavanca real do ganho (a busca já
 mostrou que `hidden`/`heads` sozinhos não ajudam muito).
 
-**Em andamento (relançado 13/08/2026 ~23:43)**: `comparar_baselines.py`
-com `han_hgt` usando `epochs=150` (commit `affe891`). PID 36441, log em
-`~/comparar_baselines_v4_han_hgt_tunado.log`. Estimativa corrigida: ~17-
-17,5h total (tabular ~5min + GNN homogênea ~2,8h + HAN/HGT ~14,4h — o
-HAN/HGT sozinho já é ~7,2h **por rótulo**, 2 rótulos). Isso vira o
-resultado v4, substituindo o v3 como resultado final reportado — se o
-HAN/HGT tunado ainda perder pro tabular/GNN homogênea, o resultado
-negativo fica muito mais defensável ("buscamos hiperparâmetros e não
-adiantou" é mais forte que "usamos uma config só"). Depois disso: etapa
-7.7 (sensibilidade) e etapa 8 (publicação).
+**Concluído (relançado 13/08/2026 ~23:43, terminado 14/08/2026 ~15:36,
+~15h52 corridas, sem interrupção)**: `comparar_baselines.py` com `han_hgt`
+usando `epochs=150` (commit `affe891`). Log movido para
+`docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`.
+Checkpoints (`~/checkpoints_comparar_baselines/`) apagados após a conclusão.
+
+**Resultado final v4**:
+
+| Rótulo | Tabular | GNN homogênea | HAN/HGT (tunado) |
+|---|---|---|---|
+| `y_direto` (principal) | 50,7× | **76,3×** | 32,6× |
+| `y_qualquer` | 43,2× | 40,1× | **60,8×** |
+
+O tuning melhorou o HAN/HGT de verdade (23,5×→32,6× em `y_direto`,
+confirma que o subtreinamento do v3 era real) — **mas ele continua
+estatisticamente PIOR que tabular (p=0,0024) e GNN homogênea (p<0,0001)**
+no rótulo principal. 5ª rodada seguida confirmando essa direção; a defesa
+metodológica mais forte contra "não tentaram treinar direito" foi feita, e
+o resultado se sustenta. Em `y_qualquer`, o HAN/HGT tunado agora supera a
+GNN homogênea (p=0,0277) — leitura: mais épocas deram mais capacidade de
+explorar exatamente o mecanismo de rotulagem via sócio comum que confunde
+esse rótulo (não é sinal novo, é melhor exploração do vazamento). Detalhe
+completo em `docs/research_plan.md`, Seção 7.
+
+**Próximo passo real**: escrita. `docs/manuscrito/paper_en.md` (artigo em
+inglês, alvo *Government Information Quarterly*, moldura de política
+pública) e `docs/manuscrito/dissertacao_pt.md` (dissertação em português)
+já têm Introdução/Referencial Teórico/Metodologia — falta preencher
+Resultados/Discussão/Conclusão com os números acima, depois etapa 7.7
+(sensibilidade `y_direto`/`y_qualquer`, já com a leitura mais precisa da
+circularidade que o v4 trouxe).
 
 ## Armadilhas já identificadas (não repetir)
 

@@ -91,7 +91,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 7.3 | Baseline tabular (XGBoost + class weighting) | `src/models/tabular_baseline.py` | ✅ feito e **rodado contra o banco real** — primeiro resultado quantitativo: PR-AUC ~18,8× a taxa-base em `y_direto` (ver nota abaixo) |
 | 7.4 | Baseline GNN homogenea (via `SparseMetaPathExtractor`) | `src/models/gnn_homogeneous.py` | ✅ feito e rodado — **pior que o tabular em `y_direto`** (13,0x vs 18,8x de lift), ver nota abaixo |
 | 7.5 | HAN/HGT (heterogenea de verdade) | `src/models/han_hgt.py` | ✅ feito e rodado — recupera quase todo o sinal perdido na GNN homogenea (18,2x vs 13,0x em `y_direto`), quase empata com o tabular |
-| 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | `scripts/comparar_baselines.py` | ✅ feito e **rerodado 3x** (30 folds, 107→117→124 colunas) — **HAN/HGT e significativamente PIOR que o tabular em `y_direto` nas 3 rodadas** (p=0,007 / p<0,0001 / p=0,0001), ver nota abaixo |
+| 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | `scripts/comparar_baselines.py` | ✅ **finalizado** — rerodado 4x (30 folds, 107→117→124 colunas + busca de hiperparametros do HAN/HGT) — **HAN/HGT e significativamente PIOR que o tabular em `y_direto` nas 4 rodadas, inclusive apos tuning dedicado** (p=0,007 / p<0,0001 / p=0,0001 / p=0,0024), ver nota abaixo |
 | 7.7 | Analise de sensibilidade: rotulo `direto` (148) vs. `direto+socio` (188) | — | ⏳ pendente — decidido, nao implementado |
 | 8 | Publicacao: resultado parcial em workshop/BRACIS, depois artigo principal em periodico-alvo | — | ⏳ pendente |
 
@@ -276,10 +276,53 @@ nova: a GNN *homogênea* (mais simples, sem tipagem de relação) passou a
 vencer o tabular de forma significativa — sugerindo que o ganho de ter
 *algum* sinal de grafo (mesmo colapsado) supera o tabular puro, mas
 tipar explicitamente cada relação (HAN/HGT) piora em vez de ajudar, mesmo
-com features melhores. Decisão em aberto com o pesquisador: investir em
-tuning de hiperparâmetros do HAN/HGT antes de aceitar isso como definitivo,
-ou seguir para a etapa 7.7 e depois a etapa 8 (publicação) com esse
-resultado negativo — já reproduzido 4 vezes — discutido no texto.
+com features melhores.
+
+**Busca de hiperparâmetros do HAN/HGT (12-13/08/2026)**: antes de aceitar o
+v3 como definitivo, testamos se o resultado era artefato de configuração
+subótima — os defaults (`hidden=32`, `heads=1`, `epochs=50`) tinham sido
+reduzidos por causa de OOM na máquina local, não por ajuste. 6 candidatos
+testados (5 folds, só `y_direto`): **o modelo estava subtreinado, não
+subdimensionado** — só aumentar épocas (50→150) quase triplicou o PR-AUC
+(0,0105→0,0244); aumentar `hidden_channels` isoladamente não ajudou;
+`hidden=64+heads=2+epochs=100` deu OOM de novo. Config final escolhida:
+`epochs=150` isolado (o candidato com `heads=2` empatava dentro do ruído
+por ~3x mais custo computacional — preferida a opção mais simples).
+
+**Resultado final v4, com o HAN/HGT tunado (124 colunas, 30 folds,
+14/08/2026, ~15h52 corridas)** — ver
+`docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`:
+
+| Rotulo | Tabular | GNN homogenea | HAN/HGT (tunado) |
+|---|---|---|---|
+| `y_direto` (principal) | 50,7x | **76,3x** | 32,6x |
+| `y_qualquer` | 43,2x | 40,1x | **60,8x** |
+
+**O tuning funcionou de verdade — e o resultado negativo central sobreviveu
+mesmo assim.** Em `y_direto`, o HAN/HGT melhorou 39% em relação ao v3
+(23,5x→32,6x), confirmando que o achado do subtreinamento era real. **Mas
+continua estatisticamente PIOR que tabular (p=0,0024) e que GNN homogênea
+(p<0,0001)** — a defesa mais forte possível contra "não tentaram treinar
+direito" foi feita, e o efeito negativo se sustenta. Essa é a quinta rodada
+completa (107→117→124 colunas + tuning dedicado) confirmando a mesma
+direção no rótulo principal.
+
+**Mudança qualitativa em `y_qualquer`**: o HAN/HGT tunado agora **vence** a
+GNN homogênea (p=0,0277) e quase empata com o tabular (p=0,158, não
+significativo, mas o lift saltou de 42,8x pra 60,8x). Interpretação: mais
+épocas de treino deram ao HAN/HGT mais capacidade de explorar exatamente a
+relação sócio-empresa que é o mecanismo de circularidade desse rótulo (as
+40 empresas rotuladas via sócio comum, não sanção direta — seção 5 do
+`docs/research_plan.md`) — reforça, não contradiz, a leitura de que o
+"sucesso" do HAN/HGT em `y_qualquer` é sobre explorar melhor o vazamento de
+rótulo, não descobrir sinal novo.
+
+**Conclusão prática**: com a busca de hiperparâmetros feita e documentada,
+o resultado negativo do HAN/HGT no rótulo principal não é mais uma lacuna
+de rigor a fechar — é a conclusão final da comparação empírica. Próximo
+passo: etapa 7.7 (sensibilidade `y_direto`/`y_qualquer`, agora com essa
+leitura mais precisa da circularidade) e etapa 8 (escrita/publicação — ver
+`docs/manuscrito/`).
 
 **Dois bugs reais encontrados só ao validar contra o banco de verdade** (nenhum
 aparecia no dado sintético dos testes — registrado para não repetir):

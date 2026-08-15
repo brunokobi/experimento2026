@@ -6,17 +6,19 @@ Networks for Administrative Sanction Risk Screening in Local Government Data**
 *(provisional — revisit once Results/Discussion are finalized; target venue:
 Government Information Quarterly)*
 
-> **Status of this draft**: Introduction, Related Work and Data/Methods are
-> substantive drafts, ready for revision. Results, Discussion and Conclusion
-> are placeholders — to be written once the final 30-fold experiment
-> (`docs/resultados/`) is complete. Word budget target for GIQ: ~8,000–10,000
-> words; this draft will need trimming once all sections exist.
+> **Status of this draft (updated 2026-08-14)**: all sections now have a
+> substantive first draft, including Results, Discussion and Conclusion,
+> written after the final 30-fold experiment (with a tuned HGT) completed.
+> Word budget target for GIQ: ~8,000–10,000 words; this draft is longer and
+> will need trimming, especially Section 2 and 4, before submission. All
+> numbers below were computed directly from
+> `docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`
+> and cross-checked against `docs/research_plan.md`, not reconstructed from
+> memory.
 
 ---
 
 ## Abstract
-
-*(placeholder — draft after final numbers are in; ~200 words for GIQ)*
 
 Oversight bodies in local and regional government are increasingly asked to
 screen large corporate registries for administrative-sanction risk — evasion
@@ -29,9 +31,27 @@ risk is only visible to a relational model. We test this assumption on a
 real, complete registry of 344,130 companies from a Brazilian metropolitan
 region, comparing a tabular gradient-boosting baseline, a homogeneous GNN,
 and a heterogeneous graph transformer (HGT), under a positive-unlabeled
-framing appropriate to the extreme rarity of confirmed sanctions (148–188
-positives). [RESULT SUMMARY — TBD]. We discuss the practical implication for
-resource-constrained oversight bodies: [TBD].
+framing appropriate to the extreme rarity of confirmed sanctions (148 direct,
+188 including partner-inferred cases). Across five independent evaluation
+rounds — three successive feature-engineering iterations plus a dedicated
+hyperparameter-search round for the HGT, all under repeated stratified
+cross-validation (30 folds) with paired statistical testing — the
+heterogeneous model is consistently and significantly outperformed by both
+simpler alternatives on the primary, non-circular label (tabular: 50.7×
+lift over base rate; homogeneous GNN: 76.3×; tuned HGT: 32.6×; tabular >
+HGT, p = 0.0024; homogeneous GNN > HGT, p < 0.0001). Critically, a dedicated
+hyperparameter search — motivated by the finding that the HGT was
+undertrained, not undersized — improved its performance by 39% but did not
+change this ranking, closing the most likely methodological objection to the
+result. On a secondary, partner-inferred label where the labeling mechanism
+itself overlaps with the shared-partner metapath, the tuned HGT's advantage
+grows instead of shrinking (60.8× lift, up from 42.8× before tuning) — a
+pattern more consistent with the model exploiting label circularity than
+discovering genuine structural risk signal. We discuss the practical
+implication for resource-constrained oversight bodies: a well-engineered
+tabular model augmented with explicit graph-degree features, not a
+heterogeneous graph transformer, is the defensible choice for this task
+given realistic public-sector compute and labeling budgets.
 
 **Keywords**: administrative sanction risk; heterogeneous graph neural
 networks; anomaly detection; public sector data science; corporate network
@@ -344,25 +364,222 @@ labels (Section 3.2).
 
 ## 4. Results
 
-*(TBD — pending the final 30-fold, tuned-HGT experiment. Structure planned:
-4.1 primary label results and pairwise tests; 4.2 sensitivity label results;
-4.3 effect of literature-motivated feature engineering across the three
-iterations; 4.4 effect of hyperparameter tuning on the HGT.)*
+All PR-AUC figures below are averaged over 30 folds (5-fold stratified
+cross-validation × 6 repeats), with the same folds and random seed shared
+across models within a given round, permitting paired Wilcoxon
+signed-rank tests. "Lift" is PR-AUC divided by the label's base rate
+(148/344,130 = 0.0430% for `y_direto`; 188/344,130 = 0.0546% for
+`y_qualquer`). Five evaluation rounds were run in total as the feature set
+and the HGT configuration evolved; we report the final (fifth) round in
+detail and the preceding four as a robustness trajectory (Section 4.3).
+
+### 4.1 Primary label (`y_direto`, 148 confirmed direct sanctions)
+
+| Model | PR-AUC | Lift |
+|---|---|---|
+| Tabular (XGBoost) | 0.0218 ± 0.0146 | 50.7× |
+| Homogeneous GNN | 0.0328 ± 0.0228 | **76.3×** |
+| HGT (tuned) | 0.0140 ± 0.0181 | 32.6× |
+
+Pairwise Wilcoxon tests (paired, 30 folds): tabular vs. homogeneous GNN,
+p = 0.0145 (homogeneous GNN significantly higher); tabular vs. HGT,
+p = 0.0024 (tabular significantly higher); homogeneous GNN vs. HGT,
+p < 0.0001 (homogeneous GNN significantly higher). All three pairwise
+differences are statistically significant, and the ranking is consistent:
+**homogeneous GNN > tabular > HGT** on the primary label.
+
+### 4.2 Sensitivity label (`y_qualquer`, 188 confirmed sanctions, including
+40 companies labeled positive only via a shared-partner link to an
+already-sanctioned entity)
+
+| Model | PR-AUC | Lift |
+|---|---|---|
+| Tabular (XGBoost) | 0.0236 ± 0.0200 | 43.2× |
+| Homogeneous GNN | 0.0219 ± 0.0124 | 40.1× |
+| HGT (tuned) | 0.0332 ± 0.0259 | **60.8×** |
+
+Pairwise tests: tabular vs. homogeneous GNN, p = 0.8394 (no significant
+difference); tabular vs. HGT, p = 0.1579 (no significant difference);
+homogeneous GNN vs. HGT, p = 0.0277 (HGT significantly higher). Unlike the
+primary label, the tuned HGT is now the top performer by point estimate and
+significantly ahead of the homogeneous GNN, though not (yet, at this
+sample size) significantly ahead of the tabular baseline.
+
+### 4.3 Effect of feature engineering across three iterations (robustness trajectory)
+
+| Round | Features | `y_direto` lift (tab / homog. GNN / HGT) | `y_qualquer` lift (tab / homog. GNN / HGT) |
+|---|---|---|---|
+| 1 | 107 cols | 18.6× / 16.5× / 14.2× | 15.7× / 24.4× / 33.5× |
+| 2 | 117 cols (+dashboard-derived features) | 75.8× / 81.2× / 29.3× | 62.3× / 41.6× / 45.4× |
+| 3 | 124 cols (+literature-grounded features), untuned HGT | 50.7× / 76.3× / 23.5× | 43.2× / 40.1× / 42.8× |
+| 4 | 124 cols, tuned HGT (this study) | 50.7× / 76.3× / **32.6×** | 43.2× / 40.1× / **60.8×** |
+
+The ranking on the primary label — HGT statistically worse than both
+alternatives — holds across all three feature-set versions (round 1:
+tabular > HGT p = 0.0066, homogeneous GNN > HGT p = 0.0293; round 2/3:
+tabular > HGT p < 0.0001 / p = 0.0001, homogeneous GNN > HGT p < 0.0001 in
+both). It is not an artifact of a particular feature-engineering iteration.
+Absolute PR-AUC is not monotonic across rounds 2→3 (all three models'
+scores decreased when the literature-grounded features were added) — an
+initial quick sanity check compared round 3 against round 1 rather than
+round 2, creating a false impression of improvement; this is corrected here
+and documented as a methodological lesson in the project's internal
+research log.
+
+### 4.4 Effect of hyperparameter tuning on the HGT
+
+The HGT's original configuration (`hidden_channels=32`, `num_heads=1`,
+`epochs=50`) had been constrained by an out-of-memory failure on the
+development machine (8GB RAM) at larger settings, not selected by
+hyperparameter search. A dedicated search (6 configurations, 5-fold
+cross-validation, primary label only) found that **increasing training
+epochs alone (50→150) nearly tripled PR-AUC** (0.0105→0.0244 in the search's
+smaller-scale runs), while increasing hidden-layer width alone gave no
+improvement (0.0105→0.0100) and the largest combined configuration
+(`hidden=64, heads=2, epochs=100`) failed with an out-of-memory error again.
+This diagnosis — undertraining, not undersizing — motivated selecting
+`epochs=150` (holding `hidden=32, heads=1`) as the final configuration,
+over a marginally higher-scoring but three-times-costlier alternative
+(`heads=2` combined with `epochs=150`) that tied within noise (search-phase
+PR-AUC 0.0249 vs. 0.0244, standard deviation ≈ 0.025–0.029 on both).
+
+Applying this tuned configuration to the full 30-fold evaluation (Sections
+4.1–4.2) improved the HGT's primary-label lift by 39% relative to the
+untuned round 3 result (23.5×→32.6×) — confirming the undertraining
+diagnosis was real, not a rationalization. **The HGT nonetheless remains
+significantly worse than both alternatives on the primary label after
+tuning** (Section 4.1). On the secondary label, tuning increased the HGT's
+lift by more (42.8×→60.8×) than on the primary label — a pattern taken up
+in Section 5.
 
 ## 5. Discussion
 
-*(TBD. Planned angles: (a) interpretation through the graph-features-vs-GNN
-and information-overload literatures from Section 2; (b) practical
-implication for resource-constrained oversight bodies — what should a
-comptroller's office or court of accounts actually deploy, given headcount,
-compute and labeling-budget constraints typical of the public sector, not an
-idealized research setting; (c) limitations — label incompleteness/PU
-framing, address/partner identity-resolution heuristics, judicial-process
-data excluded as unreliable, single-region scope.)*
+### 5.1 A negative result that survives its strongest methodological challenge
+
+The single most likely objection a skeptical reviewer would raise against
+an early version of this result — that the heterogeneous model was simply
+undertrained relative to the simpler baselines — was tested directly rather
+than argued away. It turned out to be partly correct (epochs were indeed a
+real bottleneck) and irrelevant to the conclusion: a hyperparameter search
+that measurably improved the HGT (Section 4.4) did not change its ranking
+relative to the tabular or homogeneous-GNN baselines on the primary label.
+Across five independent evaluation rounds — three feature-set iterations
+plus a dedicated tuning round — the heterogeneous graph transformer is
+consistently and significantly outperformed on the task this paper's
+research question is actually about: detecting companies with a *direct*,
+non-circular administrative sanction. We treat this as a robust empirical
+finding, not a provisional one awaiting further tuning.
+
+### 5.2 Why might a simpler model win here? Two literatures converge
+
+The result is consistent with, and mutually reinforcing across, two
+distinct strands of literature reviewed in Section 2. First, the
+graph-features-vs-GNN literature (Section 2.3) predicts that giving a
+gradient-boosted tabular model explicit access to the same structural
+information a GNN would otherwise learn implicitly closes most of the
+performance gap — exactly what we observe: the tabular model, fed explicit
+graph-degree features, achieves a respectable 50.7× lift on its own, and the
+*simpler* homogeneous GNN (a single collapsed relation type) outperforms
+both it and the far more complex, per-relation-typed HGT. Second, the
+"information overload" diagnosis from corporate fraud-detection literature
+(Section 2.5) offers a mechanistic explanation for why the *more*
+heterogeneous model specifically underperforms: the HGT's auxiliary node
+types (partner, address, political connection) carry no genuine attribute
+data of their own, only a learned embedding — and these attribute-poor node
+types outnumber the attribute-rich company nodes by more than an order of
+magnitude (142,844 partner nodes and 181,268 address nodes against 344,130
+company nodes, several of which connect to the same small number of
+auxiliary nodes). Training this much additional, weakly-informed structure
+end-to-end from only 148 positive labels appears to add variance rather
+than signal, relative to a simpler model that either ignores this structure
+(tabular with explicit degree features) or aggregates it coarsely into a
+single relation type (homogeneous GNN).
+
+### 5.3 The secondary label's reversal is evidence of circularity exploitation, not of genuine advantage
+
+The sensitivity label (`y_qualquer`) includes 40 companies whose only path
+to a positive label is a shared-partner connection to an already-sanctioned
+entity — the exact relation the shared-partner metapath is built to detect.
+If the tuned HGT's larger advantage on this label (60.8× lift, up from 42.8×
+before tuning, and now significantly ahead of the homogeneous GNN) reflected
+newly discovered structural risk signal, we would expect a comparable gain
+on the primary label, where no such circularity exists. It does not: the
+primary-label gain from tuning (23.5×→32.6×) is real but far more modest,
+and the HGT remains the weakest model there. The more parsimonious
+explanation is that additional training capacity lets the HGT more
+thoroughly learn the shared-partner relation specifically where doing so
+directly reproduces part of the labeling rule, rather than uncovering new
+predictive signal. We report this pattern explicitly rather than
+foreground the sensitivity-label result, precisely because it illustrates
+how an uncritical read of the "GNN wins" result on a circular label could
+mislead a practitioner.
+
+### 5.4 Practical implication for resource-constrained oversight bodies
+
+For the audience this paper is aimed at — comptroller offices, courts of
+accounts, and procurement oversight bodies operating with limited
+data-science headcount, no dedicated GPU infrastructure, and few confirmed
+labels to learn from — the practical recommendation is direct: **a
+gradient-boosted tabular model augmented with a small number of explicit
+graph-degree features (shared partner, shared address, shared political
+connection counts) is both cheaper to build and operate, and more effective,
+than a heterogeneous graph transformer for this task.** The tabular
+model's training cost is measured in minutes on commodity hardware; the
+tuned HGT's is measured in hours per label, and required a dedicated,
+technically demanding tuning procedure just to reach its best achievable
+performance — which still fell short. Where an oversight body does have
+appetite for graph-based methods, this result recommends the simpler,
+single-relation-type homogeneous GNN over a fully heterogeneous
+architecture, at least until node types other than "company" carry genuine
+attribute data of their own (Section 5.2) rather than only a learned
+embedding.
+
+### 5.5 Limitations
+
+The primary label itself is positive-unlabeled, not exhaustive: absence of
+a confirmed sanction does not establish absence of wrongdoing, only absence
+of (so far) confirmed detection — a limitation inherent to this task
+domain, not specific to our method, but one that bounds how the PR-AUC/lift
+figures reported here should be interpreted (as detection of *already
+caught* risk, with unknown recall against uncaught risk). Partner and
+address identity resolution use registry-level heuristics (masked-CPF plus
+normalized name for partners; normalized street/number/postal-code for
+addresses) that do not resolve homonyms or spelling variants — a source of
+noise in all three metapaths, likely attenuating rather than inflating the
+graph-based models' measured advantage. Judicial-process records were
+excluded from the network entirely, as they are matched by name via a
+still-in-development record-linkage pipeline rather than by tax ID, and were
+judged too unreliable to include as either label or feature. The study is
+scoped to a single Brazilian metropolitan region (seven municipalities);
+generalization to other regions, sanction regimes, or company-registry
+structures is untested. Finally, the hyperparameter search (Section 4.4)
+covered six configurations chosen to isolate three specific axes (depth of
+training, hidden width, attention heads) rather than an exhaustive or
+Bayesian search; we consider this proportionate given that it directly
+tested, and closed, the single most likely objection to the result, but a
+larger search remains possible future work.
 
 ## 6. Conclusion
 
-*(TBD.)*
+Testing whether a heterogeneous graph neural network improves detection of
+administrative-sanction risk over simpler alternatives, on a real, complete
+registry of 344,130 companies with a positive-unlabeled, extremely rare
+label, we find that it does not — and that this finding survives its most
+serious methodological challenge. A dedicated hyperparameter search
+confirmed the heterogeneous model (HGT) was undertrained in its initial
+configuration and meaningfully improved it once corrected, yet the improved
+model remains significantly outperformed by both a tabular baseline given
+explicit graph-degree features and a simpler homogeneous graph neural
+network, on the primary, non-circular sanction label, across five
+independent evaluation rounds. Where the heterogeneous model does show an
+advantage — on a secondary label partly constructed via the same
+shared-partner relation the model exploits — the pattern is more consistent
+with exploiting label circularity than with discovering genuine structural
+risk signal. For public-sector oversight bodies operating with limited
+compute and technical capacity, this result recommends a well-engineered
+tabular model with explicit graph-derived features, not a heterogeneous
+graph transformer, as the defensible choice for administrative-sanction
+risk screening at this scale and label scarcity.
 
 ## References
 
