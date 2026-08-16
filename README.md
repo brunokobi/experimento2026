@@ -93,7 +93,7 @@ alta. Plano completo em [`docs/research_plan.md`](docs/research_plan.md) — res
 | 7.5 | HAN/HGT (heterogenea de verdade) | `src/models/han_hgt.py` | ✅ feito e rodado — recupera quase todo o sinal perdido na GNN homogenea (18,2x vs 13,0x em `y_direto`), quase empata com o tabular |
 | 7.6 | Comparacao estatistica dos 3 modelos (resultado do Marco 1) | `scripts/comparar_baselines.py` | ✅ **finalizado** — rerodado 4x (30 folds, 107→117→124 colunas + busca de hiperparametros do HAN/HGT) — **HAN/HGT e significativamente PIOR que o tabular em `y_direto` nas 4 rodadas, inclusive apos tuning dedicado** (p=0,007 / p<0,0001 / p=0,0001 / p=0,0024), ver nota abaixo |
 | 7.7 | Analise de sensibilidade: rotulo `direto` (148) vs. `direto+socio` (188) | — | ⏳ pendente — decidido, nao implementado |
-| 8 | Publicacao: resultado parcial em workshop/BRACIS, depois artigo principal em periodico-alvo | `docs/manuscrito/paper_en.md` (GIQ), `dissertacao_pt.md` | ✅ rascunho completo (Introducao->Conclusao+Referencias+2 figuras), revisado como parecer simulado de revisor experiente + ablation de features + ablation de tipo de no no HGT (15/08/2026) — falta so revisao de tom pelo pesquisador antes de submeter |
+| 8 | Publicacao: preprint aberto, depois submissao ao periodico-alvo | `docs/manuscrito/paper_en.md` (GIQ), `dissertacao_pt.md` | ✅ rascunho completo, revisado como parecer simulado de revisor experiente + 2 ablations dedicados (15/08/2026); ✅ **preprint publicado no Zenodo** (16/08/2026, ver secao abaixo); ⏳ submissao formal a GIQ pendente |
 
 Cronograma por marcos (Marco 1–4) e riscos declarados: ver secoes 9 e 11 de
 [`docs/research_plan.md`](docs/research_plan.md).
@@ -337,6 +337,32 @@ aparecia no dado sintético dos testes — registrado para não repetir):
    estourar memória. A própria estimativa tinha um bug de overflow silencioso
    em `int32` (`np.dot` sem cast para `int64`) — só apareceu com a distribuição
    real e desigual dos municípios, não com números sintéticos uniformes.
+
+## Publicação / Preprint
+
+**Preprint publicado no Zenodo (16/08/2026)**: acesso aberto, licença CC BY
+4.0, DOI permanente — citação completa (autor, título, ano) gerada
+automaticamente pelo Zenodo.
+
+- **DOI (esta versão)**: [10.5281/zenodo.21961063](https://doi.org/10.5281/zenodo.21961063)
+- **DOI "todas as versões"** (fixo, sempre aponta para a versão mais recente
+  caso o preprint seja atualizado): [10.5281/zenodo.21961062](https://doi.org/10.5281/zenodo.21961062)
+- Indexado também via [OpenAIRE](https://explore.openaire.eu/search/result?pid=10.5281/zenodo.21961063).
+
+**Por que Zenodo e não arXiv**: uma tentativa de submissão ao arXiv
+(`cs.LG`/`cs.CY`) esbarrou na política de endosso do arXiv — endurecida em
+21/01/2026 (ver [blog.arxiv.org](https://blog.arxiv.org/2026/01/21/attention-authors-updated-endorsement-policy/)),
+que agora exige endosso pessoal de um autor arXiv já estabelecido para
+contas novas sem e-mail institucional. Sem essa rede de contatos disponível
+no momento, a submissão ficou pausada em rascunho (arXiv `submission
+7955739`, código de endosso reservado para `cs.CY`) e o Zenodo foi usado
+como alternativa imediata sem barreira de endosso, mesmo objetivo de
+preprint citável antes da submissão formal ao periódico.
+
+**Próximo passo real**: submissão formal ao periódico-alvo (*Government
+Information Quarterly*), referenciando o preprint do Zenodo acima. Retomar
+a submissão do arXiv fica como via secundária, condicionada a encontrar um
+endossante.
 
 ## Estrutura do projeto
 

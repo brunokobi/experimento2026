@@ -36,8 +36,12 @@ endereço comum, vínculo político). Objetivo: publicação em veículo Qualis 
    Treino da GNN e notebooks ficam na máquina **local** — a VPS é CPU-only/ARM64
    (free tier), sem GPU, e as extensões nativas do PyTorch Geometric são
    instáveis em ARM. **Segredos de acesso (IP/chaves/credenciais) nunca vão neste
-   repositório** — é público; ficam só no `.env` local e no repositório privado
-   de infraestrutura pessoal do pesquisador.
+   repositório**, independente de visibilidade — ficam só no `.env` local, no
+   repositório privado de infraestrutura pessoal do pesquisador, ou na memória
+   local do Claude Code (nunca commitados). Nota (16/08/2026): confirmado via
+   API do GitHub que este repositório está **privado** — corrige a afirmação
+   anterior deste item, que dizia "é público"; a política de nunca commitar
+   segredo vale de qualquer forma, independente da visibilidade.
 7. **LGPD**: CPF de sócios já vem mascarado na fonte (Receita Federal) — sem
    trabalho adicional de pseudonimização necessário para uso nesta pesquisa.
 
