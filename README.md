@@ -355,6 +355,8 @@ automaticamente pelo Zenodo.
   legal completo como identidade e "Bruno Kobi" como *published name*/*also
   known as*, então ambas as formas resolvem para a mesma identidade
   desambiguada.
+- Indexado também no **Currículo Lattes** (CNPq) do autor, como "Outra
+  produção bibliográfica" — [lattes.cnpq.br/3842437456265629](http://lattes.cnpq.br/3842437456265629).
 
 **Por que Zenodo e não arXiv**: uma tentativa de submissão ao arXiv
 (`cs.LG`/`cs.CY`) esbarrou na política de endosso do arXiv — endurecida em
