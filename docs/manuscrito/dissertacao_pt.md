@@ -24,10 +24,16 @@ quando o formato institucional for confirmado.)*
 > isolando a contribuição marginal dos dois grupos de feature da rodada 3 —
 > revisou a leitura original da Seção 5.2 ("features de grafo explícitas
 > fecham a diferença") pra uma explicação mais nuançada e melhor
-> sustentada pelos dados (ver Seção 4.6/5.2). Todos os números computados
-> direto dos logs
-> `docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`
-> e `docs/resultados/ablation_features_tabular_2026-08-15.log`, reconferidos
+> sustentada pelos dados (ver Seção 4.6/5.2). Um segundo ablation, separado
+> (Seção 4.7, 15/08/2026), isolou a contribuição de cada tipo de nó
+> auxiliar dentro do HGT, revisando de forma parecida a explicação de
+> "sobrecarga de informação" da Seção 5.2: o padrão não é uniforme entre
+> tipos de nó, e o nó de sócio comum — o metapath central desta
+> dissertação — foi o que menos importou dentro do HGT especificamente.
+> Todos os números computados direto dos logs
+> `docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`,
+> `docs/resultados/ablation_features_tabular_2026-08-15.log` e
+> `docs/resultados/ablation_tipo_no_hgt_2026-08-15.log`, reconferidos
 > contra `docs/research_plan.md`, não recuperados de
 > memória; todas as citações verificadas em fonte primária.
 
@@ -655,6 +661,46 @@ foram mantidas fixas nas quatro versões de conjunto de features da Seção
 4.3, de propósito, pra isolar o efeito das features sozinhas — ver Seção
 5.5).
 
+### 4.7 Ablation: isolando a contribuição de cada tipo de nó auxiliar no HGT
+
+A Seção 5.2 (na sua forma de primeira passagem) ofereceu "sobrecarga de
+informação" — a dominância numérica de tipos de nó pobres em atributo
+(sócio, endereço, vínculo político) sobre nós de empresa — como explicação
+plausível fundamentada em literatura pra por que o HGT tem desempenho
+pior, sem testar qual tipo de nó auxiliar especificamente causa o efeito.
+Fechamos essa lacuna com um segundo ablation: removendo cada tipo de nó
+auxiliar do HGT um de cada vez (mantendo fixa a configuração tunada —
+`hidden=32, heads=1, epochs=150`), avaliado em 5 folds só no rótulo
+principal, o mesmo protocolo diagnóstico de escala reduzida usado na busca
+de hiperparâmetros (Seção 4.4), contra o resultado já estabelecido com os
+três tipos de nó daquela busca (PR-AUC 0,0244, lift 56,7×).
+
+| Configuração | PR-AUC | Lift | Δ vs. todos os três |
+|---|---|---|---|
+| Todos os três tipos de nó auxiliar (baseline) | 0,0244 | 56,7× | — |
+| Sem nós de sócio | 0,0231 | 53,7× | −0,0013 |
+| Sem nós de endereço | 0,0080 | 18,7× | **−0,0164** |
+| Sem nós de vínculo político | 0,0102 | 23,7× | **−0,0142** |
+
+Esse não é o quadro uniforme que "sobrecarga de informação" prevê. Se
+estrutura pobre em atributo simplesmente diluísse sinal por peso de
+número, remover qualquer tipo de nó auxiliar deveria ajudar, ou pelo menos
+não piorar, mais ou menos na proporção de quanta estrutura foi removida.
+Não é isso que observamos: remover o tipo de nó sócio — de longe o maior
+dos três, e o que é central pra hipótese principal de sócio comum desta
+dissertação — quase não muda o desempenho do HGT, enquanto remover o tipo
+de nó endereço ou vínculo político causa uma queda grande, apesar de suas
+contagens de aresta diferirem em duas ordens de grandeza (344.130 contra
+866) — descartando contagem de aresta sozinha como explicação e apontando,
+em vez disso, pra conteúdo informacional genuíno nessas duas relações
+especificamente. (Reportamos estimativas pontuais e diferenças em vez de
+um teste de significância pareado aqui: o resultado com todos os três
+tipos de nó foi reaproveitado da busca de hiperparâmetros, cujos escores
+brutos por fold não foram retidos depois que essa busca concluiu,
+impedindo um teste de Wilcoxon contra as variantes de remoção rodadas
+agora; a Seção 5.2 discute o que esse resultado de escala diagnóstica
+permite, e não permite, concluir.)
+
 ## 5. Discussão
 
 Esta seção separa dois tipos de contribuição que esta dissertação faz,
@@ -716,27 +762,54 @@ extremo que, até onde sabemos, não é a ênfase da literatura de
 features-de-grafo-vs-GNN que usamos, que tipicamente não testa crescimento
 de features sob escassez de rótulo tão severa.
 
-Segundo, o diagnóstico de "sobrecarga de informação" da
-literatura de detecção de fraude corporativa (Seção 2.5) oferece uma
-explicação mecanicista plausível, consistente com ainda que não diretamente
-demonstrada pelos nossos experimentos, de por que o modelo *mais*
-heterogêneo especificamente tem desempenho pior: os tipos de nó auxiliares
-do HGT (sócio, endereço, vínculo político) não carregam dado de atributo
-genuíno próprio, só um embedding aprendido — e esses tipos de nó pobres em
-atributo superam em número os nós-empresa ricos em atributo por mais de uma
-ordem de grandeza (142.844 nós de sócio e 181.268 nós de endereço contra
-344.130 nós de empresa, vários dos quais conectam ao mesmo pequeno número
-de nós auxiliares). Não rodamos um ablation removendo cada tipo de nó
-auxiliar isoladamente pra isolar qual especificamente causa o efeito (uma
-extensão natural desta análise, apontada na Seção 5.5); o que dá pra
-afirmar com os resultados em mãos é que treinar toda essa estrutura
-adicional e fracamente informada de ponta a ponta com só 148 rótulos
-positivos está associado a desempenho pior que um modelo mais simples que
-ou ignora essa estrutura (tabular com features de grau explícitas) ou a
-agrega grosseiramente num único tipo de relação (GNN homogênea) — um
-padrão que a literatura de sobrecarga de informação preveria, ainda que
-tratemos isso aqui como interpretação fundamentada em literatura, não como
-mecanismo causal demonstrado de forma independente.
+Segundo, testamos o diagnóstico de "sobrecarga de informação" da
+literatura de detecção de fraude corporativa (Seção 2.5) — de que tipos de
+nó auxiliares pobres em atributo (sócio, endereço, vínculo político), que
+superam em número os nós-empresa ricos em atributo por mais de uma ordem
+de grandeza (142.844 nós de sócio e 181.268 nós de endereço contra 344.130
+nós de empresa), diluem em vez de enriquecer sinal — diretamente, com o
+ablation de tipo de nó da Seção 4.7. O resultado complica esse diagnóstico
+em vez de confirmá-lo uniformemente. Se estrutura pobre em atributo
+simplesmente diluísse sinal por peso de número, remover qualquer tipo de
+nó auxiliar deveria ajudar, ou pelo menos não piorar, mais ou menos na
+proporção de quanta estrutura foi removida. Não é isso que observamos:
+remover o tipo de nó sócio — de longe o maior dos três, e o que é central
+pra hipótese principal de sócio comum desta dissertação — quase não muda o
+desempenho do HGT, enquanto remover o tipo de nó endereço ou vínculo
+político causa uma queda grande, apesar de suas contagens de aresta
+diferirem em duas ordens de grandeza (344.130 contra 866). Uma explicação
+genérica de "estrutura pobre em atributo demais" não consegue explicar por
+que remover o maior tipo de nó pobre em atributo é quase neutro enquanto
+remover um bem mais esparso é uma das duas remoções mais prejudiciais.
+
+Uma leitura revisada, mais precisa, é que os tipos de nó auxiliares do HGT
+não são uniformemente sinal nem uniformemente ruído: nós de endereço e
+vínculo político parecem carregar informação estrutural que o modelo usa
+produtivamente, enquanto o tipo de nó sócio — apesar de ancorar a pergunta
+de pesquisa central desta dissertação — contribui comparativamente pouco
+dentro do HGT especificamente. Isso deixa o achado empírico central
+intocado: o HGT, mesmo usando o sinal real que os nós de endereço e
+vínculo político fornecem, continua sendo superado pelos baselines
+tabular e de GNN homogênea no rótulo principal (Seções 4.1, 4.3). O que
+muda é a explicação de *por quê*: não simplesmente "estrutura auxiliar
+fracamente informada demais", mas algo mais próximo de uma explicação de
+capacidade-sob-escassez-de-rótulo — uma arquitetura heterogênea, tipada
+por relação, não converte o sinal real dessas relações em desempenho
+preditivo com a mesma eficiência que uma agregação mais grosseira (GNN
+homogênea) ou uma feature explícita (tabular) conseguem, quando só 148
+rótulos estão disponíveis pra aprender a ponderar essa estrutura.
+Registramos esse achado de escala diagnóstica (5 folds, estimativas
+pontuais sem teste de significância pareado — Seção 4.7) como uma revisão
+genuína da nossa própria leitura anterior, não uma confirmação dela — e,
+como efeito colateral, uma resposta inicial, de escala diagnóstica, a uma
+pergunta de interpretabilidade que o desenho de três metapaths desta
+dissertação convida mas não resolve sozinho: qual metapath carrega mais
+sinal. Dentro do HGT especificamente, endereço comum e vínculo político
+comum, mais que sócio comum, parecem ser o que o modelo de fato usa — um
+achado que contraria o protagonismo do metapath de sócio comum na moldura
+desta dissertação (Seção 1), e que precisaria de confirmação em poder
+estatístico completo (30 folds, um teste pareado de verdade) antes de ser
+tratado como mais que sugestivo.
 
 ### 5.3 A reversão no rótulo secundário é evidência de exploração de circularidade, não de vantagem genuína
 
@@ -883,14 +956,21 @@ o que causa uma queda estatisticamente significativa (Seção 5.2). O
 ablation foi restrito ao modelo tabular, já que é barato de rerodar em
 relação à GNN e ao HGT (Seção 4.4); um ablation equivalente pros modelos
 baseados em grafo continua trabalho futuro, e esclareceria se o mesmo
-efeito de combinação de features opera ali. De forma similar, a explicação
-de "sobrecarga de informação" da
-Seção 5.2 pra por que o HGT especificamente tem desempenho pior não foi
-testada via um ablation removendo cada tipo de nó auxiliar (sócio,
-endereço, vínculo político) isoladamente — oferecemos isso como
-interpretação fundamentada em literatura, não como mecanismo demonstrado de
-forma independente, e isolar a contribuição de cada tipo de nó fica como
-trabalho futuro.
+efeito de combinação de features opera ali. O ablation de tipo de nó da
+Seção 4.7 rodou na mesma escala reduzida da busca de hiperparâmetros (5
+folds, só rótulo principal), e seu baseline (os três tipos de nó
+auxiliares) foi reaproveitado dessa busca anterior em vez de rerodado
+dentro deste ablation — significando que conseguimos reportar estimativas
+pontuais e diferenças (Seções 4.7, 5.2) mas não um teste de significância
+pareado contra esse baseline, já que os escores brutos por fold da busca
+não foram retidos depois que ela concluiu. O padrão é grande o suficiente
+(remover endereço ou vínculo político praticamente reduz o lift à metade;
+remover sócio quase não o move) que consideramos isso uma revisão genuína,
+ainda que de escala diagnóstica, da nossa própria explicação de *por que*
+o HGT tem desempenho pior — mas confirmar isso em poder estatístico
+completo (30 folds, um teste pareado de verdade, idealmente com dado por
+fold retido ao longo de todo o processo exatamente pra esse tipo de
+análise de acompanhamento) continua trabalho futuro.
 
 ## 6. Conclusão
 

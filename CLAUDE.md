@@ -405,6 +405,19 @@ o tabular sob escassez extrema de rótulo, independente do tipo de feature
 (ver `docs/research_plan.md` para o detalhe completo). Conclusão central
 (Seção 4.1) não muda — o ablation só refina o *porquê* do número absoluto.
 
+**Feito (15/08/2026, continuação)**: mais 2 melhorias de "nota" (separar
+contribuições teóricas/práticas, conta de custo precisa distinguindo
+custo de pesquisa vs. implantação na Seção 5.4) + um segundo ablation
+(`scripts/ablation_tipo_no_hgt.py`, ~3,5h) isolando qual tipo de nó
+auxiliar (sócio/endereço/vínculo político) causa a "sobrecarga de
+informação" do HGT. Achado real: **não é uniforme** — remover sócio
+(o maior tipo de nó, e o metapath central da tese) quase não muda nada;
+remover endereço ou vínculo político derruba o desempenho pela metade,
+mesmo vínculo político tendo 400x menos arestas que endereço. Revisa de
+novo a leitura da Seção 5.2 (agora sobre "sobrecarga de informação", não
+"features de grafo") sem mudar o achado central. Detalhe completo em
+`docs/research_plan.md`.
+
 **Próximo passo real**: revisão de tom/ênfase pelo pesquisador, depois
 etapa 7.7 (sensibilidade `y_direto`/`y_qualquer`, formalizar a discussão),
 depois decidir submissão (BRACIS primeiro ou já direto GIQ).

@@ -20,10 +20,17 @@ Government Information Quarterly)*
 > ablation (Section 4.6, 2026-08-15) isolating the marginal contribution of
 > round 3's two feature groups — which revised Section 5.2's original
 > "explicit graph features close the gap" reading into a more nuanced,
-> and better-supported, account (see Section 4.6/5.2). Word budget target
-> for GIQ: ~8,000–10,000 words. All numbers were computed directly from
-> `docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`
-> and `docs/resultados/ablation_features_tabular_2026-08-15.log`, cross-checked
+> and better-supported, account (see Section 4.6/5.2). A second, separate
+> ablation (Section 4.7, 2026-08-15) isolated the contribution of each
+> auxiliary node type inside the HGT, similarly revising the "information
+> overload" account in Section 5.2: the pattern is not uniform across node
+> types, and the shared-partner node — this paper's central metapath —
+> turned out to matter least inside the HGT specifically. Word budget
+> target for GIQ: ~8,000–10,000 words. All numbers were computed directly
+> from
+> `docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`,
+> `docs/resultados/ablation_features_tabular_2026-08-15.log`, and
+> `docs/resultados/ablation_tipo_no_hgt_2026-08-15.log`, cross-checked
 > against `docs/research_plan.md`, not reconstructed from memory; all
 > citations verified directly against primary sources (see References note).
 
@@ -604,6 +611,43 @@ re-compensated by any hyperparameter re-tuning when the feature set grew
 versions in Section 4.3, by design, to isolate the effect of features
 alone — see Section 5.5).
 
+### 4.7 Ablation: isolating the contribution of each auxiliary node type in the HGT
+
+Section 5.2 (in its first-pass form) offered "information overload" — the
+numerical dominance of attribute-poor auxiliary node types (partner,
+address, political connection) over company nodes — as a plausible,
+literature-grounded explanation for why the HGT underperforms, without
+testing which auxiliary node type specifically drives the effect. We
+closed this gap with a second ablation: removing each auxiliary node type
+from the HGT one at a time (holding the tuned configuration —
+`hidden=32, heads=1, epochs=150` — fixed), evaluated at 5 folds on the
+primary label only, the same reduced-scale diagnostic protocol used for
+the hyperparameter search (Section 4.4), against the already-established
+all-three-node-types result from that search (PR-AUC 0.0244, 56.7× lift).
+
+| Configuration | PR-AUC | Lift | Δ vs. all three |
+|---|---|---|---|
+| All three auxiliary node types (baseline) | 0.0244 | 56.7× | — |
+| Without partner nodes | 0.0231 | 53.7× | −0.0013 |
+| Without address nodes | 0.0080 | 18.7× | **−0.0164** |
+| Without political-connection nodes | 0.0102 | 23.7× | **−0.0142** |
+
+This is not the uniform picture "information overload" predicts. Removing
+the partner node type — central to this paper's main shared-partner
+hypothesis, and to the label-circularity mechanism discussed in Section
+5.3 — barely changes performance. Removing either the address or the
+political-connection node type, by contrast, causes a large drop, despite
+address and political-connection edges differing by more than two orders
+of magnitude in count (344,130 versus 866) — ruling out edge count alone
+as the explanation and pointing instead to genuine informational content
+in those two relations specifically. (We report point estimates and
+differences rather than a paired significance test here: the all-three-node-types
+result was reused from the hyperparameter search, whose raw per-fold
+scores were not retained once that search concluded, precluding a
+Wilcoxon test against the freshly run removal variants; Section 5.2
+discusses what this diagnostic-scale result does and does not license us
+to conclude.)
+
 ## 5. Discussion
 
 This section separates two kinds of contribution this paper makes, in line
@@ -663,27 +707,53 @@ imbalance that is, to our knowledge, not the emphasis of the
 graph-features-vs-GNN literature we drew on, which does not typically test
 feature growth under label scarcity this severe.
 
-Second, the
-"information overload" diagnosis from corporate fraud-detection literature
-(Section 2.5) offers a plausible mechanistic explanation, consistent with
-though not directly demonstrated by our experiments, for why the *more*
-heterogeneous model specifically underperforms: the HGT's auxiliary node
-types (partner, address, political connection) carry no genuine attribute
-data of their own, only a learned embedding — and these attribute-poor node
-types outnumber the attribute-rich company nodes by more than an order of
-magnitude (142,844 partner nodes and 181,268 address nodes against 344,130
-company nodes, several of which connect to the same small number of
-auxiliary nodes). We did not run an ablation removing individual auxiliary
-node types one at a time to isolate which specifically drives the effect
-(a natural extension of this analysis, noted in Section 5.5); what we can
-say from the results in hand is that training this much additional,
-weakly-informed structure end-to-end from only 148 positive labels is
-associated with worse performance than a simpler model that either ignores
-this structure (tabular with explicit degree features) or aggregates it
-coarsely into a single relation type (homogeneous GNN) — a pattern the
-information-overload literature would predict, though we treat it here as
-a consistent, literature-grounded interpretation rather than an
-independently demonstrated causal mechanism.
+Second, we tested the "information overload" diagnosis from corporate
+fraud-detection literature (Section 2.5) — that attribute-poor auxiliary
+node types (partner, address, political connection), which outnumber
+attribute-rich company nodes by more than an order of magnitude (142,844
+partner nodes and 181,268 address nodes against 344,130 company nodes),
+dilute rather than enrich signal — directly, with the node-type ablation
+in Section 4.7. The result complicates this diagnosis rather than
+confirming it uniformly. If attribute-poor structure simply diluted signal
+by weight of numbers, removing any one auxiliary node type should help, or
+at least not hurt, roughly in proportion to how much structure was
+removed. That is not what we observe: removing the partner node type — by
+far the largest of the three, and the one central to this paper's main
+shared-partner metapath hypothesis — barely changes the HGT's performance,
+while removing either the address or the political-connection node type
+causes a large drop, despite their edge counts differing by two orders of
+magnitude (344,130 versus 866). A blanket "too much attribute-poor
+structure" account cannot explain why removing the largest attribute-poor
+node type is nearly neutral while removing a far sparser one is one of the
+two most damaging removals.
+
+A revised, more precise reading is that the HGT's auxiliary node types are
+not uniformly signal or uniformly noise: address and political-connection
+nodes appear to carry structural information the model uses productively,
+while the partner node type — despite anchoring this paper's central
+research question — contributes comparatively little inside the HGT
+specifically. This leaves the central empirical finding untouched: the
+HGT, even drawing on whatever real signal address and political-connection
+nodes provide, is still outperformed by the tabular and homogeneous-GNN
+baselines on the primary label (Sections 4.1, 4.3). What changes is the
+explanation for *why*: not simply "too much weakly-informed auxiliary
+structure," but something closer to a capacity-under-label-scarcity
+account — a heterogeneous, per-relation-typed architecture does not
+convert the real signal in these relations into predictive performance as
+efficiently as a coarser aggregation (homogeneous GNN) or an explicit
+feature (tabular) does, when only 148 labels are available to learn how to
+weigh that structure. We flag this diagnostic-scale finding (5 folds, point
+estimates without a paired significance test — Section 4.7) as a genuine
+revision to our own earlier account, not a confirmation of it — and, as a
+side effect, an early, diagnostic-scale answer to an interpretability
+question this paper's three-metapath design invites but does not, on its
+own, resolve: which metapath carries more signal. Inside the HGT
+specifically, shared address and shared political connection, more than
+shared partner, appear to be what the model actually draws on — a finding
+at odds with the shared-partner metapath's central billing in this paper's
+framing (Section 1), and one that would need confirmation at full
+statistical power (30 folds, a proper paired test) before being treated as
+more than suggestive.
 
 ### 5.3 The secondary label's reversal is evidence of circularity exploitation, not of genuine advantage
 
@@ -821,13 +891,20 @@ of both is what drives a statistically significant decline (Section 5.2).
 The ablation was restricted to the tabular model, since it is inexpensive
 to re-run relative to the GNN and HGT (Section 4.4); an equivalent ablation
 for the graph-based models remains future work, and would clarify whether
-the same feature-combination effect operates there. Similarly, the
-"information overload" explanation in
-Section 5.2 for why the HGT specifically underperforms was not tested via
-an ablation removing individual auxiliary node types (partner, address,
-political connection) one at a time — we offer it as a literature-grounded
-interpretation of the result, not an independently demonstrated mechanism,
-and isolating each node type's contribution is left for future work.
+the same feature-combination effect operates there. The node-type ablation
+in Section 4.7 was run at the same reduced scale as the hyperparameter
+search (5 folds, primary label only), and its baseline (all three auxiliary
+node types) was reused from that earlier search rather than re-run inside
+this ablation — meaning we can report point estimates and differences
+(Sections 4.7, 5.2) but not a paired significance test against that
+baseline, since the search's raw per-fold scores were not retained once it
+concluded. The pattern is large enough (removing address or political
+connection roughly halves lift; removing partner barely moves it) that we
+consider it a genuine, if diagnostic-scale, revision to our own account of
+*why* the HGT underperforms — but confirming it at full statistical power
+(30 folds, a proper paired test, ideally with per-fold data retained
+throughout for exactly this kind of follow-up analysis) remains future
+work.
 
 ## 6. Conclusion
 

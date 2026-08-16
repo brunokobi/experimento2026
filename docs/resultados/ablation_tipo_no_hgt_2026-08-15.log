@@ -1,0 +1,117 @@
+2026-08-15 18:07:42.643 | INFO     | __main__:_rodar_candidato:71 - Rodando candidato 'sem_socio' em subprocesso isolado...
+2026-08-15 18:07:48.692 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 18:07:50.660 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM socios
+2026-08-15 18:07:51.006 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM dividas_ativas
+2026-08-15 18:07:51.984 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM vinculos_politicos
+2026-08-15 18:07:51.993 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM sancoes_administrativas
+2026-08-15 18:07:52.009 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 18:07:54.050 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'empresa': 344130 nos registrados.
+2026-08-15 18:07:54.607 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'socio': 142844 nos registrados.
+2026-08-15 18:07:54.895 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'socio-participa_de-empresa': 231890 arestas.
+2026-08-15 18:07:56.187 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'endereco': 181268 nos registrados.
+2026-08-15 18:07:56.620 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-sediada_em-endereco': 344130 arestas.
+2026-08-15 18:07:56.641 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'municipio': 7 nos registrados.
+2026-08-15 18:07:57.023 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-localizada_em-municipio': 344130 arestas.
+2026-08-15 18:07:57.039 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'vinculo_politico': 519 nos registrados.
+2026-08-15 18:07:57.041 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-tem_vinculo_politico-vinculo_politico': 866 arestas.
+2026-08-15 18:07:57.041 | INFO     | src.graph.build_hin:build_empresas_hin:192 - HIN real construida: {'node_types': {'empresa': 344130, 'socio': 142844, 'endereco': 181268, 'municipio': 7, 'vinculo_politico': 519}, 'edge_types': {'socio__participa_de__empresa': 231890, 'empresa__rev_participa_de__socio': 231890, 'empresa__sediada_em__endereco': 344130, 'endereco__rev_sediada_em__empresa': 344130, 'empresa__localizada_em__municipio': 344130, 'municipio__rev_localizada_em__empresa': 344130, 'empresa__tem_vinculo_politico__vinculo_politico': 866, 'vinculo_politico__rev_tem_vinculo_politico__empresa': 866}}
+2026-08-15 18:07:57.048 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 18:07:58.861 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM socios
+2026-08-15 18:07:59.183 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM dividas_ativas
+2026-08-15 18:07:59.533 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM vinculos_politicos
+2026-08-15 18:07:59.536 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM infracoes_ambientais
+2026-08-15 18:07:59.540 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM contratos_governamentais
+2026-08-15 18:07:59.546 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-15 18:07:59.589 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-15 18:07:59.627 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-15 18:07:59.669 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM registros_jucees
+2026-08-15 18:07:59.866 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM sancoes_administrativas
+2026-08-15 18:07:59.868 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 18:08:03.203 | INFO     | src.features.tabular:build_feature_matrix:315 - Matriz de features: 344130 empresas x 122 features (+ 2 colunas de rotulo).
+2026-08-15 18:08:03.428 | INFO     | src.models.han_hgt:make_han_hgt_fit_predict:110 - HAN/HGT: 3 tipos de no, 4 tipos de relacao (endereco, vinculo_politico via embedding aprendido).
+2026-08-15 18:08:03.429 | INFO     | __main__:main:50 - Candidato excluir=('localizada_em', 'rev_localizada_em', 'participa_de', 'rev_participa_de') epochs=150 -- rodando 5x1 folds em y_direto...
+2026-08-15 18:48:03.908 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 5 folds validos, PR-AUC medio=0.0231 (+-0.0154)
+2026-08-15 18:48:03.941 | INFO     | __main__:main:55 - Candidato concluido: PR-AUC medio=0.0231. Salvo em /home/bruno/checkpoints_ablation_tipo_no_hgt/sem_socio.csv
+2026-08-15 18:48:07.340 | INFO     | __main__:_rodar_candidato:84 - Candidato 'sem_socio' concluido em 2424.7s.
+2026-08-15 18:48:07.389 | INFO     | __main__:_rodar_candidato:71 - Rodando candidato 'sem_endereco' em subprocesso isolado...
+2026-08-15 18:48:10.877 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 18:48:13.067 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM socios
+2026-08-15 18:48:13.467 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM dividas_ativas
+2026-08-15 18:48:13.917 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM vinculos_politicos
+2026-08-15 18:48:13.920 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM sancoes_administrativas
+2026-08-15 18:48:13.922 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 18:48:15.700 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'empresa': 344130 nos registrados.
+2026-08-15 18:48:16.248 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'socio': 142844 nos registrados.
+2026-08-15 18:48:16.525 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'socio-participa_de-empresa': 231890 arestas.
+2026-08-15 18:48:17.819 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'endereco': 181268 nos registrados.
+2026-08-15 18:48:18.302 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-sediada_em-endereco': 344130 arestas.
+2026-08-15 18:48:18.324 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'municipio': 7 nos registrados.
+2026-08-15 18:48:18.688 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-localizada_em-municipio': 344130 arestas.
+2026-08-15 18:48:18.703 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'vinculo_politico': 519 nos registrados.
+2026-08-15 18:48:18.705 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-tem_vinculo_politico-vinculo_politico': 866 arestas.
+2026-08-15 18:48:18.705 | INFO     | src.graph.build_hin:build_empresas_hin:192 - HIN real construida: {'node_types': {'empresa': 344130, 'socio': 142844, 'endereco': 181268, 'municipio': 7, 'vinculo_politico': 519}, 'edge_types': {'socio__participa_de__empresa': 231890, 'empresa__rev_participa_de__socio': 231890, 'empresa__sediada_em__endereco': 344130, 'endereco__rev_sediada_em__empresa': 344130, 'empresa__localizada_em__municipio': 344130, 'municipio__rev_localizada_em__empresa': 344130, 'empresa__tem_vinculo_politico__vinculo_politico': 866, 'vinculo_politico__rev_tem_vinculo_politico__empresa': 866}}
+2026-08-15 18:48:18.710 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 18:48:20.531 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM socios
+2026-08-15 18:48:20.878 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM dividas_ativas
+2026-08-15 18:48:21.238 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM vinculos_politicos
+2026-08-15 18:48:21.241 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM infracoes_ambientais
+2026-08-15 18:48:21.248 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM contratos_governamentais
+2026-08-15 18:48:21.256 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-15 18:48:21.311 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-15 18:48:21.349 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-15 18:48:21.389 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM registros_jucees
+2026-08-15 18:48:21.639 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM sancoes_administrativas
+2026-08-15 18:48:21.641 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 18:48:24.877 | INFO     | src.features.tabular:build_feature_matrix:315 - Matriz de features: 344130 empresas x 122 features (+ 2 colunas de rotulo).
+2026-08-15 18:48:25.097 | INFO     | src.models.han_hgt:make_han_hgt_fit_predict:110 - HAN/HGT: 3 tipos de no, 4 tipos de relacao (socio, vinculo_politico via embedding aprendido).
+2026-08-15 18:48:25.098 | INFO     | __main__:main:50 - Candidato excluir=('localizada_em', 'rev_localizada_em', 'sediada_em', 'rev_sediada_em') epochs=150 -- rodando 5x1 folds em y_direto...
+2026-08-15 19:28:16.914 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 5 folds validos, PR-AUC medio=0.0080 (+-0.0094)
+2026-08-15 19:28:16.922 | INFO     | __main__:main:55 - Candidato concluido: PR-AUC medio=0.0080. Salvo em /home/bruno/checkpoints_ablation_tipo_no_hgt/sem_endereco.csv
+2026-08-15 19:28:18.213 | INFO     | __main__:_rodar_candidato:84 - Candidato 'sem_endereco' concluido em 2410.8s.
+2026-08-15 19:28:18.238 | INFO     | __main__:_rodar_candidato:71 - Rodando candidato 'sem_vinculo_politico' em subprocesso isolado...
+2026-08-15 19:28:21.572 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 19:28:23.532 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM socios
+2026-08-15 19:28:23.923 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM dividas_ativas
+2026-08-15 19:28:24.299 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM vinculos_politicos
+2026-08-15 19:28:24.301 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM sancoes_administrativas
+2026-08-15 19:28:24.305 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 19:28:26.066 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'empresa': 344130 nos registrados.
+2026-08-15 19:28:26.605 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'socio': 142844 nos registrados.
+2026-08-15 19:28:26.885 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'socio-participa_de-empresa': 231890 arestas.
+2026-08-15 19:28:28.126 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'endereco': 181268 nos registrados.
+2026-08-15 19:28:28.536 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-sediada_em-endereco': 344130 arestas.
+2026-08-15 19:28:28.555 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'municipio': 7 nos registrados.
+2026-08-15 19:28:28.910 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-localizada_em-municipio': 344130 arestas.
+2026-08-15 19:28:28.923 | INFO     | src.graph.hin_builder:add_node_type:60 - No 'vinculo_politico': 519 nos registrados.
+2026-08-15 19:28:28.925 | INFO     | src.graph.hin_builder:add_edge_type:101 - Arco 'empresa-tem_vinculo_politico-vinculo_politico': 866 arestas.
+2026-08-15 19:28:28.925 | INFO     | src.graph.build_hin:build_empresas_hin:192 - HIN real construida: {'node_types': {'empresa': 344130, 'socio': 142844, 'endereco': 181268, 'municipio': 7, 'vinculo_politico': 519}, 'edge_types': {'socio__participa_de__empresa': 231890, 'empresa__rev_participa_de__socio': 231890, 'empresa__sediada_em__endereco': 344130, 'endereco__rev_sediada_em__empresa': 344130, 'empresa__localizada_em__municipio': 344130, 'municipio__rev_localizada_em__empresa': 344130, 'empresa__tem_vinculo_politico__vinculo_politico': 866, 'vinculo_politico__rev_tem_vinculo_politico__empresa': 866}}
+2026-08-15 19:28:28.930 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 19:28:30.625 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM socios
+2026-08-15 19:28:30.934 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM dividas_ativas
+2026-08-15 19:28:31.265 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM vinculos_politicos
+2026-08-15 19:28:31.267 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM infracoes_ambientais
+2026-08-15 19:28:31.271 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM contratos_governamentais
+2026-08-15 19:28:31.275 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-15 19:28:31.314 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-15 19:28:31.349 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM beneficios_fiscais
+2026-08-15 19:28:31.386 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM registros_jucees
+2026-08-15 19:28:31.618 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM sancoes_administrativas
+2026-08-15 19:28:31.620 | DEBUG    | src.data.loaders:read_query:56 - Executando query SQLite: SELECT * FROM empresas
+2026-08-15 19:28:34.650 | INFO     | src.features.tabular:build_feature_matrix:315 - Matriz de features: 344130 empresas x 122 features (+ 2 colunas de rotulo).
+2026-08-15 19:28:34.841 | INFO     | src.models.han_hgt:make_han_hgt_fit_predict:110 - HAN/HGT: 3 tipos de no, 4 tipos de relacao (socio, endereco via embedding aprendido).
+2026-08-15 19:28:34.842 | INFO     | __main__:main:50 - Candidato excluir=('localizada_em', 'rev_localizada_em', 'tem_vinculo_politico', 'rev_tem_vinculo_politico') epochs=150 -- rodando 5x1 folds em y_direto...
+2026-08-15 20:19:17.065 | INFO     | src.evaluation.harness:evaluate_repeated_cv:103 - CV: 5 folds validos, PR-AUC medio=0.0102 (+-0.0083)
+2026-08-15 20:19:17.078 | INFO     | __main__:main:55 - Candidato concluido: PR-AUC medio=0.0102. Salvo em /home/bruno/checkpoints_ablation_tipo_no_hgt/sem_vinculo_politico.csv
+2026-08-15 20:19:19.118 | INFO     | __main__:_rodar_candidato:84 - Candidato 'sem_vinculo_politico' concluido em 3060.9s.
+
+========== Ablation de tipo de no auxiliar no HGT (y_direto, 5 folds) ==========
+                nome  pr_auc_medio                                    status
+ completo_3_tipos_no      0.024400 reaproveitado da busca de hiperparametros
+           sem_socio      0.023103                                        ok
+        sem_endereco      0.008029                                        ok
+sem_vinculo_politico      0.010186                                        ok
+
+Baseline (todos os 3 tipos de no): PR-AUC 0.0244
+sem_socio: PR-AUC 0.0231 (delta vs. completo: -0.0013)
+sem_endereco: PR-AUC 0.0080 (delta vs. completo: -0.0164)
+sem_vinculo_politico: PR-AUC 0.0102 (delta vs. completo: -0.0142)

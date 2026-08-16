@@ -854,6 +854,42 @@ justa mantida) — só refina o *porquê* do número absoluto do tabular.
   de tipo de nó no HGT (sócio/endereço/vínculo político isolados) ficam
   como trabalho futuro — mais caros (horas de máquina), não priorizados
   ainda.
+
+**Feito (15/08/2026 — ablation de tipo de nó auxiliar no HGT)**: item
+originalmente adiado acima acabou sendo priorizado no mesmo dia (custo
+real ~3,5h, bem menor que o temido, rodando em subprocessos isolados por
+candidato — `scripts/ablation_tipo_no_hgt.py`). 3 candidatos (remover
+sócio/endereço/vínculo político um de cada vez do HGT, config final
+tunada, 5 folds, só `y_direto`), contra o baseline já conhecido da busca
+de hiperparâmetros (todos os 3 tipos de nó, PR-AUC 0,0244). Log em
+`docs/resultados/ablation_tipo_no_hgt_2026-08-15.log`:
+
+| Configuração | PR-AUC | Lift | Δ vs. completo |
+|---|---|---|---|
+| Todos os 3 tipos de nó (baseline) | 0,0244 | 56,7× | — |
+| Sem sócio | 0,0231 | 53,7× | −0,0013 |
+| Sem endereço | 0,0080 | 18,7× | **−0,0164** |
+| Sem vínculo político | 0,0102 | 23,7× | **−0,0142** |
+
+**Achado contraintuitivo, revisa a leitura de "sobrecarga de informação"
+da Seção 5.2 dos manuscritos**: o padrão não é uniforme. Remover sócio —
+de longe o maior dos 3 tipos de nó, e o metapath central da hipótese
+principal da dissertação — quase não muda nada. Remover endereço ou
+vínculo político, ao contrário, derruba o desempenho pela metade,
+**apesar de vínculo político ter só 866 arestas contra 344.130 do
+endereço** (duas ordens de grandeza de diferença) — descarta contagem de
+aresta como explicação, aponta pra conteúdo informacional genuíno nessas
+duas relações. Leitura revisada: os tipos de nó auxiliares do HGT não são
+uniformemente sinal nem uniformemente ruído — endereço e vínculo político
+parecem carregar sinal real que o modelo usa, sócio comum contribui pouco
+dentro do HGT especificamente (mesmo sendo o metapath mais central da
+tese). **Não muda o achado central** (HGT continua perdendo pro tabular/
+GNN homogênea em `y_direto`) — só refina o *porquê*, e de quebra dá uma
+resposta inicial (ainda de escala diagnóstica, 5 folds, sem teste de
+significância pareado — o baseline foi reaproveitado da busca de
+hiperparâmetros, cujos dados brutos por fold já tinham sido descartados)
+pra pergunta original de "quais metapaths carregam mais sinal": dentro do
+HGT, endereço e vínculo político parecem pesar mais que sócio comum.
 - `processos_judiciais` ainda não entra na HIN (pipeline `djen`, no repo do dataset,
   ainda em andamento; o campo é ruidoso por design — ver seção 9).
 - Identidade de sócio (CPF mascarado + nome) e de endereço (logradouro+número+CEP
