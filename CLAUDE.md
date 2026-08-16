@@ -426,6 +426,29 @@ novo a leitura da Seção 5.2 (agora sobre "sobrecarga de informação", não
 etapa 7.7 (sensibilidade `y_direto`/`y_qualquer`, formalizar a discussão),
 depois decidir submissão (BRACIS primeiro ou já direto GIQ).
 
+**Feito (15/08/2026, etapa 7.7)**: a mesma sessão de escrita que fez os
+dois ablations acima também formalizou a etapa 7.7 — Seção 4.5/5.3 dos
+dois manuscritos, com tabela de razão lift `y_qualquer`/`y_direto` por
+rodada (1 a 4): HGT sempre com a maior razão e sempre >1 (extrai mais
+vantagem relativa do rótulo circular), tabular sempre <1. Essa etapa
+ficou registrada como "pendente" na tabela do README por um esquecimento
+de atualização de status, não por trabalho faltando — corrigido em
+16/08/2026.
+
+**Decidido com o pesquisador (16/08/2026)**: revisão de tom feita (leu o
+manuscrito e aprovou), submissão via arXiv direto ("Sim, GIQ direto"),
+autor "Bruno Kobi, sem afiliação institucional". Preprint publicado no
+Zenodo (`10.5281/zenodo.21961063`, ver README seção "Publicação /
+Preprint") após a submissão ao arXiv esbarrar na política de endosso
+(sem rede de contatos disponível). ORCID (`0009-0009-1957-8690`) criado
+pra unificar nome legal completo e "Bruno Kobi" como nome de publicação;
+Currículo Lattes atualizado com a mesma produção.
+
+**Próximo passo real (atualizado)**: submissão formal ao periódico-alvo
+(*Government Information Quarterly*), referenciando o preprint do
+Zenodo. Retomar a submissão do arXiv fica em aberto, condicionada a
+encontrar um endossante (ver README).
+
 ## Armadilhas já identificadas (não repetir)
 
 - **Não commitar o `.db`/`.db.gz` do dataset** — chega por download da GitHub
