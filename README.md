@@ -348,6 +348,13 @@ automaticamente pelo Zenodo.
 - **DOI "todas as versões"** (fixo, sempre aponta para a versão mais recente
   caso o preprint seja atualizado): [10.5281/zenodo.21961062](https://doi.org/10.5281/zenodo.21961062)
 - Indexado também via [OpenAIRE](https://explore.openaire.eu/search/result?pid=10.5281/zenodo.21961063).
+- **Autor (ORCID)**: [0009-0009-1957-8690](https://orcid.org/0009-0009-1957-8690)
+  — linkado ao autor no registro do Zenodo. Criado para unificar duas formas
+  do nome usadas em diferentes cadastros (nome legal completo, usado no
+  arXiv, vs. "Bruno Kobi", usado nas publicações): o ORCID registra o nome
+  legal completo como identidade e "Bruno Kobi" como *published name*/*also
+  known as*, então ambas as formas resolvem para a mesma identidade
+  desambiguada.
 
 **Por que Zenodo e não arXiv**: uma tentativa de submissão ao arXiv
 (`cs.LG`/`cs.CY`) esbarrou na política de endosso do arXiv — endurecida em
