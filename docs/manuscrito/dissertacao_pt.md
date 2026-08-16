@@ -388,7 +388,7 @@ diretamente, que compartilham um sócio que foi pessoalmente sancionado
 exatamente a relação que o metapath de sócio comum é desenhado para
 detectar.
 
-![Exemplo real anonimizado: duas empresas (rotuladas A e B, identificadores das empresas e nome do sócio ocultados conforme o compromisso ético desta pesquisa) que compartilham um sócio pessoalmente sancionado; nenhuma das duas tem sanção direta própria.](figuras/figura1_caso_socio_comum.png)
+![Exemplo real anonimizado: duas empresas (rotuladas A e B, identificadores das empresas e nome do sócio ocultados conforme o compromisso ético desta pesquisa) que compartilham um sócio pessoalmente sancionado; nenhuma das duas tem sanção direta própria.](figuras/figura1_caso_socio_comum_pt.png)
 
 *Figura 1. Um caso real (identificadores anonimizados) ilustrando o
 mecanismo de rotulagem via sócio comum por trás das 40 empresas que separam
@@ -414,7 +414,7 @@ Extração de metapath usa produto de matrizes esparsas, não busca em
 profundidade — requisito de escalabilidade nesse tamanho de rede (344.130 nós
 de empresa).
 
-![Esquema dos três metapaths de hipótese da HIN: sócio comum, endereço comum, e vínculo político comum, cada um ligando dois nós de empresa através de um tipo de nó intermediário.](figuras/figura2_esquema_metapaths.png)
+![Esquema dos três metapaths de hipótese da HIN: sócio comum, endereço comum, e vínculo político comum, cada um ligando dois nós de empresa através de um tipo de nó intermediário.](figuras/figura2_esquema_metapaths_pt.png)
 
 *Figura 2. Esquema dos três metapaths empresa–X–empresa usados para
 construir a rede heterogênea de informação (ilustração abstrata, não

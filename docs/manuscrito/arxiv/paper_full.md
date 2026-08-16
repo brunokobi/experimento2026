@@ -1,39 +1,7 @@
-# Working title
-
-**Simple Models, Explicit Graph Signals: Rethinking Heterogeneous Graph Neural
-Networks for Administrative Sanction Risk Screening in Local Government Data**
-
-*(provisional — revisit once Results/Discussion are finalized; target venue:
-Government Information Quarterly)*
-
-> **Status of this draft (updated 2026-08-15)**: full first draft (2026-08-14)
-> was reviewed as if by an experienced GIQ referee, who recommended major
-> revision on five points: (1) near-zero engagement with the public-sector/AI
-> adoption literature that anchors GIQ's own scope, (2) an overclaimed
-> novelty framing given a contemporaneous parallel finding elsewhere, (3) a
-> known statistical caveat of Wilcoxon tests on repeated-CV folds left
-> unstated, (4) the Section 5.2 mechanism asserted rather than flagged as
-> literature-grounded-but-untested, (5) no data/code availability statement.
-> All five have been addressed in this revision (Sections 1, 2.1, Abstract,
-> 5.2, 5.5, and the new "Data and code availability" section), plus two
-> further improvements: a deployment sketch (Section 5.4) and a dedicated
-> ablation (Section 4.6, 2026-08-15) isolating the marginal contribution of
-> round 3's two feature groups — which revised Section 5.2's original
-> "explicit graph features close the gap" reading into a more nuanced,
-> and better-supported, account (see Section 4.6/5.2). A second, separate
-> ablation (Section 4.7, 2026-08-15) isolated the contribution of each
-> auxiliary node type inside the HGT, similarly revising the "information
-> overload" account in Section 5.2: the pattern is not uniform across node
-> types, and the shared-partner node — this paper's central metapath —
-> turned out to matter least inside the HGT specifically. Word budget
-> target for GIQ: ~8,000–10,000 words. All numbers were computed directly
-> from
-> `docs/resultados/comparar_baselines_30folds_v4_han_hgt_tunado_2026-08-14.log`,
-> `docs/resultados/ablation_features_tabular_2026-08-15.log`, and
-> `docs/resultados/ablation_tipo_no_hgt_2026-08-15.log`, cross-checked
-> against `docs/research_plan.md`, not reconstructed from memory; all
-> citations verified directly against primary sources (see References note).
-
+---
+title: "Simple Models, Explicit Graph Signals: Rethinking Heterogeneous Graph Neural Networks for Administrative Sanction Risk Screening in Local Government Data"
+author: "Bruno Kobi"
+date: "August 2026"
 ---
 
 ## Abstract
@@ -350,7 +318,7 @@ individual). Both companies enter `y_qualquer` as positives solely through
 this shared-partner link — the exact relation the shared-partner metapath is
 built to detect.
 
-![Real, anonymized example: two companies (labeled A and B, company identifiers and the partner's name withheld per the ethical-use commitment in this study) sharing a partner who was personally sanctioned; neither company has a direct sanction of its own.](figuras/figura1_caso_socio_comum_en.png)
+![Real, anonymized example: two companies (labeled A and B, company identifiers and the partner's name withheld per the ethical-use commitment in this study) sharing a partner who was personally sanctioned; neither company has a direct sanction of its own.](figuras/figura1_caso_socio_comum.png)
 
 *Figure 1. A real case (identifiers anonymized) illustrating the
 partner-inferred labeling mechanism behind the 40 companies that separate
@@ -375,7 +343,7 @@ shares a municipality with tens of thousands of others). Metapath extraction
 uses sparse matrix products rather than depth-first search, a scalability
 requirement at this network size (344,130 company nodes).
 
-![Schematic of the HIN's three hypothesis metapaths: shared partner, shared address, and shared political connection, each linking two company nodes through one intermediate node type.](figuras/figura2_esquema_metapaths_en.png)
+![Schematic of the HIN's three hypothesis metapaths: shared partner, shared address, and shared political connection, each linking two company nodes through one intermediate node type.](figuras/figura2_esquema_metapaths.png)
 
 *Figure 2. Schematic of the three company–X–company metapaths used to build
 the heterogeneous information network (abstract illustration, not drawn from

@@ -101,6 +101,13 @@ runs/
 outputs/
 
 # ============================================================
+# LaTeX (build do preprint arXiv em docs/manuscrito/arxiv/)
+# ============================================================
+docs/manuscrito/arxiv/*.aux
+docs/manuscrito/arxiv/*.log
+docs/manuscrito/arxiv/*.out
+
+# ============================================================
 # IDE / SO
 # ============================================================
 .vscode/
