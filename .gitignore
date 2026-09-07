@@ -116,3 +116,7 @@ docs/manuscrito/arxiv/*.out
 .DS_Store
 Thumbs.db
 .playwright-mcp/
+
+# Backups do Neo4j (binário grande, não versionar) — ver docs/backups/README.md
+docs/backups/*.tar.gz
+models/
