@@ -32,10 +32,14 @@ def test_num_socios_e_dividas_ativas_com_reindex_correto(grande_vitoria_loader: 
     assert features.loc["11111111000101", "valor_dividas_ativas_log1p"] == 0.0
 
 
-def test_tem_vinculo_politico_so_para_emp4(grande_vitoria_loader: GrandeVitoriaLoader) -> None:
+def test_tem_vinculo_politico_para_emp4_e_emp5(grande_vitoria_loader: GrandeVitoriaLoader) -> None:
+    """emp_4 (vinculo "antigo", por nome de socio) e emp_5 (vinculo TSE
+    direto por CNPJ, sem socio -- adicionado 02/10/2026 pra testar
+    _chave_politico) devem ambos contar como tendo vinculo politico."""
     features = build_feature_matrix(grande_vitoria_loader)
     assert features.loc["44444444000104", "tem_vinculo_politico"]
-    for cnpj in ["11111111000101", "22222222000102", "33333333000103", "55555555000105"]:
+    assert features.loc["55555555000105", "tem_vinculo_politico"]
+    for cnpj in ["11111111000101", "22222222000102", "33333333000103"]:
         assert not features.loc[cnpj, "tem_vinculo_politico"]
 
 

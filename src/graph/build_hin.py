@@ -5,12 +5,13 @@ Le as tabelas via ``GrandeVitoriaLoader`` e monta a HIN com ``HINBuilder``,
 seguindo o schema de nos/arcos alinhado a pergunta de pesquisa (secao 2 do
 plano: metapaths de socio comum, endereco comum e vinculo politico)::
 
-    Nos:  empresa, socio, endereco, municipio, vinculo_politico
+    Nos:  empresa, socio, endereco, municipio, vinculo_politico, processo_judicial
     Arcos:
-        socio   -participa_de->          empresa           (bidirecional)
-        empresa -sediada_em->            endereco          (bidirecional)
-        empresa -localizada_em->         municipio         (bidirecional)
-        empresa -tem_vinculo_politico->  vinculo_politico  (bidirecional)
+        socio   -participa_de->          empresa            (bidirecional)
+        empresa -sediada_em->            endereco           (bidirecional)
+        empresa -localizada_em->         municipio          (bidirecional)
+        empresa -tem_vinculo_politico->  vinculo_politico   (bidirecional)
+        empresa -teve_processo->         processo_judicial  (bidirecional, so match direto)
 
 O rotulo (``sancoes_administrativas``) NUNCA entra como feature de no -- so
 como ``data["empresa"].y_direto`` / ``.y_qualquer`` (ver
@@ -21,9 +22,12 @@ circularidade, secao 5/9 do plano de pesquisa).
 ``dividas_ativas`` entra agregada por empresa (valor total, numero de
 inscricoes) -- sinal auxiliar, nao rotulo.
 
-``processos_judiciais`` **nao** entra ainda: o pipeline `djen` que a
-popula (no repo do dataset) ainda esta em andamento, e o campo e ruidoso por
-design (casado por nome, nao CNPJ) -- ver riscos no plano de pesquisa.
+``processos_judiciais`` entra (02/10/2026) -- so os de ``match_confianca=
+'nome'`` (achados pela razao social da PROPRIA empresa; ainda ruidoso por
+design -- nome, nao CNPJ -- mas e da empresa). Os de ``match_confianca=
+'socio'`` (achados so pelo nome do SOCIO, acao pessoal dele -- risco de
+homonimo sem CPF de apoio) ficam de fora do grafo por decisao explicita:
+nao tem grau de certeza suficiente pra virar uma arte da empresa.
 
 Limitacoes conhecidas desta primeira versao (documentadas, nao escondidas):
 
@@ -82,6 +86,24 @@ def _chave_endereco(logradouro: str | None, numero: str | None, cep: str | None)
     """Chave de identidade de um endereco: logradouro + numero + CEP normalizados."""
     partes = [_normalizar_texto(logradouro), _normalizar_texto(numero), _normalizar_texto(cep)]
     return "|".join(partes)
+
+
+def _chave_politico(sq_candidato: str | None, nome_socio_vinculado: str | None) -> str:
+    """Identidade do no "vinculo_politico": prefere ``sq_candidato`` (TSE,
+    estavel por candidato/eleicao -- adicionado 26/09/2026, consolida a
+    MESMA pessoa entre todas as empresas que apoiaram ela) quando
+    disponivel; cai pro nome do socio normalizado nas entradas sem TSE
+    (fonte=PEP) ou do TSE antigo sem ``sq_candidato`` ainda carregado.
+
+    Sem essa preferencia, TSE_DOADOR_ORIGINARIO/TSE_FORNECEDOR_CAMPANHA
+    (vinculo DIRETO da empresa por CNPJ, sem socio -- ``nome_socio_vinculado``
+    vem nulo) colapsariam todos num unico no (nome normalizado de ``None``
+    vira string vazia) -- bug real encontrado ao integrar esses vinculos
+    novos no grafo (02/10/2026).
+    """
+    if pd.notna(sq_candidato) and str(sq_candidato).strip():
+        return f"TSE:{sq_candidato}"
+    return _normalizar_texto(nome_socio_vinculado)
 
 
 def build_empresas_hin(loader: GrandeVitoriaLoader | None = None) -> HINBuilder:
@@ -178,7 +200,13 @@ def build_empresas_hin(loader: GrandeVitoriaLoader | None = None) -> HINBuilder:
     # --- no "vinculo_politico" (metapath: vinculo politico) -------------- #
     if not vinculos.empty:
         vinculos = vinculos.copy()
-        vinculos["chave_politico"] = vinculos["nome_socio_vinculado"].map(_normalizar_texto)
+        sq_col = vinculos["sq_candidato"] if "sq_candidato" in vinculos.columns else pd.Series(
+            [None] * len(vinculos), index=vinculos.index
+        )
+        vinculos["chave_politico"] = [
+            _chave_politico(sq, nome)
+            for sq, nome in zip(sq_col, vinculos["nome_socio_vinculado"], strict=True)
+        ]
         chaves_politico = vinculos["chave_politico"].drop_duplicates().tolist()
         builder.add_node_type("vinculo_politico", chaves_politico)
         builder.add_edge_type(
@@ -186,6 +214,27 @@ def build_empresas_hin(loader: GrandeVitoriaLoader | None = None) -> HINBuilder:
             "tem_vinculo_politico",
             "vinculo_politico",
             edges=list(zip(vinculos["cnpj_empresa"], vinculos["chave_politico"], strict=True)),
+            bidirectional=True,
+        )
+
+    # --- no "processo_judicial" (DJEN, SO match direto -- ver abaixo) ---- #
+    # match_confianca='nome' = achado pela razao social da PROPRIA empresa
+    # (ainda ruidoso -- nome, nao CNPJ -- mas e da empresa). 'socio' = achado
+    # so pelo nome do SOCIO (acao pessoal dele, pode ser homonimo) -- fica de
+    # fora do grafo por pedido explicito (02/10/2026): nao tem grau de
+    # certeza suficiente pra virar uma arte do grafo da empresa.
+    processos = loader.processos_judiciais(match_confianca="nome")
+    if not processos.empty:
+        processos = processos.copy()
+        processos["chave_processo"] = processos["numero_processo"].fillna("").astype(str)
+        processos = processos[processos["chave_processo"] != ""]
+        chaves_processo = processos["chave_processo"].drop_duplicates().tolist()
+        builder.add_node_type("processo_judicial", chaves_processo)
+        builder.add_edge_type(
+            "empresa",
+            "teve_processo",
+            "processo_judicial",
+            edges=list(zip(processos["cnpj_empresa"], processos["chave_processo"], strict=True)),
             bidirectional=True,
         )
 

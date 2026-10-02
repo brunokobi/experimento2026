@@ -74,7 +74,11 @@ CREATE TABLE dividas_ativas (
     id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, valor REAL
 );
 CREATE TABLE vinculos_politicos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, nome_socio_vinculado TEXT
+    id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, nome_socio_vinculado TEXT,
+    sq_candidato TEXT
+);
+CREATE TABLE processos_judiciais (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, numero_processo TEXT, match_confianca TEXT
 );
 CREATE TABLE infracoes_ambientais (
     id INTEGER PRIMARY KEY AUTOINCREMENT, cnpj_empresa TEXT, valor_multa REAL
@@ -114,7 +118,23 @@ _SANCOES = [
     ("22222222000102", "CEIS", "socio"),
 ]
 _DIVIDAS = [("33333333000103", 500.0), ("33333333000103", 250.0)]
-_VINCULOS = [("44444444000104", "BELTRANO SOUZA")]
+# emp_4: vinculo "antigo" (PEP/candidatura pre-26/09/2026), so com nome do
+# socio, sem sq_candidato -- deve cair na identidade por nome normalizado.
+# emp_5: vinculo DIRETO da empresa por CNPJ (TSE_DOADOR_ORIGINARIO/
+# TSE_FORNECEDOR_CAMPANHA -- sem socio, nome_socio_vinculado=None) --
+# reproduz o bug real: sem a correcao em _chave_politico, colapsaria num no
+# so com os outros vinculos sem socio (nome normalizado de None = "").
+_VINCULOS = [
+    ("44444444000104", "BELTRANO SOUZA", None),
+    ("55555555000105", None, "80001234567"),
+]
+# emp_1: processo achado pela RAZAO SOCIAL da propria empresa (match direto,
+# deve entrar no grafo). emp_2: processo achado so pelo nome do SOCIO (nao
+# deve entrar -- pedido explicito de 02/10/2026, sem grau de certeza).
+_PROCESSOS = [
+    ("11111111000101", "0001234-56.2024.8.08.0001", "nome"),
+    ("22222222000102", "0007777-77.2024.8.08.0002", "socio"),
+]
 # emp_5 (antes "limpa") ganha infracao ambiental + contrato governamental +
 # renuncia fiscal, pra testar os 3 novos agregados numa empresa sem nenhum
 # outro sinal; emp_1 ganha beneficio HABILITADO, emp_2 ganha IMUNE_ISENTO.
@@ -156,7 +176,12 @@ def grande_vitoria_loader(tmp_path: Path) -> GrandeVitoriaLoader:
         )
         conn.executemany("INSERT INTO dividas_ativas (cnpj_empresa, valor) VALUES (?, ?)", _DIVIDAS)
         conn.executemany(
-            "INSERT INTO vinculos_politicos (cnpj_empresa, nome_socio_vinculado) VALUES (?, ?)", _VINCULOS
+            "INSERT INTO vinculos_politicos (cnpj_empresa, nome_socio_vinculado, sq_candidato) VALUES (?, ?, ?)",
+            _VINCULOS,
+        )
+        conn.executemany(
+            "INSERT INTO processos_judiciais (cnpj_empresa, numero_processo, match_confianca) VALUES (?, ?, ?)",
+            _PROCESSOS,
         )
         conn.executemany(
             "INSERT INTO infracoes_ambientais (cnpj_empresa, valor_multa) VALUES (?, ?)", _INFRACOES

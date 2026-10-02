@@ -42,13 +42,35 @@ para alimentar o modelo.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
+import pandas as pd
 from loguru import logger
 from neo4j import Driver, GraphDatabase
 
 from src.config import Settings, get_settings
+from src.graph.build_hin import _chave_politico
 from src.graph.hin_builder import HINBuilder
+
+# Mesma cauda usada em todas as fontes TSE com valor em R$ (ver
+# projeto_grande_vitoria_empresas/src/dataset_queries.py:valor_doacao, mesma
+# regex replicada aqui porque sao bases de codigo/linguagem diferentes --
+# so o padrao de texto e compartilhado). Exige 2 casas decimais pra nao
+# "vazar" pro proximo numero em frases como "R$ X, N despesa(s))".
+_RE_VALOR_DETALHE = re.compile(r"R\$ ([\d.]+,\d{2})")
+
+
+def _extrair_valor(detalhe: Any) -> float | None:
+    if not isinstance(detalhe, str):
+        return None
+    m = _RE_VALOR_DETALHE.search(detalhe)
+    if not m:
+        return None
+    try:
+        return float(m.group(1).replace(".", "").replace(",", "."))
+    except ValueError:
+        return None
 
 
 def _to_label(node_type: str) -> str:
@@ -146,3 +168,110 @@ def export_hin_to_neo4j(builder: HINBuilder, settings: Settings | None = None, b
     finally:
         driver.close()
     logger.info("Export para Neo4j concluido.")
+
+
+def export_detalhes_vinculos_politicos(
+    driver: Driver, database: str, vinculos: pd.DataFrame, candidatos_perfil: pd.DataFrame | None = None,
+    batch_size: int = 2000,
+) -> None:
+    """Enriquece com propriedades os relacionamentos ``TEM_VINCULO_POLITICO``
+    (ja criados "crus" por ``export_hin_to_neo4j``) -- fonte, ano, cargo,
+    partido, situacao, detalhe, valor em R$ (parseado de ``detalhe``) e o
+    nome do socio quando for esse o caso.
+
+    Bypassa ``HeteroData``/``add_edge_type`` de proposito: ``edge_attr`` so
+    suporta um tensor numerico HOMOGENEO por tipo de arco (um valor por
+    aresta, mesmo shape pra todas) -- nao da pra anexar varias propriedades
+    heterogeneas (string + float + int) por aresta individual nesse
+    mecanismo. Roda direto em cima do DataFrame bruto do loader, via Cypher
+    em lote (``MERGE`` + ``SET``), DEPOIS do export principal.
+
+    Quando ``candidatos_perfil`` e informado (nao vazio), tambem enriquece o
+    NO ``VinculoPolitico`` com nome do candidato/cargo/partido mais recente
+    (quando o vinculo tem ``sq_candidato`` -- a maioria dos vinculos TSE
+    desde 26/09/2026) -- mesma logica de "candidatura mais recente" usada em
+    projeto_grande_vitoria_empresas/src/dataset_queries.py pro ranking.
+    """
+    if vinculos.empty:
+        return
+    df = vinculos.copy()
+    sq_col = df["sq_candidato"] if "sq_candidato" in df.columns else pd.Series([None] * len(df), index=df.index)
+    df["chave_politico"] = [_chave_politico(sq, nome) for sq, nome in zip(sq_col, df["nome_socio_vinculado"], strict=True)]
+    df["valor"] = df["detalhe"].map(_extrair_valor) if "detalhe" in df.columns else None
+
+    colunas = ["cnpj_empresa", "chave_politico", "fonte", "ano", "cargo_ou_funcao",
+               "orgao_ou_partido", "situacao", "detalhe", "nome_socio_vinculado", "valor"]
+    rows = df[[c for c in colunas if c in df.columns]].where(pd.notna(df), None).to_dict("records")
+
+    with driver.session(database=database) as session:
+        for start in range(0, len(rows), batch_size):
+            batch = rows[start:start + batch_size]
+            session.run(
+                "UNWIND $rows AS row "
+                "MATCH (e:Empresa {id: row.cnpj_empresa}), (v:VinculoPolitico {id: row.chave_politico}) "
+                "MERGE (e)-[r:TEM_VINCULO_POLITICO]->(v) "
+                "SET r.fonte = row.fonte, r.ano = row.ano, r.cargo = row.cargo_ou_funcao, "
+                "r.partido = row.orgao_ou_partido, r.situacao = row.situacao, r.detalhe = row.detalhe, "
+                "r.nome_socio_vinculado = row.nome_socio_vinculado, r.valor = row.valor",
+                rows=batch,
+            )
+    logger.info(f"Neo4j: {len(rows)} relacionamentos TEM_VINCULO_POLITICO enriquecidos com propriedades.")
+
+    if candidatos_perfil is None or candidatos_perfil.empty:
+        return
+    # Candidatura mais recente por sq_candidato (pode aparecer em varios anos
+    # -- mesmo sq_candidato nao deveria repetir ano, mas defensivo mesmo assim).
+    perfil = candidatos_perfil.sort_values("ano").drop_duplicates(subset=["sq_candidato"], keep="last")
+    chaves_tse = df.loc[df["chave_politico"].str.startswith("TSE:", na=False), ["chave_politico"]].drop_duplicates()
+    chaves_tse["sq_candidato"] = chaves_tse["chave_politico"].str.removeprefix("TSE:")
+    merge = chaves_tse.merge(perfil, on="sq_candidato", how="inner")
+    if merge.empty:
+        return
+    rows_no = merge[["chave_politico", "nome_candidato", "nome_urna", "cargo", "partido"]].where(
+        pd.notna(merge), None
+    ).to_dict("records")
+    with driver.session(database=database) as session:
+        for start in range(0, len(rows_no), batch_size):
+            batch = rows_no[start:start + batch_size]
+            session.run(
+                "UNWIND $rows AS row "
+                "MATCH (v:VinculoPolitico {id: row.chave_politico}) "
+                "SET v.nome_candidato = row.nome_candidato, v.nome_urna = row.nome_urna, "
+                "v.cargo = row.cargo, v.partido = row.partido",
+                rows=batch,
+            )
+    logger.info(f"Neo4j: {len(rows_no)} nos VinculoPolitico enriquecidos com perfil de candidato.")
+
+
+def export_detalhes_processos_judiciais(
+    driver: Driver, database: str, processos: pd.DataFrame, batch_size: int = 2000,
+) -> None:
+    """Enriquece com propriedades os nos ``ProcessoJudicial`` (ja criados
+    "crus" por ``export_hin_to_neo4j``) -- tribunal, classe, assunto, polo,
+    status, data da ultima movimentacao. So processa linhas com
+    ``match_confianca='nome'`` (direto da empresa) -- mesmo filtro de
+    ``build_empresas_hin`` (as de ``match_confianca='socio'`` nem viraram
+    no, nao ha o que enriquecer)."""
+    if processos.empty:
+        return
+    df = processos[processos["match_confianca"] == "nome"].copy() if "match_confianca" in processos.columns else processos.copy()
+    if df.empty:
+        return
+    df["chave_processo"] = df["numero_processo"].fillna("").astype(str)
+    df = df[df["chave_processo"] != ""]
+
+    colunas = ["chave_processo", "tribunal", "classe", "assunto", "polo", "status", "data_ultima_movimentacao"]
+    rows = df[[c for c in colunas if c in df.columns]].where(pd.notna(df), None).to_dict("records")
+
+    with driver.session(database=database) as session:
+        for start in range(0, len(rows), batch_size):
+            batch = rows[start:start + batch_size]
+            session.run(
+                "UNWIND $rows AS row "
+                "MATCH (p:ProcessoJudicial {id: row.chave_processo}) "
+                "SET p.tribunal = row.tribunal, p.classe = row.classe, p.assunto = row.assunto, "
+                "p.polo = row.polo, p.status = row.status, "
+                "p.data_ultima_movimentacao = row.data_ultima_movimentacao",
+                rows=batch,
+            )
+    logger.info(f"Neo4j: {len(rows)} nos ProcessoJudicial enriquecidos com propriedades.")

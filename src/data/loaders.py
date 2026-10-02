@@ -118,6 +118,19 @@ class GrandeVitoriaLoader:
         """Vinculos politicos (TSE) por empresa -- sinal/no auxiliar, nao e rotulo."""
         return self._sqlite.read_table("vinculos_politicos")
 
+    def candidatos_perfil(self) -> pd.DataFrame:
+        """Perfil rico de candidato do TSE (nome, cargo, partido, bens/foto/
+        redes -- ver grande_vitoria_empresas_extracao/src/tse_ingest.py,
+        26/09/2026 em diante) -- chave ``(sq_candidato, ano)``. Tabela pode
+        nao existir em bancos antigos; devolve DataFrame vazio nesse caso em
+        vez de propagar o erro do SQLite (mesmo espirito defensivo do resto
+        do loader, mas aqui explicito porque a tabela e nova o bastante pra
+        nao estar em todo snapshot ja baixado)."""
+        try:
+            return self._sqlite.read_table("candidatos_perfil")
+        except pd.errors.DatabaseError:
+            return pd.DataFrame(columns=["sq_candidato", "ano", "nome_candidato", "nome_urna", "cargo", "partido"])
+
     def infracoes_ambientais(self) -> pd.DataFrame:
         """Infracoes ambientais (IBAMA/IEMA) -- sinal auxiliar, match direto por
         CNPJ (confirmado: 100% ``match_confianca='direto'`` no banco real, nao

@@ -55,10 +55,53 @@ def test_build_empresas_hin_node_and_edge_counts(grande_vitoria_loader: GrandeVi
     assert data["socio"].num_nodes == 3  # soc comum (emp_1/emp_2) + 2 outros
     assert data["endereco"].num_nodes == 4  # emp_1/emp_3 compartilham endereco
     assert data["municipio"].num_nodes == 3  # VITORIA, VILA VELHA, SERRA
-    assert data["vinculo_politico"].num_nodes == 1
+    # 2: emp_4 (vinculo "antigo", so por nome de socio) + emp_5 (vinculo TSE
+    # direto por CNPJ, sem socio) -- tem que ficar em nos DIFERENTES (ver
+    # test_vinculo_politico_sem_socio_nao_colapsa_num_so_no).
+    assert data["vinculo_politico"].num_nodes == 2
+    # 1: so o processo de match_confianca='nome' (emp_1) -- o de emp_2
+    # (match_confianca='socio') fica de fora por decisao explicita (ver
+    # test_processo_via_socio_fica_fora_do_grafo).
+    assert data["processo_judicial"].num_nodes == 1
 
     assert data["socio", "participa_de", "empresa"].edge_index.shape[1] == 4
     assert data["empresa", "sediada_em", "endereco"].edge_index.shape[1] == 5
+    assert data["empresa", "teve_processo", "processo_judicial"].edge_index.shape[1] == 1
+
+
+def test_vinculo_politico_sem_socio_nao_colapsa_num_so_no(grande_vitoria_loader: GrandeVitoriaLoader) -> None:
+    """Achado real (02/10/2026): vinculo TSE direto por CNPJ (sem socio,
+    ``nome_socio_vinculado=None``) colapsava com QUALQUER outro vinculo sem
+    socio num unico no "vazio" (normalizar `None` vira string vazia) --
+    _chave_politico corrige preferindo `sq_candidato` quando disponivel."""
+    builder = build_empresas_hin(grande_vitoria_loader)
+    data = builder.build()
+    graph = builder.to_networkx()
+
+    empresas = grande_vitoria_loader.empresas()["cnpj"].tolist()
+    idx_emp4, idx_emp5 = empresas.index("44444444000104"), empresas.index("55555555000105")
+
+    vizinhos_emp4 = {n for n in graph.neighbors(("empresa", idx_emp4)) if n[0] == "vinculo_politico"}
+    vizinhos_emp5 = {n for n in graph.neighbors(("empresa", idx_emp5)) if n[0] == "vinculo_politico"}
+
+    assert len(vizinhos_emp4) == 1
+    assert len(vizinhos_emp5) == 1
+    assert vizinhos_emp4 != vizinhos_emp5, "emp_4 e emp_5 nao podem compartilhar o mesmo no de vinculo_politico"
+    assert data["vinculo_politico"].num_nodes == 2
+
+
+def test_processo_via_socio_fica_fora_do_grafo(grande_vitoria_loader: GrandeVitoriaLoader) -> None:
+    """Processo achado so pelo nome do SOCIO (match_confianca='socio', sem
+    CPF de apoio -- risco de homonimo) nao deve virar aresta no grafo; so
+    match_confianca='nome' (achado pela razao social da propria empresa)."""
+    builder = build_empresas_hin(grande_vitoria_loader)
+    graph = builder.to_networkx()
+
+    empresas = grande_vitoria_loader.empresas()["cnpj"].tolist()
+    idx_emp1, idx_emp2 = empresas.index("11111111000101"), empresas.index("22222222000102")
+
+    assert any(n[0] == "processo_judicial" for n in graph.neighbors(("empresa", idx_emp1)))
+    assert not any(n[0] == "processo_judicial" for n in graph.neighbors(("empresa", idx_emp2)))
 
 
 def test_build_empresas_hin_label_preserva_circularidade(grande_vitoria_loader: GrandeVitoriaLoader) -> None:
